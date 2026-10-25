@@ -1,0 +1,14 @@
+# Secretos y configuración local: nunca al repositorio
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+credentials*.json
+*service-account*.json
+
+# Sistema y editores
+.DS_Store
+.vscode/
+.idea/

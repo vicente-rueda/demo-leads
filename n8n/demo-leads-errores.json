@@ -1,0 +1,83 @@
+{
+  "name": "Demo Leads - Alerta de errores",
+  "nodes": [
+    {
+      "id": "0ab2d5f1-8932-7d36-9607-9df72ad8ca20",
+      "name": "Se produce un error en un workflow",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "f7638649-60a2-ce5a-ccb6-cb281c0d41d3",
+      "name": "Avisar por Telegram: workflow caído",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        340,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
+        "text": "=🚨 [n8n] Ha fallado el workflow «{{ $json.workflow.name }}»\nNodo: {{ $json.execution.lastNodeExecuted }}\nError: {{ $json.execution.error.message }}\nEjecución: {{ $json.execution.url }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Telegram - bot demo-leads"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "d12faeaa-834e-e4cf-a42a-26677d4d4bcc",
+      "name": "Nota - Red de seguridad",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        60,
+        60
+      ],
+      "parameters": {
+        "content": "## Red de seguridad\nSe dispara cuando un workflow falla de una forma que no estaba prevista (un nodo sin salida de error, una caída a mitad de camino...). Los fallos previstos ya avisan desde el propio flujo.\n\n**Después de importar:** publica este workflow y, en «Demo Leads - Captura y seguimiento» → Ajustes → *Error workflow*, selecciónalo.",
+        "color": 3,
+        "width": 480,
+        "height": 240
+      }
+    }
+  ],
+  "connections": {
+    "Se produce un error en un workflow": {
+      "main": [
+        [
+          {
+            "node": "Avisar por Telegram: workflow caído",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid"
+  },
+  "active": false,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "description": "Avisa por Telegram cuando un workflow falla de forma no prevista."
+  }
+}

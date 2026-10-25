@@ -1,0 +1,783 @@
+{
+  "name": "Demo Leads - Captura y seguimiento",
+  "nodes": [
+    {
+      "id": "c39763b3-6fb9-3e88-dc75-860977dc5121",
+      "name": "Recibir formulario",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        100,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "demo-leads",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://demo-leads.vicenterueda.com"
+        }
+      },
+      "webhookId": "60d50d2b-43eb-4f80-a789-ec6df8d26a7c"
+    },
+    {
+      "id": "155b1e0a-d801-a9a7-6e96-b1d7da716a99",
+      "name": "Validar y limpiar datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const entrada = $input.first().json;\nconst body = entrada.body ?? entrada;\nconst limpio = (v, max) => String(v ?? '').replace(/[\\u0000-\\u001f\\u007f]+/g, ' ').trim().slice(0, max);\nconst escapar = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\n\nconst nombre = limpio(body.nombre, 60);\nconst apellido = limpio(body.apellido, 60);\nconst email = limpio(body.email, 254).toLowerCase();\nconst mensaje = limpio(body.mensaje, 500);\nconst origen = limpio(body.origen || 'web-form', 30);\n\nconst errores = [];\nif (!nombre) errores.push('El nombre es obligatorio.');\nif (!/^[^\\s@<>,;\"']+@[^\\s@<>,;\"']+\\.[^\\s@<>,;\"']{2,}$/.test(email)) errores.push('El email no es válido.');\nif (limpio(body.web, 100)) errores.push('Solicitud rechazada.');\n\nconst mensajeCorto = mensaje.length > 80 ? mensaje.slice(0, 80) + '...' : mensaje;\nconst fecha = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });\nconst id = 'LEAD-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);\n\nreturn [{ json: {\n  valido: errores.length === 0, errores, id, fecha, origen,\n  nombre, apellido, email, mensaje,\n  nombreH: escapar(nombre), apellidoH: escapar(apellido), emailH: escapar(email), mensajeCortoH: escapar(mensajeCorto),\n} }];"
+      },
+      "notes": "Recorta longitudes, quita caracteres de control, valida el email (sin comas ni espacios: evita enviar a varias direcciones) y prepara copias con el HTML escapado para el email y Telegram."
+    },
+    {
+      "id": "3bd3e156-4482-81a0-d58a-463fc1aa2dca",
+      "name": "¿Datos válidos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        580,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valido }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "422d6912-49c1-8222-976a-282f8868b34d",
+      "name": "Registrar lead en Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        820,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REEMPLAZAR_ID_HOJA_GOOGLE_SHEETS"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $json.id }}",
+            "Nombre": "={{ $json.nombre }}",
+            "Apellido": "={{ $json.apellido }}",
+            "Email": "={{ $json.email }}",
+            "Mensaje": "={{ $json.mensaje }}",
+            "Fecha": "={{ $json.fecha }}",
+            "Origen": "={{ $json.origen }}",
+            "Notas": ""
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Google Sheets - cuenta de servicio"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "c6c1fb5c-40ca-fc28-ddcd-632a485c1b90",
+      "name": "Enviar email de confirmación",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1060,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $(\"Validar y limpiar datos\").item.json.email }}",
+        "subject": "Hemos recibido tu solicitud",
+        "emailType": "html",
+        "message": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#222;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.</p><p style=\"margin:0 0 28px 0\">Nos pondremos en contacto contigo a la mayor brevedad posible.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Automatización</strong></p><hr style=\"border:none;border-top:1px solid #e0e0e0;margin:0 0 14px 0\"><p style=\"margin:0;font-size:12px;color:#999\">Este mensaje ha sido generado automáticamente como parte de una demostración de sistema de automatización: el texto de arriba es un ejemplo de lo que recibiría el cliente de un negocio real. Los datos que introduces se guardan en una hoja de cálculo de esta demo (así se ve el registro automático), se anonimizan automáticamente a los 30 días y no se utilizan con ningún otro fin. Si quieres que los borremos antes, responde a este correo.</p></div>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Equipo de Automatización"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Gmail - demo-leads"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "ed119170-09af-7681-58fc-a5f05b056ebf",
+      "name": "Responder 200 - todo correcto",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1300,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: \"ok\", emailSent: true, id: $(\"Validar y limpiar datos\").item.json.id, nombre: $(\"Validar y limpiar datos\").item.json.nombre, email: $(\"Validar y limpiar datos\").item.json.email } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "notes": "El «ok» llega aquí, después de guardar y enviar el primer email. El resto del flujo (aviso, espera, seguimiento) continúa sin hacer esperar al visitante."
+    },
+    {
+      "id": "49394087-5d4e-62c3-1474-dc4693549682",
+      "name": "Leer total de leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1540,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REEMPLAZAR_ID_HOJA_GOOGLE_SHEETS"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Stats"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "ID",
+              "lookupValue": "1"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Google Sheets - cuenta de servicio"
+        }
+      },
+      "notes": "Solo para el aviso de Telegram. Si falla o viene vacío, el flujo continúa igualmente (el total saldrá como «—»).",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "a46282a7-e0da-384c-2cd3-1126e3dd0046",
+      "name": "Avisar por Telegram: nuevo lead",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1780,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
+        "text": "=🔔 <b>[Demo Leads] — Nuevo lead recibido</b>\n\n👤 <b>Nombre:</b> {{ $(\"Validar y limpiar datos\").item.json.nombreH }} {{ $(\"Validar y limpiar datos\").item.json.apellidoH }}\n📧 <b>Email:</b> {{ $(\"Validar y limpiar datos\").item.json.emailH }}\n💬 <b>Mensaje:</b> {{ $(\"Validar y limpiar datos\").item.json.mensajeCortoH }}\n🕐 <b>Hora:</b> {{ $(\"Validar y limpiar datos\").item.json.fecha }}\n🆔 <b>ID:</b> {{ $(\"Validar y limpiar datos\").item.json.id }}\n📊 <b>Total leads:</b> {{ $(\"Leer total de leads\").first().json.Total ?? \"—\" }}",
+        "additionalFields": {
+          "parse_mode": "HTML",
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Telegram - bot demo-leads"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "fd0e290d-ecfb-57dd-0522-4ef2748f4015",
+      "name": "Esperar 5 minutos",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2020,
+        300
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 5,
+        "unit": "minutes"
+      }
+    },
+    {
+      "id": "fecf5b90-b2eb-c8bf-182f-b8f63ef851dd",
+      "name": "Enviar email de seguimiento",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2260,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $(\"Validar y limpiar datos\").item.json.email }}",
+        "subject": "¿Podemos ayudarte con tu solicitud?",
+        "emailType": "html",
+        "message": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#222;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Hace unos minutos recibimos tu solicitud y queríamos saber si necesitas algo más para poder ayudarte.</p><p style=\"margin:0 0 28px 0\">Si nos cuentas un poco más de lo que buscas, respondiendo a este correo, podremos prepararte una propuesta a medida.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Automatización</strong></p><div style=\"background:#f4f5ff;border-left:4px solid #6366f1;padding:12px 14px;margin:0 0 24px 0;font-size:14px\"><p style=\"margin:0 0 8px 0\"><strong>💡 Sobre esta demo:</strong> este segundo correo se ha enviado solo, 5 minutos después de tu solicitud, sin que nadie lo escribiera ni tuviera que acordarse. Eso es lo que vive tu cliente cuando tu negocio tiene un sistema de automatización:</p><ul style=\"margin:0 0 8px 0;padding-left:20px\"><li style=\"margin-bottom:4px\"><strong>Cada contacto recibe respuesta inmediata</strong>, a cualquier hora y cualquier día</li><li style=\"margin-bottom:4px\"><strong>No pierdes ningún contacto</strong>: todo queda registrado y organizado automáticamente</li><li style=\"margin-bottom:4px\"><strong>El seguimiento ocurre solo</strong>, sin depender de que alguien se acuerde</li><li style=\"margin-bottom:4px\"><strong>Recuperas el tiempo</strong> que hoy dedicas a tareas repetitivas y manuales</li></ul><p style=\"margin:0\">Si quieres ver cómo quedaría en tu caso, responde a este correo y te lo explicamos sin compromiso.</p></div><hr style=\"border:none;border-top:1px solid #e0e0e0;margin:0 0 14px 0\"><p style=\"margin:0;font-size:12px;color:#999\">Este mensaje ha sido generado automáticamente como parte de una demostración de sistema de automatización: el texto de arriba es un ejemplo de lo que recibiría el cliente de un negocio real. Los datos que introduces se guardan en una hoja de cálculo de esta demo (así se ve el registro automático), se anonimizan automáticamente a los 30 días y no se utilizan con ningún otro fin. Si quieres que los borremos antes, responde a este correo.</p></div>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Equipo de Automatización"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Gmail - demo-leads"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "b6459874-c544-7dd1-ad86-406af300a05f",
+      "name": "Avisar: fallo al registrar",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1060,
+        520
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
+        "text": "=⚠️ [Demo Leads] No se pudo registrar el lead {{ $(\"Validar y limpiar datos\").item.json.id }} en Google Sheets.\nError: {{ $json.error?.message ?? \"sin detalle\" }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Telegram - bot demo-leads"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "bce54789-5fbc-76f7-5dc8-1f2d085b4007",
+      "name": "Responder 502 - registro fallido",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1300,
+        520
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: \"upstream_error\", message: \"No hemos podido registrar tu solicitud. Inténtalo de nuevo en unos minutos.\" } }}",
+        "options": {
+          "responseCode": 502
+        }
+      }
+    },
+    {
+      "id": "af088241-167b-7ffa-38f8-805916f5a4c6",
+      "name": "Avisar: fallo en email de confirmación",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1300,
+        700
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
+        "text": "=⚠️ [Demo Leads] El lead {{ $(\"Validar y limpiar datos\").item.json.id }} se registró, pero falló el email de confirmación.\nError: {{ $json.error?.message ?? \"sin detalle\" }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Telegram - bot demo-leads"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "c08d431c-7559-f806-6ee9-9c23b693ee3e",
+      "name": "Responder 202 - registrado sin email",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1540,
+        700
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: \"registered\", emailSent: false, id: $(\"Validar y limpiar datos\").item.json.id, message: \"Tu solicitud está registrada, pero no hemos podido enviar el email de confirmación.\" } }}",
+        "options": {
+          "responseCode": 202
+        }
+      }
+    },
+    {
+      "id": "93f41f2a-9829-0a43-e345-23e084d6aa69",
+      "name": "Avisar: fallo en email de seguimiento",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2500,
+        520
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
+        "text": "=⚠️ [Demo Leads] Falló el email de seguimiento del lead {{ $(\"Validar y limpiar datos\").item.json.id }}.\nError: {{ $json.error?.message ?? \"sin detalle\" }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Telegram - bot demo-leads"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "85b6fb04-b87b-ca81-7d7a-55151283aafc",
+      "name": "Responder 400 - datos no válidos",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        820,
+        120
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: \"validation_error\", message: \"Revisa los datos del formulario.\", details: $json.errores } }}",
+        "options": {
+          "responseCode": 400
+        }
+      }
+    },
+    {
+      "id": "0dbffc95-a6f8-3d3a-7525-2aaecfe34096",
+      "name": "Recibir petición del contador",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        100,
+        1000
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "demo-count",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://demo-leads.vicenterueda.com"
+        }
+      },
+      "webhookId": "2905f1ee-79b0-47e5-aefb-a2e01d8ea6a4"
+    },
+    {
+      "id": "a35bd156-8823-0af5-da3b-a8d1779d9edd",
+      "name": "Leer total (Google Sheets)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        340,
+        1000
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REEMPLAZAR_ID_HOJA_GOOGLE_SHEETS"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Stats"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "ID",
+              "lookupValue": "1"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Google Sheets - cuenta de servicio"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "7304e806-d1ef-7e8d-676e-52cd76e505be",
+      "name": "Responder 200 - total",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        580,
+        1000
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { total: $input.first().json.Total ?? 0 } }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "public, max-age=30"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "75d20cca-037f-2690-9254-190512e954bd",
+      "name": "Responder 503 - contador no disponible",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        580,
+        1160
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: \"service_unavailable\", message: \"El contador no está disponible ahora mismo.\" } }}",
+        "options": {
+          "responseCode": 503
+        }
+      }
+    },
+    {
+      "id": "f41fc29e-8f93-d95f-eb8f-7a5f812160bb",
+      "name": "Nota - Qué hace",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        60,
+        -200
+      ],
+      "parameters": {
+        "content": "## Demo de captación de leads\nFormulario → validar → registrar en Sheets → email de confirmación → «ok» al formulario → aviso por Telegram → espera 5 min → email de seguimiento.\n\nSin secretos en el flujo: Telegram, Sheets y Gmail usan credenciales de n8n. Al importar: sustituye los marcadores `REEMPLAZAR_…` (chat de Telegram, ID de la hoja) y elige tu credencial en cada nodo que la use.",
+        "color": 4,
+        "width": 760,
+        "height": 200
+      }
+    },
+    {
+      "id": "e599843a-3c04-7d13-be3f-cb567a7ffb98",
+      "name": "Nota - Errores",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        -200
+      ],
+      "parameters": {
+        "content": "## Política de errores\n- Si falla **Sheets**: aviso a Telegram y el formulario recibe 502.\n- Si falla el **primer email**: el lead ya está guardado → aviso y el formulario recibe 202.\n- Si falla **Telegram** o la lectura del total: el visitante no se entera, el flujo sigue.\n- Cada llamada externa reintenta 3 veces (5 s).",
+        "color": 3,
+        "width": 760,
+        "height": 230
+      }
+    },
+    {
+      "id": "1026a219-6bf3-8476-091d-13aa4940f386",
+      "name": "Nota - Contador",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        60,
+        880
+      ],
+      "parameters": {
+        "content": "## Contador de la web\nLee la celda `Total` de la pestaña `Stats` (en la hoja es una fórmula `=COUNTA(Leads!A:A)-1`, así no hay carreras ni escrituras). La respuesta se puede cachear 30 s.",
+        "color": 5,
+        "width": 440,
+        "height": 200
+      }
+    }
+  ],
+  "connections": {
+    "Recibir formulario": {
+      "main": [
+        [
+          {
+            "node": "Validar y limpiar datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar y limpiar datos": {
+      "main": [
+        [
+          {
+            "node": "¿Datos válidos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Datos válidos?": {
+      "main": [
+        [
+          {
+            "node": "Registrar lead en Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 400 - datos no válidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar lead en Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Enviar email de confirmación",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar: fallo al registrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar email de confirmación": {
+      "main": [
+        [
+          {
+            "node": "Responder 200 - todo correcto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar: fallo en email de confirmación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder 200 - todo correcto": {
+      "main": [
+        [
+          {
+            "node": "Leer total de leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer total de leads": {
+      "main": [
+        [
+          {
+            "node": "Avisar por Telegram: nuevo lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar por Telegram: nuevo lead": {
+      "main": [
+        [
+          {
+            "node": "Esperar 5 minutos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar 5 minutos": {
+      "main": [
+        [
+          {
+            "node": "Enviar email de seguimiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar email de seguimiento": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Avisar: fallo en email de seguimiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar: fallo al registrar": {
+      "main": [
+        [
+          {
+            "node": "Responder 502 - registro fallido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar: fallo en email de confirmación": {
+      "main": [
+        [
+          {
+            "node": "Responder 202 - registrado sin email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recibir petición del contador": {
+      "main": [
+        [
+          {
+            "node": "Leer total (Google Sheets)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer total (Google Sheets)": {
+      "main": [
+        [
+          {
+            "node": "Responder 200 - total",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 503 - contador no disponible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "active": false,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "description": "Formulario de leads: valida, registra en Sheets, confirma por email, avisa por Telegram y hace seguimiento a los 5 min."
+  }
+}

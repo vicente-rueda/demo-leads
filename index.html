@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo · Captación y seguimiento automático de clientes</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --fondo: #090e1a;
+      --panel: rgba(10, 16, 30, 0.82);
+      --borde: rgba(99,102,241,0.22);
+      --borde-suave: rgba(100,116,139,0.22);
+      --texto: #f1f5f9;
+      --texto-suave: #b4c0d3;
+      --texto-tenue: #8b9ab0;
+      --acento: #a5b4fc;
+      --primario: #6366f1;
+      --primario-oscuro: #4f46e5;
+      --ok: #4ade80;
+      --aviso: #fbbf24;
+      --error: #f87171;
+      /* Escala de texto (rem): solo estos niveles, para que todas las secciones se vean iguales */
+      --t-lectura: 0.92rem;
+      --t-secundario: 0.85rem;
+      --t-sub: 1.05rem;
+      --t-etiqueta: 0.75rem;
+      --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    /* Tamaño base: todo el texto está en rem, así que escala junto.
+       móvil 13px < tablet 14px < escritorio 15px */
+    html { scroll-behavior: smooth; font-size: 13px; }
+    @media (min-width: 600px)  { html { font-size: 14px; } }
+    @media (min-width: 1024px) { html { font-size: 15px; } }
+
+    body {
+      font-family: var(--fuente);
+      background: var(--fondo);
+      color: var(--texto);
+      line-height: 1.5;
+      padding: 24px 16px 48px;
+      overflow-x: hidden;
+    }
+
+    /* ─── FONDO ─── */
+    .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 15% 15%, rgba(99,102,241,0.18) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 70% at 85% 85%, rgba(59,130,246,0.14) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 50% at 50% 50%, rgba(139,92,246,0.07) 0%, transparent 65%);
+      animation: bgPulse 10s ease-in-out infinite alternate;
+    }
+    @keyframes bgPulse {
+      from { opacity: 0.7; transform: scale(1); }
+      to   { opacity: 1;   transform: scale(1.06); }
+    }
+
+    .pagina {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Pasos y formulario: en móvil/tablet uno debajo del otro; en escritorio, lado a lado */
+    .contenido { display: flex; flex-direction: column; gap: 20px; }
+    .lateral { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+    :focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+
+    a { color: var(--acento); }
+
+    .oculto { display: none !important; }
+
+    /* ─── PANEL GENÉRICO ─── */
+    .panel {
+      background: var(--panel);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--borde);
+      border-radius: 20px;
+      padding: 32px 28px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    h2 { font-size: 1.3rem; line-height: 1.3; margin-bottom: 8px; }
+    .intro { font-size: var(--t-lectura); color: var(--texto-suave); margin-bottom: 22px; }
+
+    /* ─── CABECERA ─── */
+    .hero { text-align: center; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99,102,241,0.13);
+      border: 1px solid rgba(99,102,241,0.28);
+      color: var(--acento);
+      font-size: var(--t-etiqueta);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+
+    .prueba-social {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      font-size: var(--t-secundario);
+      color: var(--texto-tenue);
+    }
+    .prueba-social .punto {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--ok);
+      animation: pulse 1.8s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    .prueba-social b { color: var(--acento); font-weight: 700; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* Un único h1: qué es la demo + el ahorro. Ancho completo para que no se parta en muchas líneas */
+    .hero h1 {
+      font-size: 1.4rem;
+      line-height: 1.25;
+      margin: 0 auto 14px;
+      max-width: 34em;
+      text-wrap: balance; /* reparte las líneas por igual: sin palabras sueltas al final */
+    }
+    @media (min-width: 600px)  { .hero h1 { font-size: 1.7rem; } }
+    @media (min-width: 1024px) { .hero h1 { font-size: 2rem; max-width: none; } }
+    .hero .subtitulo { font-size: 1rem; color: var(--texto-suave); max-width: 56em; margin: 0 auto 22px; text-wrap: pretty; }
+    @media (min-width: 1024px) { .hero .subtitulo { max-width: 72em; } }
+
+    .btn-secundario {
+      display: inline-block;
+      padding: 11px 24px;
+      border: 1px solid rgba(99,102,241,0.5);
+      border-radius: 10px;
+      color: var(--texto);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: var(--t-lectura);
+      transition: background 0.2s;
+    }
+    .btn-secundario:hover { background: rgba(99,102,241,0.12); }
+
+    /* ─── AHORRO ─── */
+    .ahorro-lista {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .ahorro-lista li {
+      background: rgba(99,102,241,0.07);
+      border: 1px solid rgba(99,102,241,0.18);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: var(--t-lectura);
+      color: var(--texto-suave);
+    }
+    .ahorro-cab { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .ahorro-lista .icono { font-size: 1.3rem; line-height: 1; flex-shrink: 0; }
+    .ahorro-lista strong { color: var(--texto); font-size: var(--t-sub); }
+
+    /* ─── MAPA DE 5 PASOS ─── */
+    .pasos { list-style: none; display: flex; flex-direction: column; gap: 14px; counter-reset: paso; }
+
+    .paso {
+      position: relative;
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 14px;
+    }
+    .paso:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 42px;
+      bottom: -14px;
+      width: 2px;
+      background: var(--borde-suave);
+    }
+    .paso-num {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: rgba(99,102,241,0.18);
+      border: 1px solid rgba(99,102,241,0.4);
+      color: var(--acento);
+      font-weight: 700;
+      font-size: var(--t-sub);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .paso-cuerpo h3 { font-size: var(--t-sub); margin: 6px 0 10px; }
+
+    .comparativa {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .comparativa > div {
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: var(--t-lectura);
+      line-height: 1.45;
+    }
+    .comparativa .etiqueta {
+      display: block;
+      font-size: var(--t-etiqueta);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .persona { background: rgba(100,116,139,0.1); border: 1px solid var(--borde-suave); color: var(--texto-suave); }
+    .persona .etiqueta { color: var(--texto-tenue); }
+    .sistema { background: rgba(34,197,94,0.07); border: 1px solid rgba(34,197,94,0.25); color: var(--texto); }
+    .sistema .etiqueta { color: var(--ok); }
+
+    .cierre-mapa {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--borde-suave);
+      font-size: var(--t-lectura);
+      color: var(--texto-suave);
+    }
+    .cierre-mapa strong { color: var(--texto); }
+
+    /* ─── FORMULARIO ─── */
+    .fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .campo { margin-bottom: 14px; }
+    .campo label.etiqueta-campo {
+      display: block;
+      font-size: var(--t-secundario);
+      font-weight: 600;
+      color: var(--texto-suave);
+      margin-bottom: 6px;
+    }
+    .campo .opcional { font-weight: 400; color: var(--texto-tenue); }
+    .req { color: var(--error); font-weight: 700; }
+
+    .campo input[type="text"],
+    .campo input[type="email"],
+    .campo textarea {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid rgba(100,116,139,0.4);
+      border-radius: 10px;
+      color: var(--texto);
+      font-family: inherit;
+      font-size: max(16px, 1rem); /* nunca menos de 16px: evita el zoom automático en iPhone */
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .campo textarea { resize: vertical; min-height: 96px; line-height: 1.5; }
+    .campo input::placeholder, .campo textarea::placeholder { color: #94a3b8; }
+    .campo input:focus, .campo textarea:focus {
+      outline: none;
+      border-color: var(--primario);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+    }
+    .campo [aria-invalid="true"] { border-color: var(--error); }
+
+    .contador { font-size: var(--t-secundario); color: var(--texto-tenue); text-align: right; margin-top: 4px; }
+    .contador.aviso { color: var(--aviso); }
+    .contador.peligro { color: var(--error); }
+
+    /* Campo trampa: fuera de pantalla, no con display:none (algunos bots lo ignoran) */
+    .trampa {
+      position: absolute;
+      left: -10000px;
+      top: auto;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+
+    .consentimiento {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin: 18px 0 6px;
+      font-size: var(--t-lectura);
+      color: var(--texto-suave);
+    }
+    .consentimiento input {
+      width: 20px; height: 20px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      accent-color: var(--primario);
+    }
+
+    .error-campo { color: var(--error); font-size: var(--t-secundario); margin-top: 4px; }
+
+    .nota-envio { font-size: var(--t-secundario); color: var(--texto-tenue); margin: 8px 0 0 30px; }
+
+    .estado-envio { margin-top: 12px; text-align: center; font-size: var(--t-secundario); color: var(--texto-suave); }
+
+    /* Solo visible en local, para no confundir una simulación con una petición real */
+    .banner-sim {
+      position: fixed; left: 0; right: 0; top: 0; z-index: 10;
+      background: var(--aviso); color: #1f1300;
+      font-size: max(11px, 0.78rem); font-weight: 600;
+      padding: 6px 12px; text-align: center;
+    }
+
+    .error-general {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.4);
+      color: #fecaca;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: var(--t-lectura);
+      margin-bottom: 16px;
+    }
+    .error-general ul { margin: 6px 0 0 18px; }
+
+    .btn-primario {
+      width: 100%;
+      margin-top: 18px;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, var(--primario) 0%, var(--primario-oscuro) 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: var(--t-sub);
+      font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    }
+    .btn-primario:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(99,102,241,0.42); }
+    .btn-primario:active:not(:disabled) { transform: translateY(0); }
+    .btn-primario:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      display: none;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── PRIVACIDAD Y PIE ─── */
+    /* Política: ventana emergente. En la página solo hay un enlace discreto en el pie */
+    .enlace-pie {
+      background: none; border: none; padding: 0; font: inherit; color: inherit;
+      text-decoration: underline; cursor: pointer;
+    }
+    .enlace-pie:hover { color: var(--texto-suave); }
+
+    dialog#privacidad {
+      width: calc(100% - 32px); max-width: 760px; max-height: 86vh;
+      margin: auto; padding: 0; overflow: auto;
+      background: #0f172a; color: var(--texto);
+      border: 1px solid var(--borde); border-radius: 16px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+    }
+    dialog#privacidad::backdrop { background: rgba(0,0,0,0.7); }
+    .dlg-cab {
+      position: sticky; top: 0; z-index: 1;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 16px 24px; background: #0f172a; border-bottom: 1px solid var(--borde-suave);
+    }
+    .dlg-cab h2 { margin: 0; font-size: 1.15rem; }
+    .dlg-cerrar {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      background: rgba(100,116,139,0.15); border: 1px solid var(--borde-suave);
+      color: var(--texto); font-size: 1rem; cursor: pointer;
+    }
+    .dlg-cerrar:hover { background: rgba(100,116,139,0.3); }
+    .dlg-cuerpo { padding: 8px 24px 24px; font-size: var(--t-lectura); color: var(--texto-suave); line-height: 1.55; }
+    .dlg-cuerpo dt { margin-top: 16px; font-weight: 700; color: var(--texto); }
+    .dlg-cuerpo dd { margin: 4px 0 0; }
+    @media (min-width: 600px) {
+      .dlg-cuerpo { display: grid; grid-template-columns: 11em 1fr; column-gap: 24px; }
+      .dlg-cuerpo dt { margin-top: 0; padding: 14px 0; border-top: 1px solid rgba(100,116,139,0.18); }
+      .dlg-cuerpo dd { margin: 0; padding: 14px 0; border-top: 1px solid rgba(100,116,139,0.18); }
+      .dlg-cuerpo dt:first-of-type, .dlg-cuerpo dt:first-of-type + dd { border-top: none; }
+    }
+
+    .marcador {
+      background: rgba(251,191,36,0.15);
+      border: 1px dashed var(--aviso);
+      color: var(--aviso);
+      border-radius: 4px;
+      padding: 0 4px;
+    }
+
+    footer { text-align: center; font-size: max(11px, 0.78rem); color: var(--texto-tenue); padding-top: 8px; }
+
+
+    /* ─── RESULTADO ─── */
+    .res-cab { text-align: center; margin-bottom: 22px; }
+    .insignia {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: var(--t-secundario); font-weight: 600;
+      padding: 5px 14px; border-radius: 20px; margin-bottom: 12px;
+    }
+    .insignia.ok    { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.3);  color: var(--ok); }
+    .insignia.aviso { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); color: var(--aviso); }
+    .res-cab h2 { font-size: 1.5rem; max-width: 30em; margin: 0 auto 6px; text-wrap: balance; }
+    .res-cab h2:focus { outline: none; }
+    .res-cab p { font-size: var(--t-lectura); color: var(--texto-suave); }
+
+    .pasos-res { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+    .pr {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr);
+      gap: 10px 14px;
+      padding: 16px;
+      border: 1px solid var(--borde-suave);
+      border-radius: 14px;
+      background: rgba(100,116,139,0.06);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    .pr.visible { opacity: 1; transform: none; }
+    .pr.hecho  { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.05); }
+    .pr.espera { border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.05); }
+    .pr.fallo  { border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.06); }
+    .pr.apagado.visible { opacity: 0.55; }
+    .pr-icono {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; background: rgba(100,116,139,0.18);
+    }
+    .pr.hecho  .pr-icono { background: rgba(34,197,94,0.18); }
+    .pr.espera .pr-icono { background: rgba(251,191,36,0.18); }
+    .pr.fallo  .pr-icono { background: rgba(239,68,68,0.2); }
+    .pr-texto h3 { font-size: var(--t-sub); margin-bottom: 4px; }
+    .pr-desc { font-size: var(--t-lectura); color: var(--texto); }
+    .pr-ahorro { margin-top: 8px; font-size: var(--t-secundario); color: var(--texto-tenue); }
+    .pr-extra { grid-column: 1 / -1; min-width: 0; }
+
+    .vista-etiqueta { font-size: var(--t-etiqueta); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--texto-tenue); margin-bottom: 6px; }
+
+    /* Hoja de cálculo */
+    .hoja { border: 1px solid var(--borde-suave); border-radius: 12px; overflow: hidden; background: rgba(10,16,30,0.7); }
+    .hoja-barra { background: rgba(15,80,50,0.35); border-bottom: 1px solid var(--borde-suave); padding: 7px 12px; font-size: var(--t-secundario); font-weight: 500; color: var(--ok); }
+    .hoja-scroll { overflow-x: auto; }
+    .hoja table { width: 100%; border-collapse: collapse; font-size: var(--t-secundario); white-space: nowrap; }
+    .hoja th { background: rgba(20,30,50,0.9); color: var(--texto-tenue); font-weight: 600; padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--borde-suave); }
+    .hoja td { padding: 7px 10px; color: #e2e8f0; max-width: 150px; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid rgba(100,116,139,0.1); }
+    .hoja .previas td { color: var(--texto-tenue); font-style: italic; }
+    @keyframes filaNueva {
+      0%   { opacity: 0; background: rgba(34,197,94,0.3); }
+      40%  { opacity: 1; background: rgba(34,197,94,0.2); }
+      100% { opacity: 1; background: rgba(34,197,94,0.07); }
+    }
+    .fila-nueva td { opacity: 0; }
+    .pr.visible .fila-nueva td { animation: filaNueva 1.8s ease forwards; }
+    .pr.visible .fila-nueva td:nth-child(2) { animation-delay: 0.1s; }
+    .pr.visible .fila-nueva td:nth-child(3) { animation-delay: 0.2s; }
+    .pr.visible .fila-nueva td:nth-child(4) { animation-delay: 0.3s; }
+    .pr.visible .fila-nueva td:nth-child(5) { animation-delay: 0.4s; }
+    .pr.visible .fila-nueva td:nth-child(6) { animation-delay: 0.5s; }
+    .pr.visible .fila-nueva td:nth-child(7) { animation-delay: 0.6s; }
+
+    /* Correo y aviso de Telegram */
+    .tarjeta-vista { border: 1px solid var(--borde-suave); border-radius: 12px; background: rgba(10,16,30,0.7); padding: 12px 14px; font-size: var(--t-lectura); color: var(--texto-suave); line-height: 1.55; }
+    .tarjeta-vista .meta { font-size: var(--t-secundario); color: var(--texto-tenue); border-bottom: 1px solid rgba(100,116,139,0.15); padding-bottom: 8px; margin-bottom: 8px; }
+    .tarjeta-vista .meta b { color: var(--texto); }
+    .tarjeta-vista strong { color: var(--texto); }
+    .tarjeta-vista p + p { margin-top: 6px; }
+    .nota-demo ul { margin: 6px 0 6px 18px; }
+    .nota-demo p + p { margin-top: 6px; }
+    .nota-demo { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--primario); background: rgba(99,102,241,0.12); border-radius: 0 8px 8px 0; font-size: var(--t-secundario); }
+    .tarjeta-vista .pie-correo { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(100,116,139,0.15); font-size: var(--t-etiqueta); color: var(--texto-tenue); line-height: 1.45; }
+    .pr-extra .cuenta + div { margin-top: 12px; }
+    .nota-pie { margin-top: 6px; font-size: var(--t-etiqueta); color: var(--texto-tenue); }
+    @keyframes aparece { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .aparece { animation: aparece 0.6s ease both; }
+    .telegram { border-color: rgba(56,189,248,0.3); }
+    .telegram .linea { display: block; overflow-wrap: anywhere; }
+
+    /* Cuenta atrás */
+    .cuenta { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 12px; padding: 12px 16px; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.25); font-size: var(--t-lectura); color: var(--texto-suave); }
+    .cuenta .tiempo { font-size: 1.6rem; font-weight: 700; color: var(--aviso); font-variant-numeric: tabular-nums; }
+    .cuenta.hecha { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.3); }
+    .cuenta.hecha .tiempo { font-size: var(--t-lectura); color: var(--ok); }
+
+    /* Cierre */
+    .res-cierre { margin-top: 20px; border-top: 1px solid var(--borde-suave); padding-top: 18px; text-align: center; }
+    .res-cierre p { font-size: var(--t-lectura); color: var(--texto-suave); max-width: 44em; margin: 0 auto 12px; }
+    .res-cierre strong { color: var(--texto); }
+    /* La pregunta final va en una sola línea en pantallas anchas; en estrechas se reparte sin dejar una palabra sola */
+    .res-cierre .res-pregunta { max-width: none; text-wrap: balance; }
+    .res-botones { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 4px; }
+    .btn-cta { display: inline-block; padding: 11px 24px; border-radius: 10px; background: linear-gradient(135deg, var(--primario) 0%, var(--primario-oscuro) 100%); color: #fff; text-decoration: none; font-weight: 600; font-size: var(--t-lectura); }
+    .btn-texto { background: none; border: 1px solid rgba(100,116,139,0.4); color: var(--texto-suave); font-family: inherit; font-size: var(--t-lectura); padding: 10px 20px; border-radius: 10px; cursor: pointer; }
+    .btn-texto:hover { border-color: rgba(99,102,241,0.6); color: var(--acento); }
+
+    @media (min-width: 1024px) {
+      .pr { grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1.3fr); }
+      .pr-extra { grid-column: auto; }
+      /* La hoja tiene 7 columnas: en escritorio ocupa todo el ancho, debajo del texto */
+      .pr.ancho .pr-texto { grid-column: 2 / -1; }
+      .pr.ancho .pr-extra { grid-column: 2 / -1; }
+    }
+
+    /* ─── MÓVIL (< 600px) ─── */
+    @media (max-width: 599px) {
+      body { padding: 16px 12px 40px; }
+      .panel { padding: 24px 18px; border-radius: 16px; }
+      .ahorro-lista { grid-template-columns: 1fr; }
+      .comparativa { grid-template-columns: 1fr; }
+      .fila2 { grid-template-columns: 1fr; gap: 0; }
+      .nota-envio { margin-left: 0; }
+    }
+
+    /* ─── ESCRITORIO (≥ 1024px): ancho aprovechado y dos columnas ─── */
+    @media (min-width: 1024px) {
+      body { padding: 32px 32px 56px; }
+      .pagina { max-width: 1280px; gap: 24px; }
+      .panel { padding: 36px 36px; }
+      .contenido {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+      }
+    }
+
+    /* El formulario se queda fijo mientras lees los pasos, solo si la pantalla es lo bastante alta */
+    @media (min-width: 1024px) and (min-height: 780px) {
+      .lateral { position: sticky; top: 24px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="banner-sim oculto" id="bannerSim" role="status"></div>
+  <div class="bg" aria-hidden="true"></div>
+
+  <main class="pagina">
+
+    <!-- ─── CABECERA ─── -->
+    <header class="panel hero">
+      <div class="badge">⚡ Demo en vivo</div>
+      <p class="prueba-social oculto" id="pruebaSocial"><span class="punto" aria-hidden="true"></span>
+        <span><b id="contadorPersonas"></b> <span id="textoContador">personas ya han probado esta demo</span></span></p>
+      <!-- TÍTULO PROVISIONAL: se decide al crear la demo. Alternativas en notas del paso 4b. -->
+      <h1>Captación y seguimiento automático de clientes: atiende a cada contacto al instante y ahorra tiempo y costes en tareas manuales</h1>
+      <p class="subtitulo">Lo que hoy hace una persona a mano (apuntar el contacto, contestar, avisar al responsable, acordarse del seguimiento) lo hace el sistema solo. Solo necesitas tu nombre y tu email: envía el formulario y verás en pantalla, paso a paso, todo el proceso.</p>
+      <a href="#probar" class="btn-secundario">Probarlo ahora ↓</a>
+    </header>
+
+    <!-- ─── LO QUE TE AHORRAS ─── -->
+    <section class="panel" aria-labelledby="t-ahorro">
+      <h2 id="t-ahorro">Lo que te ahorras</h2>
+      <p class="intro">Son las tareas repetitivas de cualquier negocio que recibe contactos por web.</p>
+      <ul class="ahorro-lista">
+        <li><div class="ahorro-cab"><span class="icono" aria-hidden="true">⏱️</span><strong>Tiempo</strong></div>Nadie dedica horas a copiar datos, escribir respuestas y reenviar avisos.</li>
+        <li><div class="ahorro-cab"><span class="icono" aria-hidden="true">💶</span><strong>Costes</strong></div>El trabajo repetitivo no consume horas de personal y funciona a cualquier hora, también de noche y en festivos.</li>
+        <li><div class="ahorro-cab"><span class="icono" aria-hidden="true">🤝</span><strong>Clientes</strong></div>Nadie espera horas una respuesta ni se queda sin seguimiento por un olvido.</li>
+      </ul>
+    </section>
+
+    <div class="contenido" id="contenido">
+
+    <!-- ─── MAPA DE 5 PASOS ─── -->
+    <section class="panel" aria-labelledby="t-pasos">
+      <h2 id="t-pasos">Qué pasa cuando alguien rellena el formulario</h2>
+      <p class="intro">Son 5 pasos. Debajo de cada uno ves lo que tendría que hacer una persona y lo que hace el sistema.</p>
+
+      <ol class="pasos">
+        <li class="paso">
+          <div class="paso-num" aria-hidden="true">1</div>
+          <div class="paso-cuerpo">
+            <h3>Rellenas el formulario</h3>
+            <div class="comparativa">
+              <div class="persona"><span class="etiqueta">👤 Una persona tendría que</span>Atender llamadas o emails y pedir los datos uno a uno al cliente.</div>
+              <div class="sistema"><span class="etiqueta">⚙️ El sistema</span>El cliente deja sus datos solo, a cualquier hora, y llegan ordenados.</div>
+            </div>
+          </div>
+        </li>
+        <li class="paso">
+          <div class="paso-num" aria-hidden="true">2</div>
+          <div class="paso-cuerpo">
+            <h3>Se apunta en una hoja de cálculo</h3>
+            <div class="comparativa">
+              <div class="persona"><span class="etiqueta">👤 Una persona tendría que</span>Copiar nombre, email y mensaje a una hoja, contacto a contacto.</div>
+              <div class="sistema"><span class="etiqueta">⚙️ El sistema</span>Añade una fila nueva al instante y sin errores de copia.</div>
+            </div>
+          </div>
+        </li>
+        <li class="paso">
+          <div class="paso-num" aria-hidden="true">3</div>
+          <div class="paso-cuerpo">
+            <h3>Te llega un email de confirmación</h3>
+            <div class="comparativa">
+              <div class="persona"><span class="etiqueta">👤 Una persona tendría que</span>Ver el mensaje, redactar la respuesta y enviarla. A veces horas después.</div>
+              <div class="sistema"><span class="etiqueta">⚙️ El sistema</span>Responde de inmediato, de día o de noche.</div>
+            </div>
+          </div>
+        </li>
+        <li class="paso">
+          <div class="paso-num" aria-hidden="true">4</div>
+          <div class="paso-cuerpo">
+            <h3>El negocio recibe un aviso en el móvil</h3>
+            <div class="comparativa">
+              <div class="persona"><span class="etiqueta">👤 Una persona tendría que</span>Reenviar el contacto al responsable o llamarle para avisarle.</div>
+              <div class="sistema"><span class="etiqueta">⚙️ El sistema</span>Manda un aviso automático por Telegram con tu nombre, tu email y las primeras palabras de tu mensaje.</div>
+            </div>
+          </div>
+        </li>
+        <li class="paso">
+          <div class="paso-num" aria-hidden="true">5</div>
+          <div class="paso-cuerpo">
+            <h3>A los 5 minutos, un segundo email</h3>
+            <div class="comparativa">
+              <div class="persona"><span class="etiqueta">👤 Una persona tendría que</span>Acordarse de volver a escribir. Y a veces no pasa.</div>
+              <div class="sistema"><span class="etiqueta">⚙️ El sistema</span>El seguimiento sale solo, sin que nadie se acuerde.</div>
+            </div>
+          </div>
+        </li>
+      </ol>
+
+      <p class="cierre-mapa"><strong>Cuantos más contactos recibe un negocio, más se nota el ahorro:</strong> cada contacto nuevo cuesta el mismo trabajo a una persona y ninguno al sistema.</p>
+    </section>
+
+    <div class="lateral">
+
+    <!-- ─── FORMULARIO ─── -->
+    <section class="panel" id="probar" aria-labelledby="t-probar">
+      <h2 id="t-probar">Pruébalo ahora</h2>
+      <p class="intro">Usa un email al que tengas acceso: es donde llegarán los correos. Los campos marcados con <span class="req" aria-hidden="true">*</span> son obligatorios.</p>
+
+      <div id="errorGeneral" class="error-general oculto" role="alert" tabindex="-1"></div>
+
+      <form id="leadForm" novalidate>
+        <input type="hidden" name="origen" value="web-form-demo">
+
+        <!-- Campo trampa: las personas no lo ven; los bots lo rellenan y el servidor los rechaza -->
+        <div class="trampa" aria-hidden="true">
+          <label>No rellenes este campo
+            <input type="text" name="web" tabindex="-1" autocomplete="off">
+          </label>
+        </div>
+
+        <div class="fila2">
+          <div class="campo">
+            <label class="etiqueta-campo" for="nombre">Nombre <span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="nombre" name="nombre" maxlength="60" autocomplete="given-name" required aria-required="true">
+            <div class="error-campo oculto" id="error-nombre"></div>
+          </div>
+          <div class="campo">
+            <label class="etiqueta-campo" for="apellido">Apellido <span class="opcional">(opcional)</span></label>
+            <input type="text" id="apellido" name="apellido" maxlength="60" autocomplete="family-name">
+          </div>
+        </div>
+
+        <div class="campo">
+          <label class="etiqueta-campo" for="email">Email <span class="req" aria-hidden="true">*</span></label>
+          <input type="email" id="email" name="email" maxlength="254" autocomplete="email" required aria-required="true">
+          <div class="error-campo oculto" id="error-email"></div>
+        </div>
+
+        <div class="campo">
+          <label class="etiqueta-campo" for="mensaje">Mensaje <span class="opcional">(opcional)</span></label>
+          <textarea id="mensaje" name="mensaje" maxlength="400" placeholder="Por ejemplo: me gustaría automatizar los presupuestos de mi tienda"></textarea>
+          <div class="contador" id="contadorMensaje">400 caracteres disponibles</div>
+        </div>
+
+        <label class="consentimiento">
+          <input type="checkbox" id="consentimiento" required aria-required="true">
+          <span><span class="req" aria-hidden="true">*</span> He leído y acepto la <a href="#privacidad">política de privacidad</a>. Entiendo que recibiré dos correos: uno ahora y otro a los 5 minutos.</span>
+        </label>
+        <div class="error-campo oculto" id="error-consentimiento" style="margin-left:30px"></div>
+        <p class="nota-envio">Tus datos se anonimizan automáticamente a los 30 días.</p>
+
+        <button type="submit" class="btn-primario" id="btnEnviar">
+          <span class="spinner" id="spinner" aria-hidden="true"></span>
+          <span id="btnTexto">Probar la automatización →</span>
+        </button>
+        <p class="estado-envio oculto" id="estadoEnvio" role="status">Guardando tu solicitud y enviando tu primer correo… puede tardar unos segundos.</p>
+      </form>
+    </section>
+
+    </div><!-- /lateral -->
+    </div><!-- /contenido -->
+
+    <!-- ─── RESULTADO: lo construye el JavaScript tras el envío ─── -->
+    <section class="panel oculto" id="resultado" aria-labelledby="t-resultado"></section>
+
+    <footer>
+      Demo de automatización con n8n, Google Sheets, Gmail y Telegram ·
+      <button type="button" class="enlace-pie" data-abrir-politica>Política de privacidad</button>
+    </footer>
+
+  </main>
+
+
+  <!-- ─── POLÍTICA DE PRIVACIDAD (ventana emergente; no es asesoramiento legal: conviene revisarla antes de publicar) ─── -->
+  <dialog id="privacidad" aria-labelledby="t-priv">
+    <div class="dlg-cab">
+      <h2 id="t-priv">Política de privacidad</h2>
+      <button type="button" class="dlg-cerrar" id="cerrarPolitica" aria-label="Cerrar la política de privacidad">✕</button>
+    </div>
+    <dl class="dlg-cuerpo">
+      <dt>Responsable</dt>
+      <dd><span class="marcador">[NOMBRE DEL RESPONSABLE]</span><br>Contacto: <span class="marcador">[EMAIL DE CONTACTO]</span></dd>
+      <dt>Para qué usamos tus datos</dt>
+      <dd>Esta es una demo de automatización. Con tus datos se registra tu solicitud en una hoja de cálculo, se te envían dos correos (uno inmediato y otro a los 5 minutos) y se avisa por Telegram a quien gestiona la demo.</dd>
+      <dt>Qué datos</dt>
+      <dd>Nombre, apellido (opcional), email, mensaje (opcional), fecha y un identificador de la solicitud. El aviso de Telegram incluye tu nombre, tu email y las primeras palabras de tu mensaje.</dd>
+      <dt>Base legal</dt>
+      <dd>Tu consentimiento, que das al marcar la casilla del formulario. Puedes retirarlo cuando quieras escribiendo al contacto.</dd>
+      <dt>Cuánto tiempo</dt>
+      <dd>Los datos personales se anonimizan automáticamente a los 30 días. Si quieres que se borren antes, responde a cualquiera de los correos o escribe al contacto: necesitaremos tu email para localizar el registro. El historial de versiones de la hoja de cálculo y el chat de Telegram pueden conservar copias durante un tiempo.</dd>
+      <dt>Quién más los recibe</dt>
+      <dd>Google (hoja de cálculo y correo), Telegram y el servidor donde funciona el sistema de automatización. Alguno de ellos puede tratar los datos fuera de la Unión Europea.</dd>
+      <dt>Tus derechos</dt>
+      <dd>Acceso, rectificación, supresión, oposición, limitación y portabilidad. Para ejercerlos, escribe al contacto. Si crees que no se han respetado, puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).</dd>
+      <dt>Cookies</dt>
+      <dd>Esta página no usa cookies ni herramientas de analítica, y no carga recursos de terceros.</dd>
+    </dl>
+  </dialog>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* ── Configuración: lo único que cambia al desplegar en el VPS nuevo ── */
+    const URL_ENVIO        = 'https://n8n.vicenterueda.com/webhook/demo-leads';
+    const URL_CONTADOR     = 'https://n8n.vicenterueda.com/webhook/demo-count';
+    const MAX_MENSAJE      = 400;
+    const TIMEOUT_ENVIO_MS = 45000; // el flujo reintenta 3 × 5 s cada llamada externa
+    const TIMEOUT_CONT_MS  = 8000;
+    const URL_DEMO         = 'https://demo-leads.vicenterueda.com';
+    const CONTACTO_EMAIL   = ''; // se rellena al decidir qué email publicar; vacío = el botón de contacto se oculta
+
+    /* ── Modo simulación: SOLO en local (localhost, 127.0.0.1 o archivo abierto).
+          En el dominio real se ignora aunque alguien escriba ?simular=… ── */
+    const EN_LOCAL  = ['localhost', '127.0.0.1', ''].includes(location.hostname);
+    const MODO_SIM  = EN_LOCAL ? (new URLSearchParams(location.search).get('simular') || '200') : null;
+    const SIMULANDO = MODO_SIM !== null && MODO_SIM !== 'real';
+    const RAPIDO    = EN_LOCAL && new URLSearchParams(location.search).has('rapido'); // cuenta atrás de 10 s para probar
+    const SEGUNDOS_SEGUIMIENTO = RAPIDO ? 10 : 300;
+
+    /* ── Textos de error ── */
+    const MSG = {
+      red:          'No hemos podido conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.',
+      timeout:      'El servidor está tardando más de lo normal. Es posible que tu solicitud sí se haya registrado: revisa tu correo antes de volver a intentarlo.',
+      guardado:     'No hemos podido registrar tu solicitud. No se ha guardado nada ni se ha enviado ningún correo. Inténtalo de nuevo en unos minutos.',
+      rechazada:    'No hemos podido aceptar el envío. Recarga la página e inténtalo de nuevo.',
+      revisa:       'Revisa los datos del formulario.',
+      demasiadas:   'Has hecho demasiados intentos seguidos. Espera un minuto e inténtalo de nuevo.',
+      noDisponible: 'El servicio no está disponible ahora mismo. Inténtalo de nuevo en unos minutos.',
+      email:        'El email no parece válido. Revisa que no tenga espacios ni comas.',
+      consentimiento: 'Necesitamos que aceptes la política de privacidad para poder hacer la demo.'
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const mostrar = (el, si) => el.classList.toggle('oculto', !si);
+    const suave = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
+
+    const form          = $('leadForm');
+    const btnEnviar     = $('btnEnviar');
+    const spinner       = $('spinner');
+    const btnTexto      = $('btnTexto');
+    const textoBoton    = btnTexto.textContent;
+    const errorGeneral  = $('errorGeneral');
+    const mensaje       = $('mensaje');
+    const contadorMsg   = $('contadorMensaje');
+    let enviando = false;
+    let totalPersonas = null; // null = el contador no está disponible
+
+    /* ═══ Contador de personas (prueba social) ═══ */
+    function pintarContador() {
+      if (totalPersonas === null || totalPersonas < 1) { mostrar($('pruebaSocial'), false); return; }
+      $('contadorPersonas').textContent = totalPersonas.toLocaleString('es-ES');
+      $('textoContador').textContent = totalPersonas === 1 ? 'persona ya ha probado esta demo' : 'personas ya han probado esta demo';
+      mostrar($('pruebaSocial'), true);
+    }
+
+    async function cargarContador() {
+      if (SIMULANDO) { totalPersonas = 128; pintarContador(); return; }
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), TIMEOUT_CONT_MS);
+      try {
+        const r = await fetch(URL_CONTADOR, { signal: ctrl.signal });
+        if (!r.ok) throw new Error('contador ' + r.status);
+        const n = Number((await r.json()).total);
+        totalPersonas = Number.isFinite(n) ? n : null;
+      } catch (_) {
+        totalPersonas = null; // sin contador no se muestra nada: mejor que un "—" o un 0
+      } finally { clearTimeout(t); }
+      pintarContador();
+    }
+
+    /* ═══ Contador de caracteres del mensaje ═══ */
+    function actualizarContadorMsg() {
+      const quedan = MAX_MENSAJE - mensaje.value.length;
+      contadorMsg.textContent = quedan + ' caracteres disponibles';
+      contadorMsg.className = 'contador' + (quedan < 40 ? ' peligro' : quedan < 100 ? ' aviso' : '');
+    }
+    mensaje.addEventListener('input', actualizarContadorMsg);
+
+    /* ═══ Validación en el navegador (misma regla de email que el flujo de n8n) ═══ */
+    const RE_EMAIL = /^[^\s@<>,;"']+@[^\s@<>,;"']+\.[^\s@<>,;"']{2,}$/;
+    const CAMPOS = { nombre: 'nombre', email: 'email', consentimiento: 'consentimiento' };
+
+    function leerValores() {
+      return {
+        nombre:   form.nombre.value.trim(),
+        apellido: form.apellido.value.trim(),
+        email:    form.email.value.trim(),
+        mensaje:  form.mensaje.value.trim(),
+        consentimiento: $('consentimiento').checked
+      };
+    }
+
+    function validar(v) {
+      const e = {};
+      if (!v.nombre) e.nombre = 'Escribe tu nombre.';
+      if (!v.email) e.email = 'Escribe tu email.';
+      else if (!RE_EMAIL.test(v.email.toLowerCase())) e.email = MSG.email;
+      if (!v.consentimiento) e.consentimiento = MSG.consentimiento;
+      return e;
+    }
+
+    function limpiarErrores() {
+      mostrar(errorGeneral, false);
+      errorGeneral.replaceChildren();
+      Object.keys(CAMPOS).forEach((c) => {
+        mostrar($('error-' + c), false);
+        $('error-' + c).textContent = '';
+        $(c).removeAttribute('aria-invalid');
+        $(c).removeAttribute('aria-describedby');
+      });
+    }
+
+    function mostrarErroresCampo(errores, enfocar) {
+      let primero = null;
+      Object.keys(CAMPOS).forEach((c) => {
+        if (!errores[c]) return;
+        $('error-' + c).textContent = errores[c];
+        mostrar($('error-' + c), true);
+        $(c).setAttribute('aria-invalid', 'true');
+        $(c).setAttribute('aria-describedby', 'error-' + c);
+        if (!primero) primero = $(c);
+      });
+      if (primero && enfocar) { primero.scrollIntoView({ behavior: suave(), block: 'center' }); primero.focus({ preventScroll: true }); }
+    }
+
+    function mostrarErrorGeneral(texto) {
+      errorGeneral.textContent = texto;
+      mostrar(errorGeneral, true);
+      errorGeneral.scrollIntoView({ behavior: suave(), block: 'center' });
+      errorGeneral.focus({ preventScroll: true });
+    }
+
+    /* El 400 trae details: ['El nombre es obligatorio.', 'El email no es válido.', 'Solicitud rechazada.'] */
+    function mostrarErroresServidor(json) {
+      const detalles = Array.isArray(json && json.details) ? json.details.map(String) : [];
+      const porCampo = {};
+      let rechazada = false;
+      const otros = [];
+      detalles.forEach((d) => {
+        if (/^el nombre/i.test(d)) porCampo.nombre = d;
+        else if (/^el email/i.test(d)) porCampo.email = d;
+        else if (/rechazada/i.test(d)) rechazada = true;
+        else otros.push(d);
+      });
+      const hayCampo = Object.keys(porCampo).length > 0;
+      if (hayCampo) mostrarErroresCampo(porCampo, !rechazada && !otros.length);
+      if (rechazada) mostrarErrorGeneral(MSG.rechazada);
+      else if (otros.length) mostrarErrorGeneral(otros.join(' '));
+      else if (!hayCampo) mostrarErrorGeneral(MSG.revisa);
+    }
+
+    /* ═══ Simulación de las respuestas del flujo (solo local) ═══ */
+    function simular(modo, datos) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          const id = 'LEAD-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+          const nombre = String(datos.get('nombre') || ''), email = String(datos.get('email') || '').toLowerCase();
+          if (datos.get('web')) return resolve({ status: 400, json: { error: 'validation_error', message: MSG.revisa, details: ['Solicitud rechazada.'] } });
+          switch (modo) {
+            case '202':          return resolve({ status: 202, json: { status: 'registered', emailSent: false, id, message: 'Tu solicitud está registrada, pero no hemos podido enviar el email de confirmación.' } });
+            case '400':          return resolve({ status: 400, json: { error: 'validation_error', message: MSG.revisa, details: ['El nombre es obligatorio.', 'El email no es válido.'] } });
+            case '400-trampa':   return resolve({ status: 400, json: { error: 'validation_error', message: MSG.revisa, details: ['Solicitud rechazada.'] } });
+            case '502':          return resolve({ status: 502, json: { error: 'upstream_error', message: MSG.guardado } });
+            case '429':          return resolve({ status: 429, json: null });
+            case '500':          return resolve({ status: 500, json: null });
+            case 'timeout':      return reject(Object.assign(new Error('timeout'), { name: 'AbortError' }));
+            case 'red':          return reject(new TypeError('Failed to fetch'));
+            default:             return resolve({ status: 200, json: { status: 'ok', emailSent: true, id, nombre, email } });
+          }
+        }, 1200);
+      });
+    }
+
+    async function enviarAlServidor(datos) {
+      if (SIMULANDO) return simular(MODO_SIM, datos);
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), TIMEOUT_ENVIO_MS);
+      try {
+        const r = await fetch(URL_ENVIO, { method: 'POST', body: datos, signal: ctrl.signal });
+        let json = null;
+        try { json = await r.json(); } catch (_) { /* un 502/504 de un proxy no trae JSON */ }
+        return { status: r.status, json };
+      } finally { clearTimeout(t); }
+    }
+
+    /* ═══ Qué hacer con cada respuesta ═══ */
+    function manejarRespuesta(status, json, v) {
+      if (status === 200 || status === 202) {
+        const j = json || {};
+        if (totalPersonas !== null) { totalPersonas += 1; pintarContador(); } // en ambos casos el lead quedó guardado
+        mostrarResultado({
+          tipo: status === 200 ? 'ok' : 'sinEmail',
+          id: j.id || null,
+          nombre: j.nombre || v.nombre,
+          apellido: v.apellido,
+          email: j.email || v.email.toLowerCase(), // el servidor guarda el email en minúsculas
+          mensaje: v.mensaje,
+          fecha: new Date()
+        });
+        return;
+      }
+      if (status === 400) return mostrarErroresServidor(json);
+      if (status === 502) return mostrarErrorGeneral(MSG.guardado);
+      if (status === 429) return mostrarErrorGeneral(MSG.demasiadas);
+      mostrarErrorGeneral(MSG.noDisponible);
+    }
+
+    function estadoEnvio(activo) {
+      btnEnviar.disabled = activo;
+      spinner.style.display = activo ? 'block' : 'none';
+      btnTexto.textContent = activo ? 'Enviando…' : textoBoton;
+      mostrar($('estadoEnvio'), activo);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (enviando) return;
+      limpiarErrores();
+
+      const v = leerValores();
+      const errores = validar(v);
+      if (Object.keys(errores).length) { mostrarErroresCampo(errores, true); return; }
+
+      enviando = true;
+      estadoEnvio(true);
+      try {
+        const datos = new FormData(form); // incluye el campo trampa "web" y "origen"
+        ['nombre', 'apellido', 'email', 'mensaje'].forEach((k) => datos.set(k, v[k]));
+        const { status, json } = await enviarAlServidor(datos);
+        manejarRespuesta(status, json, v);
+      } catch (err) {
+        mostrarErrorGeneral(err && err.name === 'AbortError' ? MSG.timeout : MSG.red);
+      } finally {
+        enviando = false;
+        estadoEnvio(false);
+      }
+    });
+
+    /* ═══ Resultado: los 5 pasos con los datos reales del visitante ═══ */
+    function el(tag, clase, texto) {
+      const n = document.createElement(tag);
+      if (clase) n.className = clase;
+      if (texto !== undefined) n.textContent = texto;
+      return n;
+    }
+    const recortar = (t, max) => (t.length > max ? t.slice(0, max) + '…' : t);
+    const FECHA_FMT = { timeZone: 'Europe/Madrid', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    let temporizador = null;
+
+    function paso(estado, icono, titulo, texto, ahorro, extra) {
+      const li = el('li', 'pr ' + estado + (extra && extra.classList.contains('vista-hoja') ? ' ancho' : ''));
+      const ic = el('div', 'pr-icono', icono);
+      ic.setAttribute('aria-hidden', 'true');
+      const tx = el('div', 'pr-texto');
+      tx.append(el('h3', '', titulo), el('p', 'pr-desc', texto));
+      if (ahorro) tx.append(el('p', 'pr-ahorro', '👤 Sin automatizar: una persona habría tenido que ' + ahorro));
+      li.append(ic, tx);
+      if (extra) { const ex = el('div', 'pr-extra'); ex.append(extra); li.append(ex); }
+      return li;
+    }
+
+    function vistaHoja(r) {
+      const caja = el('div', 'vista-hoja');
+      caja.append(el('div', 'vista-etiqueta', 'Así queda la hoja de cálculo'));
+      const hoja = el('div', 'hoja');
+      hoja.append(el('div', 'hoja-barra', '📊 Hoja de cálculo · pestaña «Leads»'));
+      const scroll = el('div', 'hoja-scroll');
+      const tabla = el('table');
+      const cab = el('tr');
+      ['ID', 'Nombre', 'Apellido', 'Email', 'Mensaje', 'Fecha', 'Origen'].forEach((t) => cab.append(el('th', '', t)));
+      const previas = el('tr', 'previas');
+      const prev = el('td', '', 'registros anteriores…'); prev.colSpan = 7; previas.append(prev);
+      const nueva = el('tr', 'fila-nueva');
+      [r.id || '—', r.nombre, r.apellido || '—', r.email, r.mensaje || '—', r.fecha.toLocaleString('es-ES', FECHA_FMT), 'web-form-demo']
+        .forEach((t) => { const td = el('td', '', t); td.title = t; nueva.append(td); });
+      const thead = el('thead'); thead.append(cab);
+      const tbody = el('tbody'); tbody.append(previas, nueva);
+      tabla.append(thead, tbody); scroll.append(tabla); hoja.append(scroll); caja.append(hoja);
+      return caja;
+    }
+
+    /* Los textos son los mismos que envía el flujo de n8n (salvo el pie con el aviso de datos, que aquí se omite): si cambias uno, cambia el otro */
+    function vistaCorreo(r, numero) {
+      const primero = numero === 1;
+      const caja = el('div');
+      caja.append(el('div', 'vista-etiqueta', primero ? 'Así es el correo que recibes' : 'Así es el segundo correo'));
+      const t = el('div', 'tarjeta-vista');
+      const meta = el('div', 'meta');
+      meta.append(el('b', '', 'Equipo de Automatización'), document.createElement('br'),
+        'Asunto: ' + (primero ? 'Hemos recibido tu solicitud' : '¿Podemos ayudarte con tu solicitud?'));
+      const hola = el('p'); hola.append('Hola ', el('strong', '', r.nombre), ',');
+      t.append(meta, hola);
+      if (primero) {
+        t.append(
+          el('p', '', 'Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.'),
+          el('p', '', 'Nos pondremos en contacto contigo a la mayor brevedad posible.'));
+      } else {
+        t.append(
+          el('p', '', 'Hace unos minutos recibimos tu solicitud y queríamos saber si necesitas algo más para poder ayudarte.'),
+          el('p', '', 'Si nos cuentas un poco más de lo que buscas, respondiendo a este correo, podremos prepararte una propuesta a medida.'));
+      }
+      const firma = el('p'); firma.append('Un saludo, ', el('strong', '', 'Equipo de Automatización'));
+      t.append(firma);
+      if (!primero) {
+        const nota = el('div', 'nota-demo');
+        nota.append(el('p', '', ''));
+        nota.firstChild.append(el('strong', '', '💡 Sobre esta demo: '), 'este segundo correo se ha enviado solo, 5 minutos después de tu solicitud, sin que nadie lo escribiera ni tuviera que acordarse. Eso es lo que vive tu cliente cuando tu negocio tiene un sistema de automatización:');
+        const lista = el('ul');
+        [['Cada contacto recibe respuesta inmediata', ', a cualquier hora y cualquier día'],
+         ['No pierdes ningún contacto', ': todo queda registrado y organizado automáticamente'],
+         ['El seguimiento ocurre solo', ', sin depender de que alguien se acuerde'],
+         ['Recuperas el tiempo', ' que hoy dedicas a tareas repetitivas y manuales']]
+          .forEach(([negrita, resto]) => { const li = el('li'); li.append(el('strong', '', negrita), resto); lista.append(li); });
+        nota.append(lista, el('p', '', 'Si quieres ver cómo quedaría en tu caso, responde a este correo y te lo explicamos sin compromiso.'));
+        t.append(nota);
+      }
+      caja.append(t, el('p', 'nota-pie', 'El correo real termina con un aviso sobre el tratamiento de tus datos.'));
+      return caja;
+    }
+
+    function vistaTelegram(r) {
+      const caja = el('div');
+      caja.append(el('div', 'vista-etiqueta', 'Así lo ve el negocio en su móvil'));
+      const t = el('div', 'tarjeta-vista telegram');
+      const l = (txt) => el('span', 'linea', txt);
+      const nombreCompleto = r.nombre + (r.apellido ? ' ' + r.apellido : '');
+      const msg = r.mensaje.length > 80 ? r.mensaje.slice(0, 80) + '...' : r.mensaje;
+      t.append(
+        el('strong', 'linea', '🔔 [Demo Leads] — Nuevo lead recibido'),
+        l('👤 Nombre: ' + nombreCompleto),
+        l('📧 Email: ' + r.email),
+        l('💬 Mensaje: ' + (msg || '—')),
+        l('🕐 Hora: ' + r.fecha.toLocaleString('es-ES', FECHA_FMT)),
+        l('🆔 ID: ' + (r.id || '—')));
+      caja.append(t);
+      return caja;
+    }
+
+    function cuentaAtras(li, alTerminar) {
+      const box = el('div', 'cuenta');
+      box.setAttribute('role', 'timer');
+      const etiqueta = el('span', '', 'Email de seguimiento en');
+      const tiempo = el('span', 'tiempo');
+      box.append(etiqueta, tiempo);
+      const fin = Date.now() + SEGUNDOS_SEGUIMIENTO * 1000; // con la hora real: si la pestaña se pausa, no se desfasa
+      function tick() {
+        const quedan = Math.max(0, Math.round((fin - Date.now()) / 1000));
+        if (quedan === 0) {
+          clearInterval(temporizador); temporizador = null;
+          box.classList.add('hecha'); etiqueta.textContent = ''; tiempo.textContent = 'Ya debería estar en tu bandeja 📩';
+          li.className = 'pr hecho visible';
+          li.querySelector('.pr-icono').textContent = '✅';
+          if (alTerminar) alTerminar();
+          return;
+        }
+        tiempo.textContent = Math.floor(quedan / 60) + ':' + String(quedan % 60).padStart(2, '0');
+      }
+      tick();
+      temporizador = setInterval(tick, 1000);
+      return box;
+    }
+
+    function mostrarResultado(r) {
+      form.reset(); // los datos del visitante no se quedan en el formulario
+      actualizarContadorMsg();
+      clearInterval(temporizador);
+      const ok = r.tipo === 'ok';
+      const caja = $('resultado');
+      caja.replaceChildren();
+
+      /* Cabecera */
+      const cab = el('div', 'res-cab');
+      cab.append(el('div', 'insignia ' + (ok ? 'ok' : 'aviso'), ok ? '✅ Automatización ejecutada' : '⚠️ Guardado, pero con un fallo'));
+      const h = el('h2', '', ok ? 'Cuatro tareas hechas sin que nadie tocara nada' : 'Hemos guardado tu solicitud, pero no hemos podido enviarte el correo');
+      h.id = 't-resultado'; h.tabIndex = -1;
+      cab.append(h, el('p', '', ok ? 'Esto es lo que acaba de pasar con tu solicitud, paso a paso.' : 'Esto es lo que ha pasado con tu solicitud, paso a paso.'));
+
+      /* Los 5 pasos */
+      const lista = el('ol', 'pasos-res');
+      lista.append(
+        paso('hecho', '✅', '1 · Has rellenado el formulario', 'Tus datos han llegado al sistema.', 'atender el contacto y pedir los datos uno a uno.'),
+        paso('hecho', '✅', '2 · Se ha apuntado en la hoja de cálculo',
+          'Tu solicitud se ha guardado como una fila nueva' + (r.id ? ' (ID: ' + r.id + ').' : '.'),
+          'copiar los datos a una hoja, a mano.', vistaHoja(r)));
+      if (ok) {
+        lista.append(
+          paso('hecho', '✅', '3 · Te hemos enviado un email', 'Hemos enviado un correo a ' + r.email + '. Si no lo ves, mira en la carpeta de spam.',
+            'leer el mensaje, redactar la respuesta y enviarla.', vistaCorreo(r, 1)),
+          paso('hecho', '📱', '4 · Se avisa al móvil del negocio', 'Ahora mismo se avisa por Telegram a quien gestiona el negocio, con tus datos.',
+            'reenviar el contacto al responsable o llamarle.', vistaTelegram(r)));
+        const li5 = paso('espera', '⏳', '5 · A los 5 minutos, un segundo email',
+          'Llegará a ' + r.email + ' con el asunto «¿Podemos ayudarte con tu solicitud?». Cuando termine la cuenta atrás verás aquí lo que dice. Aunque cierres esta página, llegará igualmente.',
+          'acordarse de volver a escribirte.');
+        const ex = el('div', 'pr-extra');
+        ex.append(cuentaAtras(li5, () => { // al llegar a cero se muestra lo que dice el segundo correo
+          const correo2 = vistaCorreo(r, 2); correo2.classList.add('aparece'); ex.append(correo2);
+        }));
+        li5.append(ex);
+        lista.append(li5);
+      } else {
+        lista.append(
+          paso('fallo', '⚠️', '3 · No hemos podido enviar el correo', 'No hemos podido enviar el correo a ' + r.email + '.'),
+          paso('apagado', '⏸️', '4 · Aviso al móvil del negocio', 'No se ha realizado: el sistema se detiene si falla el primer correo.'),
+          paso('apagado', '⏸️', '5 · Segundo email a los 5 minutos', 'No se ha realizado: el sistema se detiene si falla el primer correo.'));
+      }
+
+      /* Cierre */
+      const cierre = el('div', 'res-cierre');
+      const resumen = el('p');
+      if (ok) resumen.append(el('strong', '', 'Con cada contacto nuevo pasa lo mismo, a cualquier hora y sin que nadie intervenga.'));
+      else resumen.append(el('strong', '', 'Un sistema bien hecho avisa de cada fallo. '), 'En esta demo, el responsable recibe un aviso para poder resolverlo.');
+      const pregunta = el('p', 'res-pregunta', '¿Cuánto tiempo pierde tu negocio en tareas así? Cuéntanos tu caso y vemos qué se puede automatizar.');
+      const botones = el('div', 'res-botones');
+      if (CONTACTO_EMAIL) {
+        const a = el('a', 'btn-cta', 'Quiero saber más →');
+        a.href = 'mailto:' + CONTACTO_EMAIL + '?subject=' + encodeURIComponent('Quiero automatizar mis leads');
+        botones.append(a);
+      }
+      const compartir = el('button', 'btn-texto', '🔗 Compartir esta demo'); compartir.type = 'button';
+      compartir.addEventListener('click', () => compartirDemo(compartir));
+      const otra = el('button', 'btn-texto', '← Probar con otro email'); otra.type = 'button';
+      otra.addEventListener('click', reiniciar);
+      botones.append(compartir, otra);
+      cierre.append(resumen, pregunta, botones);
+
+      caja.append(cab, lista, cierre);
+      mostrar($('contenido'), false);
+      mostrar(caja, true);
+      caja.scrollIntoView({ behavior: suave(), block: 'start' });
+      h.focus({ preventScroll: true });
+
+      /* Los pasos aparecen uno a uno */
+      const pasos = lista.querySelectorAll('.pr');
+      const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      pasos.forEach((li, i) => setTimeout(() => li.classList.add('visible'), reducido ? 0 : 250 + i * 600));
+    }
+
+    function compartirDemo(btn) {
+      const original = btn.textContent;
+      const aviso = (t) => { btn.textContent = t; setTimeout(() => { btn.textContent = original; }, 2500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(URL_DEMO).then(() => aviso('✅ ¡Enlace copiado!'), () => aviso(URL_DEMO));
+      } else aviso(URL_DEMO);
+    }
+
+    function reiniciar() {
+      clearInterval(temporizador); temporizador = null;
+      limpiarErrores();
+      mostrar($('resultado'), false);
+      mostrar($('contenido'), true);
+      $('probar').scrollIntoView({ behavior: suave(), block: 'start' });
+    }
+
+    /* Política de privacidad en ventana emergente (<dialog>: Escape cierra y el foco queda atrapado dentro) */
+    const dialogo = $('privacidad');
+    const abrirPolitica = (e) => { if (e) e.preventDefault(); if (!dialogo.open) dialogo.showModal(); };
+    document.querySelectorAll('a[href="#privacidad"], [data-abrir-politica]').forEach((n) => n.addEventListener('click', abrirPolitica));
+    $('cerrarPolitica').addEventListener('click', () => dialogo.close());
+    dialogo.addEventListener('click', (e) => { if (e.target === dialogo) dialogo.close(); }); // clic en el fondo oscuro
+    if (location.hash === '#privacidad') abrirPolitica();
+
+    /* ═══ Arranque ═══ */
+    if (SIMULANDO) {
+      const b = $('bannerSim');
+      b.textContent = 'MODO SIMULACIÓN (' + MODO_SIM + '): no se envía nada a n8n. Cambia con ?simular=200 | 202 | 400 | 400-trampa | 502 | 429 | 500 | timeout | red | real';
+      mostrar(b, true);
+    }
+    cargarContador();
+  })();
+  </script>
+
+</body>
+</html>

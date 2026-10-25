@@ -1,0 +1,232 @@
+{
+  "name": "Demo Leads - Limpieza de datos personales",
+  "nodes": [
+    {
+      "id": "50f232df-f440-b2d8-1d04-b4e072f06f8d",
+      "name": "Cada día a las 04:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        100,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 4,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2b75d73d-a511-8e94-e23c-f1474a51ebe3",
+      "name": "Leer todos los leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        340,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REEMPLAZAR_ID_HOJA_GOOGLE_SHEETS"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        }
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Google Sheets - cuenta de servicio"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "a8fba83e-1e23-088a-279f-813989f811fd",
+      "name": "Elegir leads de más de 30 días",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const DIAS = 30;\nconst limite = Date.now() - DIAS * 24 * 3600 * 1000;\nconst aMs = (txt) => {\n  const m = String(txt ?? '').match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4}),?\\s+(\\d{2}):(\\d{2}):(\\d{2})$/);\n  if (!m) return null;\n  return Date.UTC(+m[3], +m[2] - 1, +m[1], +m[4], +m[5], +m[6]);\n};\nconst salida = [];\nfor (const fila of $input.all()) {\n  const t = aMs(fila.json.Fecha);\n  if (t === null || t > limite) continue;\n  if (fila.json.Email === '(borrado)') continue;\n  salida.push({ json: { ID: fila.json.ID, Nombre: '(borrado)', Apellido: '(borrado)', Email: '(borrado)', Mensaje: '(borrado)' } });\n}\nreturn salida;"
+      },
+      "notes": "Deja pasar solo las filas con más de 30 días que aún no estén anonimizadas. Si no hay ninguna, no sale nada y el resto del flujo no se ejecuta. Fecha ilegible = se salta la fila (nunca borra a ciegas)."
+    },
+    {
+      "id": "30d25e97-d94e-29ad-a45e-90b30766dbca",
+      "name": "Anonimizar datos personales",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        820,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REEMPLAZAR_ID_HOJA_GOOGLE_SHEETS"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $json.ID }}",
+            "Nombre": "={{ $json.Nombre }}",
+            "Apellido": "={{ $json.Apellido }}",
+            "Email": "={{ $json.Email }}",
+            "Mensaje": "={{ $json.Mensaje }}"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Google Sheets - cuenta de servicio"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "id": "a593dbb1-abe2-5709-81c2-0005aa277b27",
+      "name": "Avisar por Telegram: resumen de la limpieza",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1060,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
+        "text": "=🧹 [Demo Leads] Limpieza diaria: {{ $input.all().length }} lead(s) anonimizado(s) por superar los 30 días.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Telegram - bot demo-leads"
+        }
+      },
+      "executeOnce": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "b8aa0be1-8ae8-c838-bae3-d46edae3febd",
+      "name": "Nota - Limpieza",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        60,
+        60
+      ],
+      "parameters": {
+        "content": "## Limpieza de datos personales\nCada día anonimiza (Nombre, Apellido, Email y Mensaje → «(borrado)») los leads de más de 30 días. La fila se conserva sin datos personales, así el contador de leads no baja.\n\nSi falla algo, salta el workflow de errores: **selecciónalo en Ajustes → Error workflow** tras importar.\n\nLímite conocido: el historial de versiones de Google Sheets puede conservar valores antiguos durante un tiempo.",
+        "color": 6,
+        "width": 560,
+        "height": 260
+      }
+    }
+  ],
+  "connections": {
+    "Cada día a las 04:00": {
+      "main": [
+        [
+          {
+            "node": "Leer todos los leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer todos los leads": {
+      "main": [
+        [
+          {
+            "node": "Elegir leads de más de 30 días",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elegir leads de más de 30 días": {
+      "main": [
+        [
+          {
+            "node": "Anonimizar datos personales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anonimizar datos personales": {
+      "main": [
+        [
+          {
+            "node": "Avisar por Telegram: resumen de la limpieza",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "all"
+  },
+  "active": false,
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "description": "Cada día anonimiza los datos personales de los leads con más de 30 días."
+  }
+}
