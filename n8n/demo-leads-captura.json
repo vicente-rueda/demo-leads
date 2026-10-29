@@ -122,28 +122,27 @@
     {
       "id": "c6c1fb5c-40ca-fc28-ddcd-632a485c1b90",
       "name": "Enviar email de confirmación",
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.2,
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
       "position": [
         1060,
         300
       ],
       "parameters": {
-        "resource": "message",
         "operation": "send",
-        "sendTo": "={{ $(\"Validar y limpiar datos\").item.json.email }}",
+        "fromEmail": "Equipo de Automatización <REEMPLAZAR_EMAIL_REMITENTE>",
+        "toEmail": "={{ $(\"Validar y limpiar datos\").item.json.email }}",
         "subject": "Hemos recibido tu solicitud",
-        "emailType": "html",
-        "message": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#222;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.</p><p style=\"margin:0 0 28px 0\">Nos pondremos en contacto contigo a la mayor brevedad posible.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Automatización</strong></p><hr style=\"border:none;border-top:1px solid #e0e0e0;margin:0 0 14px 0\"><p style=\"margin:0;font-size:12px;color:#999\">Este mensaje ha sido generado automáticamente como parte de una demostración de sistema de automatización: el texto de arriba es un ejemplo de lo que recibiría el cliente de un negocio real. Los datos que introduces se guardan en una hoja de cálculo de esta demo (así se ve el registro automático), se anonimizan automáticamente a los 30 días y no se utilizan con ningún otro fin. Si quieres que los borremos antes, responde a este correo.</p></div>",
+        "emailFormat": "html",
+        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#222;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.</p><p style=\"margin:0 0 28px 0\">Nos pondremos en contacto contigo a la mayor brevedad posible.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Automatización</strong></p><hr style=\"border:none;border-top:1px solid #e0e0e0;margin:0 0 14px 0\"><p style=\"margin:0;font-size:12px;color:#999\">Este mensaje ha sido generado automáticamente como parte de una demostración de sistema de automatización: el texto de arriba es un ejemplo de lo que recibiría el cliente de un negocio real. Los datos que introduces se guardan en una hoja de cálculo de esta demo (así se ve el registro automático), se anonimizan automáticamente a los 30 días y no se utilizan con ningún otro fin. Si quieres que los borremos antes, responde a este correo.</p></div>",
         "options": {
-          "appendAttribution": false,
-          "senderName": "Equipo de Automatización"
+          "appendAttribution": false
         }
       },
       "credentials": {
-        "gmailOAuth2": {
+        "smtp": {
           "id": "REEMPLAZAR_ID_CREDENCIAL",
-          "name": "Gmail - demo-leads"
+          "name": "SMTP - Postale demo-leads"
         }
       },
       "retryOnFail": true,
@@ -262,28 +261,27 @@
     {
       "id": "fecf5b90-b2eb-c8bf-182f-b8f63ef851dd",
       "name": "Enviar email de seguimiento",
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.2,
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
       "position": [
         2260,
         300
       ],
       "parameters": {
-        "resource": "message",
         "operation": "send",
-        "sendTo": "={{ $(\"Validar y limpiar datos\").item.json.email }}",
+        "fromEmail": "Equipo de Automatización <REEMPLAZAR_EMAIL_REMITENTE>",
+        "toEmail": "={{ $(\"Validar y limpiar datos\").item.json.email }}",
         "subject": "¿Podemos ayudarte con tu solicitud?",
-        "emailType": "html",
-        "message": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#222;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Hace unos minutos recibimos tu solicitud y queríamos saber si necesitas algo más para poder ayudarte.</p><p style=\"margin:0 0 28px 0\">Si nos cuentas un poco más de lo que buscas, respondiendo a este correo, podremos prepararte una propuesta a medida.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Automatización</strong></p><div style=\"background:#f4f5ff;border-left:4px solid #6366f1;padding:12px 14px;margin:0 0 24px 0;font-size:14px\"><p style=\"margin:0 0 8px 0\"><strong>💡 Sobre esta demo:</strong> este segundo correo se ha enviado solo, 5 minutos después de tu solicitud, sin que nadie lo escribiera ni tuviera que acordarse. Eso es lo que vive tu cliente cuando tu negocio tiene un sistema de automatización:</p><ul style=\"margin:0 0 8px 0;padding-left:20px\"><li style=\"margin-bottom:4px\"><strong>Cada contacto recibe respuesta inmediata</strong>, a cualquier hora y cualquier día</li><li style=\"margin-bottom:4px\"><strong>No pierdes ningún contacto</strong>: todo queda registrado y organizado automáticamente</li><li style=\"margin-bottom:4px\"><strong>El seguimiento ocurre solo</strong>, sin depender de que alguien se acuerde</li><li style=\"margin-bottom:4px\"><strong>Recuperas el tiempo</strong> que hoy dedicas a tareas repetitivas y manuales</li></ul><p style=\"margin:0\">Si quieres ver cómo quedaría en tu caso, responde a este correo y te lo explicamos sin compromiso.</p></div><hr style=\"border:none;border-top:1px solid #e0e0e0;margin:0 0 14px 0\"><p style=\"margin:0;font-size:12px;color:#999\">Este mensaje ha sido generado automáticamente como parte de una demostración de sistema de automatización: el texto de arriba es un ejemplo de lo que recibiría el cliente de un negocio real. Los datos que introduces se guardan en una hoja de cálculo de esta demo (así se ve el registro automático), se anonimizan automáticamente a los 30 días y no se utilizan con ningún otro fin. Si quieres que los borremos antes, responde a este correo.</p></div>",
+        "emailFormat": "html",
+        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#222;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Hace unos minutos recibimos tu solicitud y queríamos saber si necesitas algo más para poder ayudarte.</p><p style=\"margin:0 0 28px 0\">Si nos cuentas un poco más de lo que buscas, respondiendo a este correo, podremos prepararte una propuesta a medida.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Automatización</strong></p><div style=\"background:#f4f5ff;border-left:4px solid #6366f1;padding:12px 14px;margin:0 0 24px 0;font-size:14px\"><p style=\"margin:0 0 8px 0\"><strong>💡 Sobre esta demo:</strong> este segundo correo se ha enviado solo, 5 minutos después de tu solicitud, sin que nadie lo escribiera ni tuviera que acordarse. Eso es lo que vive tu cliente cuando tu negocio tiene un sistema de automatización:</p><ul style=\"margin:0 0 8px 0;padding-left:20px\"><li style=\"margin-bottom:4px\"><strong>Cada contacto recibe respuesta inmediata</strong>, a cualquier hora y cualquier día</li><li style=\"margin-bottom:4px\"><strong>No pierdes ningún contacto</strong>: todo queda registrado y organizado automáticamente</li><li style=\"margin-bottom:4px\"><strong>El seguimiento ocurre solo</strong>, sin depender de que alguien se acuerde</li><li style=\"margin-bottom:4px\"><strong>Recuperas el tiempo</strong> que hoy dedicas a tareas repetitivas y manuales</li></ul><p style=\"margin:0\">Si quieres ver cómo quedaría en tu caso, responde a este correo y te lo explicamos sin compromiso.</p></div><hr style=\"border:none;border-top:1px solid #e0e0e0;margin:0 0 14px 0\"><p style=\"margin:0;font-size:12px;color:#999\">Este mensaje ha sido generado automáticamente como parte de una demostración de sistema de automatización: el texto de arriba es un ejemplo de lo que recibiría el cliente de un negocio real. Los datos que introduces se guardan en una hoja de cálculo de esta demo (así se ve el registro automático), se anonimizan automáticamente a los 30 días y no se utilizan con ningún otro fin. Si quieres que los borremos antes, responde a este correo.</p></div>",
         "options": {
-          "appendAttribution": false,
-          "senderName": "Equipo de Automatización"
+          "appendAttribution": false
         }
       },
       "credentials": {
-        "gmailOAuth2": {
+        "smtp": {
           "id": "REEMPLAZAR_ID_CREDENCIAL",
-          "name": "Gmail - demo-leads"
+          "name": "SMTP - Postale demo-leads"
         }
       },
       "retryOnFail": true,
@@ -543,7 +541,7 @@
         -200
       ],
       "parameters": {
-        "content": "## Demo de captación de leads\nFormulario → validar → registrar en Sheets → email de confirmación → «ok» al formulario → aviso por Telegram → espera 5 min → email de seguimiento.\n\nSin secretos en el flujo: Telegram, Sheets y Gmail usan credenciales de n8n. Al importar: sustituye los marcadores `REEMPLAZAR_…` (chat de Telegram, ID de la hoja) y elige tu credencial en cada nodo que la use.",
+        "content": "## Demo de captación de leads\nFormulario → validar → registrar en Sheets → email de confirmación → «ok» al formulario → aviso por Telegram → espera 5 min → email de seguimiento.\n\nSin secretos en el flujo: Telegram, Sheets y el correo (SMTP) usan credenciales de n8n. Al importar: sustituye los marcadores `REEMPLAZAR_…` (chat de Telegram, ID de la hoja, remitente de los correos) y elige tu credencial en cada nodo que la use.",
         "color": 4,
         "width": 760,
         "height": 200
