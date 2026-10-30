@@ -90,7 +90,7 @@
       display: flex; flex-direction: column; align-items: center;
     }
     .portada > *:not(.fondo-flujo) { position: relative; z-index: 1; }
-    .portada-centro { display: flex; flex-direction: column; align-items: center; padding: var(--espacio-32) 0 var(--espacio-96); }
+    .portada-centro { display: flex; flex-direction: column; align-items: center; padding: var(--espacio-32) 0 var(--espacio-128); }
     .logo { display: inline-block; line-height: 0; }
     .logo img { height: 48px; width: auto; }
     @media (min-width: 1024px) { .logo img { height: 56px; } }
@@ -108,6 +108,7 @@
     .fondo-flujo circle { fill: var(--color-fondo); stroke: var(--color-principal); stroke-opacity: 0.35; stroke-width: 2.5; animation: aparece 0.4s ease both; }
     .fondo-flujo circle.halo { fill: var(--color-principal); fill-opacity: 0.07; stroke: none; }
     .fondo-flujo circle.centro { fill: var(--color-principal); fill-opacity: 0.45; stroke: none; }
+    .fondo-flujo .ovalo { fill: var(--color-principal); fill-opacity: 0.05; stroke: var(--color-principal); stroke-opacity: 0.10; stroke-width: 1.5; animation: aparece 0.8s ease both; }
     @keyframes dibuja { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 
     .portada .etiqueta { margin-bottom: var(--espacio-12); }
@@ -247,70 +248,82 @@
     }
     .nodo .icono { width: 16px; height: 16px; stroke-width: 2; }
 
-    /* ─── RECORRIDO: un paso cada vez, con su pieza en grande y «A mano» frente a «Automático» ─── */
+    /* ─── RECORRIDO: un paso cada vez, a todo lo ancho, con su pieza en grande y «A mano» frente a «Automático» ─── */
+    .escenario .seccion-cab { text-align: center; margin-bottom: var(--espacio-24); }
     .r-pasos { list-style: none; }
     .r-paso + .r-paso { margin-top: var(--espacio-64); }
-    .r-bloque { max-width: 40rem; }
-    .r-bloque .etiqueta { margin-bottom: var(--espacio-4); }
-    .r-bloque h3 { font-family: var(--fuente-titulares); font-weight: var(--peso-fuerte); font-size: 1.5rem; line-height: 1.2; margin-bottom: var(--espacio-24); }
-    .r-pieza { margin-bottom: var(--espacio-24); }
+    .r-bloque {
+      display: grid; gap: var(--espacio-16) var(--espacio-64);
+      grid-template-columns: minmax(0, 1fr); grid-template-areas: "cab" "pieza" "comp";
+      max-width: 1200px; margin: 0 auto;
+    }
+    .r-cab { grid-area: cab; }
+    .r-cab .etiqueta { margin-bottom: var(--espacio-4); }
+    .r-cab h3 { font-family: var(--fuente-titulares); font-weight: var(--peso-fuerte); font-size: 1.5rem; line-height: 1.2; }
+    .r-pieza { grid-area: pieza; }
     .r-pieza .pieza { font-size: 1rem; box-shadow: var(--sombra-alta); }
-
-    .comparar { display: grid; gap: var(--espacio-12); }
+    .comparar { grid-area: comp; display: grid; gap: var(--espacio-12); }
     @media (min-width: 600px) { .comparar { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 1024px) {
+      .r-bloque { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); grid-template-areas: "cab pieza" "comp pieza"; align-items: start; }
+      .r-cab { align-self: end; }
+      .r-cab h3 { font-size: 1.8rem; }
+      .comparar { grid-template-columns: 1fr; }
+      .r-pieza { align-self: center; }
+    }
     .comparar > div { background: var(--color-fondo); border: 1px solid var(--borde); border-radius: var(--radio-medio); padding: var(--espacio-16); }
     .comparar .c-auto { border: 1.5px solid var(--color-principal); }
     .c-etq { display: flex; align-items: center; gap: var(--espacio-8); margin-bottom: var(--espacio-4); font-size: var(--t-etiqueta); font-weight: var(--peso-fuerte); letter-spacing: 0.08em; text-transform: uppercase; }
     .c-mano { color: var(--color-texto-suave); }
     .c-auto .c-etq { color: var(--color-principal); }
 
-    /* Al bajar, cada paso aparece cuando llega (solo con JavaScript y sin «reducir movimiento») */
+    /* Sin escena: cada paso aparece al llegar (solo con JavaScript y sin «reducir movimiento») */
     .con-movimiento .r-bloque { transition: opacity 0.5s ease, transform 0.5s ease; }
     .con-movimiento:not(.escena) .r-paso:not(.visto) .r-bloque { opacity: 0; transform: translateY(24px); }
 
-    /* La lista de pasos, fija a la izquierda en pantallas anchas: se enciende el paso que estás viendo */
-    .r-nav { display: none; }
-    @media (min-width: 1024px) {
-      .escenario { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: var(--espacio-32) var(--espacio-96); }
-      .escenario .seccion-cab { grid-column: 1 / -1; }
-      .r-nav { display: block; position: sticky; top: calc(50vh - 160px); align-self: start; }
-      .r-nav ol { list-style: none; }
-      .r-nav li { position: relative; padding-bottom: var(--espacio-24); }
-      .r-nav li:last-child { padding-bottom: 0; }
-      .r-nav li:not(:last-child)::before {
-        content: ''; position: absolute; left: calc(var(--tam-nodo) / 2 - 0.75px); top: var(--tam-nodo); bottom: 0; width: 1.5px;
-        background: var(--borde); transition: background 0.3s ease;
-      }
-      .r-nav li.hecho::before { background: var(--color-principal); }
-      .r-nav a { display: flex; align-items: center; gap: var(--espacio-12); color: var(--color-texto-suave); text-decoration: none; font-weight: var(--peso-fuerte); transition: color 0.3s ease; }
-      .r-nav .nodo { border-color: var(--borde); color: var(--color-texto-suave); transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; }
-      .r-nav li.hecho .nodo { border-color: var(--color-principal); color: var(--color-principal); }
-      .r-nav li.activo a { color: var(--color-texto); }
-      .r-nav li.activo .nodo { background: var(--color-principal); border-color: var(--color-principal); color: var(--color-sobre-principal); box-shadow: 0 0 0 6px var(--color-fondo); }
-      .r-paso { min-height: 78vh; display: flex; align-items: center; }
-      .r-paso + .r-paso { margin-top: 0; }
-      .r-bloque h3 { font-size: 1.8rem; }
+    /* Barra de progreso: los 5 pasos centrados; la línea se llena hasta el que estás viendo */
+    .r-progreso { display: none; }
+    .r-progreso ol { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); max-width: 880px; margin: 0 auto; }
+    .r-progreso li { position: relative; }
+    .r-progreso a { display: flex; flex-direction: column; align-items: center; gap: var(--espacio-8); text-align: center; text-decoration: none; font-size: var(--t-nota); font-weight: var(--peso-fuerte); color: var(--color-texto-suave); transition: color 0.4s ease; }
+    .r-progreso li:not(:last-child)::before, .r-progreso li:not(:last-child)::after {
+      content: ''; position: absolute; top: calc(var(--tam-nodo) / 2 - 0.75px); height: 1.5px;
+      left: calc(50% + var(--tam-nodo) / 2); width: calc(100% - var(--tam-nodo));
     }
-    @media (min-width: 1400px) { .escenario { column-gap: var(--espacio-128); } }
-    .escenario .seccion-cab { margin-bottom: 0; }
-    @media (max-width: 1023px) { .escenario .seccion-cab { margin-bottom: var(--espacio-32); } }
+    .r-progreso li:not(:last-child)::before { background: var(--borde); }
+    .r-progreso li:not(:last-child)::after { background: var(--color-principal); transform: scaleX(0); transform-origin: left; transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+    .r-progreso li.hecho::after { transform: scaleX(1); }
+    .r-progreso .nodo { border-color: var(--borde); color: var(--color-texto-suave); transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease; }
+    .r-progreso li.hecho .nodo { border-color: var(--color-principal); color: var(--color-principal); }
+    .r-progreso li.activo .nodo { background: var(--color-principal); border-color: var(--color-principal); color: var(--color-sobre-principal); box-shadow: 0 0 0 6px var(--color-fondo); transform: scale(1.12); }
+    .r-progreso li.activo a { color: var(--color-texto); }
+    @media (max-width: 599px) { .r-progreso a span:last-child { display: none; } } /* en móvil, solo los números */
 
-    /* Escena: la zona de pasos se queda fija y, al hacer scroll, un paso sustituye al otro (bajar = siguiente, subir = anterior).
+    /* Escena: la zona queda fija y, al hacer scroll, un paso sustituye al otro (bajar = siguiente, subir = anterior).
        La activa el JavaScript solo si cabe en la pantalla y sin «reducir movimiento»; si no, los pasos van uno debajo de otro. */
     .recorrido { position: relative; }
     .recorrido.escena { height: calc(5 * 100vh); }
+    .escena .escenario { position: sticky; top: var(--arriba, 0px); } /* --arriba la calcula el JavaScript para dejarla centrada */
+    .escena .r-pasos { overflow-x: clip; overflow-clip-margin: var(--espacio-12); }
+    @media (min-width: 600px) { .escena .r-pasos { overflow-clip-margin: var(--espacio-24); } } /* lo que entra y sale de lado no ensancha la página */
+    .escena .r-progreso { display: block; margin-bottom: var(--espacio-32); }
+    .escena .r-pasos { display: grid; grid-template-columns: minmax(0, 1fr); }
+    .escena .r-paso { grid-area: 1 / 1; align-self: center; margin: 0; }
+    .escena .r-paso + .r-paso { margin-top: 0; }
+    .escena .r-paso { pointer-events: none; }
+    .escena .r-paso.activo { pointer-events: auto; }
+    /* Transición: lo que sale se va hacia un lado; lo que entra llega del otro, por partes (título, pieza, comparación) */
+    .escena .anima { opacity: 0; transform: translateX(48px); transition: opacity 0.18s ease-in, transform 0.25s ease-in; } /* lo que sale se va rápido */
+    .escena .r-paso.pasado .anima { transform: translateX(-48px); }
+    .escena .r-pieza.anima { transform: translateX(48px) scale(0.96); }
+    .escena .r-paso.pasado .r-pieza.anima { transform: translateX(-48px) scale(0.96); }
+    .escena .r-paso.activo .anima { opacity: 1; transform: none; transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.2s, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.2s; } /* lo que entra espera a que se vaya lo anterior */
+    .escena .r-paso.activo .r-pieza.anima { transition-delay: 0.28s; }
+    .escena .r-paso.activo .c-mano.anima { transition-delay: 0.36s; }
+    .escena .r-paso.activo .c-auto.anima { transition-delay: 0.44s; }
     /* Imán: al soltar el scroll cerca de un paso, se queda en él (así un gesto largo no se salta pasos) */
     html:has(.recorrido.escena) { scroll-snap-type: y proximity; }
     .ancla { position: absolute; left: 0; width: 1px; height: 1px; scroll-snap-align: start; scroll-snap-stop: always; pointer-events: none; }
-    .escena .escenario { position: sticky; top: var(--arriba, 0px); display: grid; } /* --arriba la calcula el JavaScript para dejarla centrada */
-    .escena .r-nav { position: static; align-self: center; }
-    .escena .r-pasos { display: grid; grid-template-columns: minmax(0, 1fr); align-self: center; }
-    @media (max-width: 1023px) { .escena .escenario { grid-template-columns: minmax(0, 1fr); } }
-    .escena .r-paso { grid-area: 1 / 1; align-self: center; min-height: 0; margin: 0; display: block; }
-    .escena .r-paso + .r-paso { margin-top: 0; }
-    .escena .r-paso .r-bloque { opacity: 0; transform: translateY(32px); transition: opacity 0.35s ease, transform 0.35s ease; }
-    .escena .r-paso.pasado .r-bloque { transform: translateY(-32px); }
-    .escena .r-paso.activo .r-bloque { opacity: 1; transform: none; }
 
     .aviso-falla {
       display: flex; gap: var(--espacio-8); align-items: flex-start;
@@ -547,14 +560,15 @@
 
     <!-- ─── PORTADA: qué hace (titular), el dolor (subtítulo y pregunta) y probarlo ─── -->
     <header class="portada">
-      <svg class="fondo-flujo" viewBox="0 0 1600 560" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-        <path class="lejos" pathLength="1" d="M-40 152 C 140 152, 230 470, 430 484 S 680 500, 800 500 S 1050 500, 1170 484 S 1460 152, 1640 139"/>
-        <path class="cerca" pathLength="1" d="M-40 152 C 140 152, 230 470, 430 484 S 680 500, 800 500 S 1050 500, 1170 484 S 1460 152, 1640 139"/>
-        <circle class="halo" cx="146" cy="264" r="44"/><circle cx="146" cy="264" r="18"/><circle class="centro" cx="146" cy="264" r="6"/>
-        <circle class="halo" cx="430" cy="484" r="44"/><circle cx="430" cy="484" r="18"/><circle class="centro" cx="430" cy="484" r="6"/>
-        <circle class="halo" cx="800" cy="500" r="44"/><circle cx="800" cy="500" r="18"/><circle class="centro" cx="800" cy="500" r="6"/>
-        <circle class="halo" cx="1170" cy="484" r="44"/><circle cx="1170" cy="484" r="18"/><circle class="centro" cx="1170" cy="484" r="6"/>
-        <circle class="halo" cx="1458" cy="238" r="44"/><circle cx="1458" cy="238" r="18"/><circle class="centro" cx="1458" cy="238" r="6"/>
+      <svg class="fondo-flujo" viewBox="0 0 1600 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <ellipse class="ovalo" cx="800" cy="362" rx="640" ry="150"/>
+        <path class="lejos" pathLength="1" d="M-40 152 C 140 152, 230 520, 430 534 S 680 552, 800 552 S 1050 552, 1170 534 S 1460 152, 1640 139"/>
+        <path class="cerca" pathLength="1" d="M-40 152 C 140 152, 230 520, 430 534 S 680 552, 800 552 S 1050 552, 1170 534 S 1460 152, 1640 139"/>
+        <circle class="halo" cx="146" cy="270" r="40"/><circle cx="146" cy="270" r="18"/><circle class="centro" cx="146" cy="270" r="6"/>
+        <circle class="halo" cx="430" cy="534" r="40"/><circle cx="430" cy="534" r="18"/><circle class="centro" cx="430" cy="534" r="6"/>
+        <circle class="halo" cx="800" cy="552" r="40"/><circle cx="800" cy="552" r="18"/><circle class="centro" cx="800" cy="552" r="6"/>
+        <circle class="halo" cx="1170" cy="534" r="40"/><circle cx="1170" cy="534" r="18"/><circle class="centro" cx="1170" cy="534" r="6"/>
+        <circle class="halo" cx="1458" cy="244" r="40"/><circle cx="1458" cy="244" r="18"/><circle class="centro" cx="1458" cy="244" r="6"/>
       </svg>
       <a class="logo" href="https://vicenterueda.com" aria-label="Vicente Rueda Gómez, ir a la web">
         <img src="logo/logo-color.svg" alt="Vicente Rueda Gómez" width="272" height="64">
@@ -580,122 +594,132 @@
           <div class="escenario">
             <div class="seccion-cab">
               <p class="etiqueta">Cómo funciona</p>
-              <h2 class="titular" id="t-pasos">Qué pasa, paso a paso.</h2>
+              <h2 class="titular" id="t-pasos">Cinco pasos que hoy haces a mano.</h2>
             </div>
-          <nav class="r-nav" aria-label="Los 5 pasos">
+          <nav class="r-progreso" aria-label="Los 5 pasos">
             <ol>
-              <li><a href="#paso-1"><span class="nodo" aria-hidden="true">1</span><span>El cliente escribe en tu web</span></a></li>
-              <li><a href="#paso-2"><span class="nodo" aria-hidden="true">2</span><span>Queda registrado en tu hoja</span></a></li>
-              <li><a href="#paso-3"><span class="nodo" aria-hidden="true">3</span><span>Recibe respuesta al momento</span></a></li>
-              <li><a href="#paso-4"><span class="nodo" aria-hidden="true">4</span><span>Te avisa al móvil</span></a></li>
-              <li><a href="#paso-5"><span class="nodo" aria-hidden="true">5</span><span>Si nadie le ha contestado, vuelve a escribirle</span></a></li>
+                <li><a href="#paso-1"><span class="nodo" aria-hidden="true">1</span><span>Escribe</span></a></li>
+                <li><a href="#paso-2"><span class="nodo" aria-hidden="true">2</span><span>Se registra</span></a></li>
+                <li><a href="#paso-3"><span class="nodo" aria-hidden="true">3</span><span>Responde</span></a></li>
+                <li><a href="#paso-4"><span class="nodo" aria-hidden="true">4</span><span>Te avisa</span></a></li>
+                <li><a href="#paso-5"><span class="nodo" aria-hidden="true">5</span><span>Seguimiento</span></a></li>
             </ol>
           </nav>
           <ol class="r-pasos">
           <li class="r-paso" id="paso-1">
             <div class="r-bloque">
-              <p class="etiqueta">Paso 1 de 5</p>
-              <h3>El cliente escribe en tu web</h3>
-              <div class="r-pieza" aria-hidden="true">
-              <div class="pieza">
-                <div class="pieza-barra"><svg class="icono"><use href="#i-formulario"/></svg>Formulario de tu web</div>
-                <div class="pieza-cuerpo">
-                  <div class="mini-campo"><span>Nombre</span>Ana García</div>
-                  <div class="mini-campo"><span>Email</span>ana@ejemplo.com</div>
-                  <div class="mini-campo"><span>Mensaje</span>Quiero automatizar los presupuestos de mi tienda</div>
+              <div class="r-cab anima">
+                <p class="etiqueta">Paso 1 de 5</p>
+                <h3>El cliente escribe en tu web</h3>
+              </div>
+              <div class="r-pieza anima" aria-hidden="true">
+                <div class="pieza">
+                  <div class="pieza-barra"><svg class="icono"><use href="#i-formulario"/></svg>Formulario de tu web</div>
+                  <div class="pieza-cuerpo">
+                    <div class="mini-campo"><span>Nombre</span>Ana García</div>
+                    <div class="mini-campo"><span>Email</span>ana@ejemplo.com</div>
+                    <div class="mini-campo"><span>Mensaje</span>Quiero automatizar los presupuestos de mi tienda</div>
+                  </div>
                 </div>
               </div>
-              </div>
               <div class="comparar">
-                <div class="c-mano"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>A mano</p><p>Copiar sus datos de un correo o una llamada.</p></div>
-                <div class="c-auto"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-check"/></svg>Automático</p><p>Llegan solos, sin teclear nada.</p></div>
+                <div class="c-mano anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>A mano</p><p>Copiar sus datos de un correo o una llamada.</p></div>
+                <div class="c-auto anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-check"/></svg>Automático</p><p>Llegan solos, sin teclear nada.</p></div>
               </div>
             </div>
           </li>
           <li class="r-paso" id="paso-2">
             <div class="r-bloque">
-              <p class="etiqueta">Paso 2 de 5</p>
-              <h3>Queda registrado en tu hoja</h3>
-              <div class="r-pieza" aria-hidden="true">
-              <div class="pieza hoja">
-                <div class="pieza-barra"><svg class="icono"><use href="#i-hoja"/></svg>Hoja de cálculo · pestaña «Leads»</div>
-                <div class="hoja-scroll">
-                  <table>
-                    <thead><tr><th>Nombre</th><th>Email</th><th>Mensaje</th><th>Fecha</th></tr></thead>
-                    <tbody><tr class="previas"><td colspan="4">registros anteriores…</td></tr><tr class="fila-nueva"><td>Ana García</td><td>ana@ejemplo.com</td><td>Quiero automatizar…</td><td>30/10, 10:42</td></tr></tbody>
-                  </table>
+              <div class="r-cab anima">
+                <p class="etiqueta">Paso 2 de 5</p>
+                <h3>Queda registrado en tu hoja</h3>
+              </div>
+              <div class="r-pieza anima" aria-hidden="true">
+                <div class="pieza hoja">
+                  <div class="pieza-barra"><svg class="icono"><use href="#i-hoja"/></svg>Hoja de cálculo · pestaña «Leads»</div>
+                  <div class="hoja-scroll">
+                    <table>
+                      <thead><tr><th>Nombre</th><th>Email</th><th>Mensaje</th><th>Fecha</th></tr></thead>
+                      <tbody><tr class="previas"><td colspan="4">registros anteriores…</td></tr><tr class="fila-nueva"><td>Ana García</td><td>ana@ejemplo.com</td><td>Quiero automatizar…</td><td>30/10, 10:42</td></tr></tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-              </div>
               <div class="comparar">
-                <div class="c-mano"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>A mano</p><p>Abrir la hoja y pegar cada dato.</p></div>
-                <div class="c-auto"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-check"/></svg>Automático</p><p>Una fila con nombre, email, mensaje y hora.</p></div>
+                <div class="c-mano anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>A mano</p><p>Abrir la hoja y pegar cada dato.</p></div>
+                <div class="c-auto anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-check"/></svg>Automático</p><p>Una fila con nombre, email, mensaje y hora.</p></div>
               </div>
             </div>
           </li>
           <li class="r-paso" id="paso-3">
             <div class="r-bloque">
-              <p class="etiqueta">Paso 3 de 5</p>
-              <h3>Recibe respuesta al momento</h3>
-              <div class="r-pieza" aria-hidden="true">
-              <div class="pieza">
-                <div class="pieza-barra"><svg class="icono"><use href="#i-correo"/></svg>Correo · bandeja de entrada</div>
-                <div class="correo-cab">
-                  <dl><dt>De</dt><dd>Equipo de Automatización</dd><dt>Para</dt><dd>ana@ejemplo.com</dd></dl>
-                  <p class="asunto">Hemos recibido tu solicitud</p>
-                </div>
-                <div class="pieza-cuerpo">
-                  <p>Hola <strong>Ana</strong>,</p>
-                  <p>Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.</p>
-                  <p>Nos pondremos en contacto contigo a la mayor brevedad posible.</p>
-                </div>
+              <div class="r-cab anima">
+                <p class="etiqueta">Paso 3 de 5</p>
+                <h3>Recibe respuesta al momento</h3>
               </div>
+              <div class="r-pieza anima" aria-hidden="true">
+                <div class="pieza">
+                  <div class="pieza-barra"><svg class="icono"><use href="#i-correo"/></svg>Correo · bandeja de entrada</div>
+                  <div class="correo-cab">
+                    <dl><dt>De</dt><dd>Equipo de Automatización</dd><dt>Para</dt><dd>ana@ejemplo.com</dd></dl>
+                    <p class="asunto">Hemos recibido tu solicitud</p>
+                  </div>
+                  <div class="pieza-cuerpo">
+                    <p>Hola <strong>Ana</strong>,</p>
+                    <p>Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.</p>
+                    <p>Nos pondremos en contacto contigo a la mayor brevedad posible.</p>
+                  </div>
+                </div>
               </div>
               <div class="comparar">
-                <div class="c-mano"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>A mano</p><p>Escribirle cuando haya un hueco.</p></div>
-                <div class="c-auto"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-check"/></svg>Automático</p><p>Un correo en segundos.</p></div>
+                <div class="c-mano anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>A mano</p><p>Escribirle cuando haya un hueco.</p></div>
+                <div class="c-auto anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-check"/></svg>Automático</p><p>Un correo en segundos.</p></div>
               </div>
             </div>
           </li>
           <li class="r-paso" id="paso-4">
             <div class="r-bloque">
-              <p class="etiqueta">Paso 4 de 5</p>
-              <h3>Te avisa al móvil</h3>
-              <div class="r-pieza" aria-hidden="true">
-              <div class="pieza">
-                <div class="tg-cab"><span class="tg-avatar">DL</span><span>Demo Leads<small>bot de Telegram</small></span></div>
-                <div class="tg-burbuja">
-                  <strong class="linea">🔔 [Demo Leads] — Nuevo lead recibido</strong>
-                  <span class="linea">👤 Nombre: Ana García</span>
-                  <span class="linea">📧 Email: ana@ejemplo.com</span>
-                  <span class="linea">💬 Mensaje: Quiero automatizar los presupuestos de mi tienda</span>
-                  <span class="linea">🕐 Hora: 30/10/2026, 10:42:05</span>
-                  <span class="tg-hora">10:42</span>
+              <div class="r-cab anima">
+                <p class="etiqueta">Paso 4 de 5</p>
+                <h3>Te avisa al móvil</h3>
+              </div>
+              <div class="r-pieza anima" aria-hidden="true">
+                <div class="pieza">
+                  <div class="tg-cab"><span class="tg-avatar">DL</span><span>Demo Leads<small>bot de Telegram</small></span></div>
+                  <div class="tg-burbuja">
+                    <strong class="linea">🔔 [Demo Leads] — Nuevo lead recibido</strong>
+                    <span class="linea">👤 Nombre: Ana García</span>
+                    <span class="linea">📧 Email: ana@ejemplo.com</span>
+                    <span class="linea">💬 Mensaje: Quiero automatizar los presupuestos de mi tienda</span>
+                    <span class="linea">🕐 Hora: 30/10/2026, 10:42:05</span>
+                    <span class="tg-hora">10:42</span>
+                  </div>
                 </div>
               </div>
-              </div>
               <div class="comparar">
-                <div class="c-mano"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>A mano</p><p>Mirar el buzón varias veces al día.</p></div>
-                <div class="c-auto"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-check"/></svg>Automático</p><p>Un mensaje de Telegram con sus datos.</p></div>
+                <div class="c-mano anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>A mano</p><p>Mirar el buzón varias veces al día.</p></div>
+                <div class="c-auto anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-check"/></svg>Automático</p><p>Un mensaje de Telegram con sus datos.</p></div>
               </div>
             </div>
           </li>
           <li class="r-paso" id="paso-5">
             <div class="r-bloque">
-              <p class="etiqueta">Paso 5 de 5</p>
-              <h3>Si nadie le ha contestado, vuelve a escribirle</h3>
-              <div class="r-pieza" aria-hidden="true">
-              <div class="pieza">
-                <div class="pieza-barra"><svg class="icono"><use href="#i-reloj"/></svg>Seguimiento</div>
-                <div class="pieza-cuerpo">
-                  <div class="mini-reloj"><svg class="icono"><use href="#i-reloj"/></svg>5:00</div>
-                  <p>Si nadie le ha contestado, le llega un segundo correo para retomar la conversación.</p>
+              <div class="r-cab anima">
+                <p class="etiqueta">Paso 5 de 5</p>
+                <h3>Si nadie le ha contestado, vuelve a escribirle</h3>
+              </div>
+              <div class="r-pieza anima" aria-hidden="true">
+                <div class="pieza">
+                  <div class="pieza-barra"><svg class="icono"><use href="#i-reloj"/></svg>Seguimiento</div>
+                  <div class="pieza-cuerpo">
+                    <div class="mini-reloj"><svg class="icono"><use href="#i-reloj"/></svg>5:00</div>
+                    <p>Si nadie le ha contestado, le llega un segundo correo para retomar la conversación.</p>
+                  </div>
                 </div>
               </div>
-              </div>
               <div class="comparar">
-                <div class="c-mano"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>A mano</p><p>Acordarse de quién falta por contestar.</p></div>
-                <div class="c-auto"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-check"/></svg>Automático</p><p>Lo detecta y le escribe (en la demo, a los 5 minutos; en un negocio real, por ejemplo, a las 24 horas).</p></div>
+                <div class="c-mano anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>A mano</p><p>Acordarse de quién falta por contestar.</p></div>
+                <div class="c-auto anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-check"/></svg>Automático</p><p>Lo detecta y le escribe (en la demo, a los 5 minutos; en un negocio real, por ejemplo, a las 24 horas).</p></div>
               </div>
             </div>
           </li>
@@ -894,7 +918,7 @@
     (function recorrido() {
       const rec = $('recorrido');
       const pasos = [...rec.querySelectorAll('.r-paso')];
-      const nav = [...rec.querySelectorAll('.r-nav li')];
+      const nav = [...rec.querySelectorAll('.r-progreso li')];
       let activo = -1, enEscena = false, pendiente = false;
 
       function marcar(i) {
@@ -914,8 +938,7 @@
       }
       function decidir() {
         rec.classList.add('escena');
-        const alto = rec.querySelector('.seccion-cab').offsetHeight + 32 +
-          Math.max(rec.querySelector('.r-pasos').offsetHeight, rec.querySelector('.r-nav').offsetHeight); // con los pasos apilados mide el más alto
+        const alto = rec.querySelector('.escenario').offsetHeight; // con los pasos apilados mide el más alto
         enEscena = !reducido() && alto <= innerHeight - 48;
         rec.classList.toggle('escena', enEscena);
         const banner = document.body.classList.contains('con-banner') ? $('bannerSim').offsetHeight : 0;
