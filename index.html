@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Demo · Captación y seguimiento automático de clientes</title>
-  <meta name="description" content="Alguien rellena un formulario y el sistema lo apunta en una hoja, le responde por email, avisa al negocio y hace el seguimiento solo. Pruébalo con tu email.">
+  <title>Demo · Cada contacto de tu web, respondido al momento</title>
+  <meta name="description" content="Cuando alguien escribe desde tu web, queda registrado en tu hoja, recibe respuesta al momento y te llega un aviso al móvil. Pruébalo haciendo de cliente.">
   <meta name="theme-color" content="#f8f6fb">
   <link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="logo/favicon-180.png">
@@ -17,13 +17,17 @@
 
     :root {
       /* Bordes finos: el texto suave de la identidad con transparencia (decorativos) */
-      --borde: rgba(91, 86, 104, 0.28);
+      --borde: rgba(91, 86, 104, 0.22);
       --borde-campo: var(--color-texto-suave);
+      /* Profundidad: sombras suaves en capas, del color del texto (nunca resplandor de color) */
+      --sombra: 0 1px 2px rgba(31, 27, 43, 0.06), 0 6px 20px rgba(31, 27, 43, 0.08);
+      --sombra-alta: 0 2px 4px rgba(31, 27, 43, 0.08), 0 12px 32px rgba(31, 27, 43, 0.12);
       /* Escala de texto (rem): solo estos niveles, para que todas las secciones se vean iguales */
       --t-nota: 0.87rem;
       --t-etiqueta: 0.8rem;
       --t-paso: 1.05rem;
       --tam-nodo: 32px;
+      --ritmo: 350ms; /* separación entre un paso y el siguiente al encenderse */
     }
 
     /* Tamaño base: todo el texto está en rem, así que escala junto.
@@ -69,81 +73,182 @@
       color: var(--color-acento);
     }
 
-    /* ─── CABECERA ─── */
-    /* Cabecera centrada, como una portada: logo (con su separador dentro), titular y ENTRA/SALE */
-    .cabecera { text-align: center; }
-    .logo { display: inline-block; line-height: 0; margin-bottom: var(--espacio-24); }
-    .logo img { height: 48px; width: auto; }
-    @media (min-width: 1024px) { .logo img { height: 64px; } .logo { margin-bottom: var(--espacio-32); } }
-
-    h1, h2.titular {
+    h1, .titular {
       font-family: var(--fuente-titulares);
       font-weight: var(--peso-fuerte);
       line-height: 1.15;
       letter-spacing: -0.005em;
       text-wrap: balance; /* reparte las líneas: sin palabras sueltas al final */
     }
-    h1 { font-size: 1.9rem; max-width: 24em; margin: 0 auto var(--espacio-16); }
+
+    @keyframes aparece { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .aparece { animation: aparece 0.4s ease both; }
+
+    /* ─── PORTADA ─── */
+    .portada { position: relative; text-align: center; padding-bottom: var(--espacio-48); }
+    .portada > *:not(.fondo-flujo) { position: relative; z-index: 1; }
+    .logo { display: inline-block; line-height: 0; margin-bottom: var(--espacio-24); }
+    .logo img { height: 48px; width: auto; }
+    @media (min-width: 1024px) { .logo img { height: 56px; } }
+
+    /* Imagen de fondo propia: la línea del flujo, en grande y muy suave */
+    .fondo-flujo {
+      position: absolute; z-index: 0; pointer-events: none;
+      left: 50%; transform: translateX(-50%);
+      top: 72px; width: 100vw; max-width: 1800px; height: calc(100% - 72px);
+    }
+    .fondo-flujo path { fill: none; stroke: var(--color-principal); stroke-opacity: 0.14; stroke-width: 2; stroke-dasharray: 1; animation: dibuja 1.6s ease-out both; }
+    .fondo-flujo circle { fill: var(--color-principal); fill-opacity: 0.05; stroke: var(--color-principal); stroke-opacity: 0.14; stroke-width: 2; }
+    .fondo-flujo circle.centro { fill-opacity: 0.12; stroke: none; }
+    @keyframes dibuja { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+    .portada .etiqueta { margin-bottom: var(--espacio-12); }
+    h1 { font-size: 1.9rem; max-width: 22em; margin: 0 auto var(--espacio-12); }
     @media (min-width: 600px)  { h1 { font-size: 2.1rem; } }
     @media (min-width: 1024px) { h1 { font-size: 2.4rem; } }
-
-    .cabecera-pie { display: flex; flex-direction: column; align-items: center; gap: var(--espacio-12); }
-    .entra-sale {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: var(--espacio-8) var(--espacio-24);
-      max-width: 36em;
-      font-size: var(--t-paso);
-      text-align: left;
+    .subtitulo { font-size: var(--t-paso); max-width: 34em; margin: 0 auto var(--espacio-16); text-wrap: balance; }
+    .pregunta {
+      display: inline-flex; align-items: baseline; gap: var(--espacio-8);
+      font-weight: var(--peso-fuerte); max-width: 40em; margin-bottom: var(--espacio-24); text-align: left;
     }
-    .entra-sale dt {
-      font-size: var(--t-etiqueta);
+    .pregunta::before { content: ''; width: 6px; height: 6px; flex-shrink: 0; background: var(--color-acento); transform: translateY(-2px) rotate(45deg); }
+    .cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--espacio-12) var(--espacio-24); }
+    .portada .aparece:nth-child(3) { animation-delay: 0.1s; }
+    .portada .aparece:nth-child(4) { animation-delay: 0.2s; }
+    .portada .aparece:nth-child(5) { animation-delay: 0.3s; }
+    .portada .aparece:nth-child(6) { animation-delay: 0.4s; }
+    .portada .aparece:nth-child(7) { animation-delay: 0.5s; }
+
+    .personas { display: inline-flex; align-items: center; gap: var(--espacio-8); font-size: var(--t-nota); color: var(--color-texto-suave); }
+    .personas b { color: var(--color-texto); }
+
+    /* ─── BOTONES ─── */
+    .btn-primario {
+      width: 100%;
+      margin-top: var(--espacio-16);
+      padding: var(--espacio-12) var(--espacio-24);
+      background: var(--color-principal);
+      color: var(--color-sobre-principal);
+      border: 0;
+      border-radius: var(--radio-pequeno);
+      font-family: inherit;
+      font-size: 1rem;
       font-weight: var(--peso-fuerte);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: var(--espacio-8);
+      text-decoration: none;
+      /* un poco de relieve: luz arriba y sombra debajo */
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 1px 2px rgba(31, 27, 43, 0.16), 0 4px 12px rgba(31, 27, 43, 0.12);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-primario:hover:not(:disabled) { transform: translateY(-1px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 2px 4px rgba(31, 27, 43, 0.18), 0 8px 20px rgba(31, 27, 43, 0.16); }
+    .btn-primario:active:not(:disabled) { transform: none; }
+    .btn-primario:disabled { opacity: 0.7; cursor: progress; }
+    .cta .btn-primario { width: auto; margin-top: 0; }
+
+    .btn-secundario {
+      display: inline-flex; align-items: center; gap: var(--espacio-8);
+      padding: var(--espacio-8) var(--espacio-16);
+      min-height: 40px;
+      background: none;
+      border: 1px solid var(--color-principal);
+      border-radius: var(--radio-pequeno);
       color: var(--color-principal);
-      padding-top: 0.2em;
+      font-family: inherit; font-size: 1rem; font-weight: var(--peso-fuerte);
+      cursor: pointer; text-decoration: none;
     }
-    /* Solo hace falta cuando el formulario no está al lado (móvil y tablet) */
-    .ir-probar { font-size: var(--t-nota); white-space: nowrap; }
-    @media (min-width: 1024px) { .ir-probar { display: none; } }
+    .btn-secundario:hover { background: var(--color-fondo); }
 
-    /* ─── CONTENIDO: flujo a la izquierda, formulario a la derecha ─── */
-    .contenido { display: grid; gap: var(--espacio-48); }
-    @media (min-width: 1024px) {
-      .contenido { grid-template-columns: minmax(0, 1fr) 440px; gap: var(--espacio-96); align-items: start; }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-top-color: var(--color-sobre-principal);
+      border-radius: var(--radio-redondo);
+      animation: gira 0.65s linear infinite;
+      display: none;
+      flex-shrink: 0;
     }
-    @media (min-width: 1400px) { .contenido { gap: var(--espacio-128); } }
+    @keyframes gira { to { transform: rotate(360deg); } }
 
-    .cab-seccion { display: flex; align-items: baseline; justify-content: space-between; gap: var(--espacio-12); margin-bottom: var(--espacio-16); }
-    .cab-seccion .nota { font-size: var(--t-nota); color: var(--color-texto-suave); }
+    /* ─── PIEZAS: la hoja, el correo y el Telegram (en el recorrido y en el resultado) ─── */
+    .pieza { border: 1px solid var(--borde); border-radius: var(--radio-medio); background: var(--color-fondo); box-shadow: var(--sombra); overflow: hidden; font-size: var(--t-nota); line-height: 1.5; text-align: left; }
+    .pieza-barra { display: flex; align-items: center; gap: var(--espacio-8); background: var(--color-superficie); padding: var(--espacio-8) var(--espacio-12); font-weight: var(--peso-fuerte); color: var(--color-texto-suave); }
+    .pieza-cuerpo { padding: var(--espacio-12); }
+    .pieza-cuerpo p + p { margin-top: var(--espacio-8); }
 
-    /* ─── LÍNEA DE FLUJO (los 5 pasos y el resultado usan la misma) ─── */
-    .flujo { list-style: none; max-width: var(--ancho-lectura); }
-    .paso {
+    /* Formulario en miniatura */
+    .mini-campo { border: 1px solid var(--borde); border-radius: var(--radio-pequeno); padding: var(--espacio-4) var(--espacio-8); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .mini-campo + .mini-campo { margin-top: var(--espacio-8); }
+    .mini-campo span { display: block; font-size: 0.9em; color: var(--color-texto-suave); }
+
+    /* Hoja de cálculo */
+    .hoja-scroll { overflow-x: auto; }
+    .hoja table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    .hoja th { color: var(--color-texto-suave); font-weight: var(--peso-fuerte); padding: var(--espacio-8) var(--espacio-12); text-align: left; border-bottom: 1px solid var(--borde); }
+    .hoja td { padding: var(--espacio-8) var(--espacio-12); max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+    .hoja .previas td { color: var(--color-texto-suave); font-style: italic; border-bottom: 1px solid var(--borde); }
+    .hoja .fila-nueva td { font-weight: var(--peso-fuerte); background: var(--color-superficie); }
+    @keyframes filaNueva {
+      0%   { opacity: 0; background: rgba(47, 107, 58, 0.22); }
+      40%  { opacity: 1; background: rgba(47, 107, 58, 0.16); }
+      100% { opacity: 1; background: var(--color-superficie); }
+    }
+    .paso.visible .fila-nueva td { animation: filaNueva 1.8s ease both; }
+
+    /* Correo */
+    .correo-cab { padding: var(--espacio-12); border-bottom: 1px solid var(--borde); }
+    .correo-cab dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--espacio-4) var(--espacio-12); color: var(--color-texto-suave); }
+    .correo-cab dt { font-weight: var(--peso-fuerte); }
+    .correo-cab dd { overflow-wrap: anywhere; }
+    .correo-cab .asunto { margin-top: var(--espacio-8); font-weight: var(--peso-fuerte); }
+    .nota-demo { margin-top: var(--espacio-12); padding: var(--espacio-12) var(--espacio-16); background: var(--color-superficie); border-radius: var(--radio-pequeno); }
+    .nota-demo ul { margin: var(--espacio-8) 0 var(--espacio-8) var(--espacio-16); }
+
+    /* Telegram (reproduce el mensaje real: por eso lleva sus emojis) */
+    .tg-cab { display: flex; align-items: center; gap: var(--espacio-8); padding: var(--espacio-8) var(--espacio-12); border-bottom: 1px solid var(--borde); }
+    .tg-avatar { width: 32px; height: 32px; border-radius: var(--radio-redondo); background: var(--color-principal); color: var(--color-sobre-principal); display: flex; align-items: center; justify-content: center; font-weight: var(--peso-fuerte); font-size: 0.85em; flex-shrink: 0; }
+    .tg-cab > span:last-child { display: block; line-height: 1.3; }
+    .tg-cab small { display: block; font-size: 0.9em; color: var(--color-texto-suave); }
+    .tg-burbuja { margin: var(--espacio-8); padding: var(--espacio-8) var(--espacio-12); background: var(--color-superficie); border-radius: var(--radio-medio); }
+    .tg-burbuja .linea { display: block; overflow-wrap: anywhere; }
+    .tg-hora { display: block; text-align: right; font-size: 0.9em; color: var(--color-texto-suave); margin-top: var(--espacio-4); }
+
+    /* Seguimiento en miniatura */
+    .mini-reloj { display: flex; align-items: center; gap: var(--espacio-8); font-size: 1.5rem; font-weight: var(--peso-fuerte); color: var(--color-acento); font-variant-numeric: tabular-nums; margin-bottom: var(--espacio-4); }
+
+    /* ─── RECORRIDO: los 5 pasos con su pieza y «A mano» frente a «Automático» ─── */
+    .seccion-cab { margin-bottom: var(--espacio-32); }
+    .seccion-cab .etiqueta { margin-bottom: var(--espacio-4); }
+    .seccion-cab .titular { font-size: 1.6rem; }
+    @media (min-width: 1024px) { .seccion-cab .titular { font-size: 1.8rem; } }
+
+    .recorrido { list-style: none; }
+    .r-paso {
       position: relative;
       display: grid;
       grid-template-columns: var(--tam-nodo) minmax(0, 1fr);
-      gap: var(--espacio-16);
-      padding-bottom: var(--espacio-16);
+      grid-template-areas: "nodo titulo" ". pieza" ". comparar";
+      gap: var(--espacio-12) var(--espacio-16);
+      padding-bottom: var(--espacio-48);
     }
-    .paso:last-child { padding-bottom: 0; }
-    /* El tramo de línea que une este nodo con el siguiente */
-    .paso:not(:last-child)::before {
-      content: '';
-      position: absolute;
-      left: calc(var(--tam-nodo) / 2 - 0.75px);
-      top: var(--tam-nodo);
-      bottom: 0;
-      width: 1.5px;
-      background: var(--color-principal);
-      transform-origin: top;
-      animation: trazo 0.5s ease-out both;
+    .r-paso:last-child { padding-bottom: 0; }
+    .r-nodo { grid-area: nodo; }
+    .r-paso h3 { grid-area: titulo; font-size: var(--t-paso); font-weight: var(--peso-fuerte); line-height: 1.35; align-self: center; }
+    .r-pieza { grid-area: pieza; max-width: 26rem; }
+    .comparar { grid-area: comparar; max-width: 26rem; }
+    .comparar dt { font-size: var(--t-etiqueta); font-weight: var(--peso-fuerte); letter-spacing: 0.08em; text-transform: uppercase; }
+    .comparar dd + dt { margin-top: var(--espacio-8); }
+    .comparar .a-mano { color: var(--color-texto-suave); }
+    .comparar .a-mano + dd { color: var(--color-texto-suave); }
+    .comparar .auto { color: var(--color-principal); }
+
+    /* Línea que une cada nodo con el siguiente (vertical en móvil) */
+    .r-paso:not(:last-child)::before {
+      content: ''; position: absolute;
+      left: calc(var(--tam-nodo) / 2 - 0.75px); top: var(--tam-nodo); bottom: 0; width: 1.5px;
+      background: var(--color-principal); transform-origin: top;
+      transition: transform 0.5s ease-out calc(var(--i) * var(--ritmo) + 0.15s);
     }
-    .flujo .paso:nth-child(2)::before { animation-delay: 0.15s; }
-    .flujo .paso:nth-child(3)::before { animation-delay: 0.3s; }
-    .flujo .paso:nth-child(4)::before { animation-delay: 0.45s; }
-    @keyframes trazo { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 
     .nodo {
       width: var(--tam-nodo); height: var(--tam-nodo);
@@ -156,38 +261,57 @@
       position: relative; z-index: 1;
     }
     .nodo .icono { width: 16px; height: 16px; stroke-width: 2; }
+    .r-nodo { background: var(--color-principal); color: var(--color-sobre-principal); transition: background 0.3s ease calc(var(--i) * var(--ritmo)), color 0.3s ease calc(var(--i) * var(--ritmo)); }
+    .r-pieza, .comparar { transition: opacity 0.4s ease calc(var(--i) * var(--ritmo) + 0.1s), transform 0.4s ease calc(var(--i) * var(--ritmo) + 0.1s); }
 
-    .paso-cuerpo { display: flex; flex-direction: column; gap: var(--espacio-4); min-width: 0; padding-top: 0.25em; }
-    .paso-cuerpo h3 { font-size: var(--t-paso); font-weight: var(--peso-fuerte); line-height: 1.35; margin-bottom: var(--espacio-4); }
-    .persona { color: var(--color-texto-suave); }
-    .persona b { color: var(--color-texto-suave); }
-    .sistema b { color: var(--color-principal); }
+    /* Antes de llegar a verla (solo con JavaScript y sin «reducir movimiento»): todo apagado */
+    .por-encender .r-nodo { background: var(--color-fondo); color: var(--color-principal); }
+    .por-encender .r-paso::before { transform: scaleY(0); }
+    .por-encender .r-pieza, .por-encender .comparar { opacity: 0; transform: translateY(10px); }
 
-    /* Móvil: cada paso muestra «El sistema…»; lo que haría una persona se abre al tocar */
-    .ver-persona {
-      display: none;
-      align-self: flex-start;
-      align-items: center; gap: var(--espacio-4);
-      background: none; border: 0; padding: var(--espacio-4) 0;
-      font: inherit; font-size: var(--t-nota); color: var(--color-texto-suave);
-      text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+    /* Pantallas anchas: en horizontal, de izquierda a derecha */
+    @media (min-width: 1280px) {
+      .recorrido {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-rows: auto auto auto auto;
+        column-gap: var(--espacio-24);
+      }
+      .r-paso {
+        grid-row: span 4;
+        grid-template-rows: subgrid; /* títulos, piezas y comparaciones alineados entre columnas */
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: "nodo" "titulo" "pieza" "comparar";
+        row-gap: var(--espacio-12);
+        padding-bottom: 0;
+      }
+      .r-nodo { justify-self: center; }
+      .r-paso h3 { text-align: center; align-self: start; text-wrap: balance; }
+      .r-pieza, .comparar { max-width: none; }
+      .r-pieza { align-self: start; }
+      .r-paso:not(:last-child)::before {
+        left: calc(50% + var(--tam-nodo) / 2); top: calc(var(--tam-nodo) / 2 - 0.75px); bottom: auto;
+        width: calc(100% + var(--espacio-24) - var(--tam-nodo)); height: 1.5px;
+        transform-origin: left;
+      }
+      .por-encender .r-paso::before { transform: scaleX(0); }
     }
-    .ver-persona .icono { transition: transform 0.2s; }
-    .ver-persona[aria-expanded="true"] .icono { transform: rotate(180deg); }
-    @media (max-width: 599px) {
-      .flujo-inicio .persona { display: none; order: 3; }
-      .flujo-inicio .paso.abierto .persona { display: block; }
-      .ver-persona { display: inline-flex; order: 2; }
-    }
 
-    /* Pantallas anchas: «Una persona…» y «El sistema…» lado a lado, para comparar de un vistazo */
-    @media (min-width: 1400px) {
-      .flujo-inicio { max-width: none; }
-      .flujo-inicio .paso-cuerpo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--espacio-4) var(--espacio-32); }
-      .flujo-inicio .paso-cuerpo h3 { grid-column: 1 / -1; }
+    .aviso-falla {
+      display: flex; gap: var(--espacio-8); align-items: flex-start;
+      max-width: 40em; margin: var(--espacio-48) auto 0;
+      padding: var(--espacio-12) var(--espacio-16);
+      background: var(--color-superficie); border-radius: var(--radio-pequeno);
     }
+    .aviso-falla .icono { margin-top: 0.25em; color: var(--color-principal); }
 
-    /* ─── FORMULARIO ─── */
+    /* ─── PROBAR: formulario a la izquierda, lo que pasa al enviar a la derecha ─── */
+    .probar { display: grid; gap: var(--espacio-32); align-items: start; scroll-margin-top: var(--espacio-24); }
+    @media (min-width: 1024px) {
+      .probar { grid-template-columns: 440px minmax(0, 1fr); gap: var(--espacio-96); }
+    }
+    @media (min-width: 1400px) { .probar { gap: var(--espacio-128); } }
+
     .tarjeta {
       background: var(--color-superficie);
       border-radius: var(--radio-medio);
@@ -197,8 +321,10 @@
       .tarjeta { padding: var(--espacio-32); }
       .tarjeta .campo { margin-bottom: var(--espacio-12); }
       .tarjeta .campo textarea { min-height: 64px; }
-      .cab-seccion { margin-bottom: var(--espacio-12); }
     }
+    .tarjeta-cab { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--espacio-4) var(--espacio-12); margin-bottom: var(--espacio-16); }
+    .tarjeta-cab .titular, .panel-cab .titular { font-size: 1.5rem; }
+    .tarjeta-cab .nota { font-size: var(--t-nota); color: var(--color-texto-suave); }
 
     .fila2 { display: grid; gap: 0 var(--espacio-16); }
     @media (min-width: 600px) { .fila2 { grid-template-columns: 1fr 1fr; } }
@@ -266,52 +392,63 @@
     .aviso b { color: inherit; }
     #errorGeneral { margin-bottom: var(--espacio-16); }
 
-    .btn-primario {
-      width: 100%;
-      margin-top: var(--espacio-16);
-      padding: var(--espacio-12) var(--espacio-24);
-      background: var(--color-principal);
-      color: var(--color-sobre-principal);
-      border: 0;
-      border-radius: var(--radio-pequeno);
-      font-family: inherit;
-      font-size: 1rem;
-      font-weight: var(--peso-fuerte);
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: var(--espacio-8);
-      text-decoration: none;
-    }
-    .btn-primario:hover:not(:disabled) { box-shadow: inset 0 0 0 999px rgba(31, 27, 43, 0.15); }
-    .btn-primario:disabled { opacity: 0.7; cursor: progress; }
-
-    .spinner {
-      width: 16px; height: 16px;
-      border: 2px solid rgba(255, 255, 255, 0.35);
-      border-top-color: var(--color-sobre-principal);
-      border-radius: var(--radio-redondo);
-      animation: gira 0.65s linear infinite;
-      display: none;
-      flex-shrink: 0;
-    }
-    @keyframes gira { to { transform: rotate(360deg); } }
-
     .estado-envio { margin-top: var(--espacio-12); text-align: center; font-size: var(--t-nota); color: var(--color-texto-suave); }
 
-    .personas { display: flex; align-items: center; gap: var(--espacio-8); margin-top: var(--espacio-12); font-size: var(--t-nota); color: var(--color-texto-suave); }
+    /* Tras enviar: el formulario deja sitio al cierre */
+    .enviado > * + * { margin-top: var(--espacio-16); }
+    .enviado .res-pregunta { color: var(--color-texto-suave); }
+    .res-botones { display: flex; flex-wrap: wrap; gap: var(--espacio-12); }
 
-    /* Botón secundario: sin relleno */
-    .btn-secundario {
-      display: inline-flex; align-items: center; gap: var(--espacio-8);
-      padding: var(--espacio-8) var(--espacio-16);
-      min-height: 40px;
-      background: none;
-      border: 1px solid var(--color-principal);
-      border-radius: var(--radio-pequeno);
-      color: var(--color-principal);
-      font-family: inherit; font-size: 1rem; font-weight: var(--peso-fuerte);
-      cursor: pointer; text-decoration: none;
+    /* Panel «Lo que pasa al enviar» */
+    .panel { background: var(--color-fondo); border: 1px solid var(--borde); border-radius: var(--radio-medio); box-shadow: var(--sombra); padding: var(--espacio-24); scroll-margin-top: var(--espacio-24); }
+    @media (min-width: 1024px) { .panel { padding: var(--espacio-32); } }
+    .panel-cab { margin-bottom: var(--espacio-24); }
+    .panel-cab .titular { margin-bottom: var(--espacio-4); }
+    .panel-cab .titular:focus { outline: none; }
+    .panel-cab p { color: var(--color-texto-suave); }
+
+    /* ─── LÍNEA DEL RESULTADO (vertical, con el estado de cada paso) ─── */
+    .flujo { list-style: none; }
+    .paso {
+      position: relative;
+      display: grid;
+      grid-template-columns: var(--tam-nodo) minmax(0, 1fr);
+      gap: var(--espacio-16);
+      padding-bottom: var(--espacio-24);
     }
-    .btn-secundario:hover { background: var(--color-superficie); }
+    .paso:last-child { padding-bottom: 0; }
+    .paso:not(:last-child)::before {
+      content: ''; position: absolute;
+      left: calc(var(--tam-nodo) / 2 - 0.75px); top: var(--tam-nodo); bottom: 0; width: 1.5px;
+      background: var(--color-principal);
+    }
+    .paso.pendiente:not(:last-child)::before { background: var(--borde); }
+    .res-texto { min-width: 0; padding-top: 0.25em; }
+    .res-fila { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--espacio-4) var(--espacio-12); margin-bottom: var(--espacio-4); }
+    .res-fila h3 { font-size: var(--t-paso); font-weight: var(--peso-fuerte); }
+    .res-texto > p + p { margin-top: var(--espacio-4); }
+    .res-extra { margin-top: var(--espacio-12); min-width: 0; }
+    .estado-paso { display: inline-flex; align-items: center; gap: var(--espacio-4); font-size: var(--t-nota); font-weight: var(--peso-fuerte); white-space: nowrap; }
+
+    /* Estado de cada nodo: color + icono + texto */
+    .paso.hecho  .nodo { background: var(--color-principal); border-color: var(--color-principal); color: var(--color-sobre-principal); }
+    .paso.hecho  .estado-paso { color: var(--color-correcto); }
+    .paso.espera .nodo, .paso.espera .estado-paso { border-color: var(--color-acento); color: var(--color-acento); }
+    .paso.fallo  .nodo, .paso.fallo .estado-paso, .paso.fallo h3 { border-color: var(--color-error); color: var(--color-error); }
+    .paso.apagado .nodo, .paso.pendiente .nodo { border-color: var(--color-texto-suave); color: var(--color-texto-suave); border-style: dashed; }
+    .paso.apagado .res-texto, .paso.pendiente .res-texto, .paso.pendiente .estado-paso { color: var(--color-texto-suave); }
+    /* Paso que aún no ha llegado: solo el título */
+    .paso.esperando .res-texto > p, .paso.esperando .res-extra { display: none; }
+    .paso.visible .res-texto > p, .paso.visible .res-extra { animation: aparece 0.4s ease both; }
+
+    .nota-pie { margin-top: var(--espacio-8); font-size: var(--t-nota); color: var(--color-texto-suave); }
+
+    /* Cuenta atrás */
+    .cuenta { display: flex; align-items: center; justify-content: space-between; gap: var(--espacio-12); border: 1px solid var(--color-acento); border-radius: var(--radio-pequeno); padding: var(--espacio-12) var(--espacio-16); background: var(--color-fondo); }
+    .cuenta .tiempo { font-size: 1.6rem; font-weight: var(--peso-fuerte); color: var(--color-acento); font-variant-numeric: tabular-nums; }
+    .cuenta.hecha { border-color: var(--color-correcto); }
+    .cuenta.hecha .tiempo { display: flex; align-items: center; gap: var(--espacio-8); font-size: 1rem; color: var(--color-correcto); }
+    .cuenta + div { margin-top: var(--espacio-16); }
 
     /* Solo visible en local, para no confundir una simulación con una petición real */
     .banner-sim {
@@ -320,10 +457,10 @@
       font-size: var(--t-etiqueta); font-weight: var(--peso-fuerte);
       padding: var(--espacio-4) var(--espacio-12); text-align: center;
     }
-    body.con-banner .pagina { padding-top: var(--espacio-64); }
+    body.con-banner .pagina { padding-top: var(--espacio-48); }
 
     /* ─── PIE ─── */
-    .pie { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--espacio-8) var(--espacio-24); font-size: var(--t-nota); color: var(--color-texto-suave); }
+    .pie { display: flex; flex-direction: column; align-items: center; gap: var(--espacio-8); text-align: center; font-size: var(--t-nota); color: var(--color-texto-suave); }
     .pie p + p { margin-top: var(--espacio-4); }
     .enlace {
       background: none; border: 0; padding: 0; font: inherit;
@@ -363,89 +500,6 @@
     /* Huecos que se rellenan al desplegar (build args del Dockerfile) */
     .marcador { background: var(--color-superficie); border: 1px dashed var(--color-acento); color: var(--color-acento); border-radius: var(--radio-pequeno); padding: 0 var(--espacio-4); }
 
-    /* ─── RESULTADO: la misma línea de flujo, con lo que ha pasado de verdad ─── */
-    .res-cab { margin-bottom: var(--espacio-32); max-width: 48em; }
-    .res-cab .aviso { display: inline-flex; margin-bottom: var(--espacio-16); }
-    .res-cab h2 { font-size: 1.7rem; margin-bottom: var(--espacio-8); }
-    @media (min-width: 1024px) { .res-cab h2 { font-size: 2rem; } }
-    .res-cab h2:focus { outline: none; }
-    .res-cab p { color: var(--color-texto-suave); font-size: var(--t-paso); }
-
-    .flujo-res { max-width: none; }
-    .flujo-res .paso { padding-bottom: var(--espacio-32); opacity: 0; transform: translateY(12px); transition: opacity 0.45s ease, transform 0.45s ease; }
-    .flujo-res .paso.visible { opacity: 1; transform: none; }
-    .flujo-res .paso:last-child { padding-bottom: 0; }
-    .flujo-res .paso::before { animation: none; }
-    .res-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--espacio-16); min-width: 0; padding-top: 0.25em; }
-    .res-extra, .res-texto { min-width: 0; }
-    .res-texto p + p { margin-top: var(--espacio-4); }
-    .res-texto h3 { font-size: var(--t-paso); font-weight: var(--peso-fuerte); margin-bottom: var(--espacio-4); }
-    .res-ahorro { color: var(--color-texto-suave); }
-    .res-ahorro b { color: var(--color-texto-suave); }
-    @media (min-width: 1024px) {
-      .res-cuerpo { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: var(--espacio-48); }
-      .paso.ancho .res-cuerpo { grid-template-columns: minmax(0, 1fr); gap: var(--espacio-16); }
-    }
-
-    /* Estado de cada nodo */
-    .paso.hecho  .nodo { border-color: var(--color-correcto); color: var(--color-correcto); }
-    .paso.espera .nodo { border-color: var(--color-acento);   color: var(--color-acento); }
-    .paso.fallo  .nodo { border-color: var(--color-error);    color: var(--color-error); }
-    .paso.apagado .nodo { border-color: var(--color-texto-suave); color: var(--color-texto-suave); border-style: dashed; }
-    .paso.apagado .res-texto { color: var(--color-texto-suave); }
-    .paso.fallo .res-texto h3 { color: var(--color-error); }
-
-    .vista-etiqueta { margin-bottom: var(--espacio-8); }
-    .nota-pie { margin-top: var(--espacio-8); font-size: var(--t-nota); color: var(--color-texto-suave); }
-
-    /* Hoja de cálculo */
-    .hoja { border: 1px solid var(--borde); border-radius: var(--radio-medio); overflow: hidden; background: var(--color-fondo); }
-    .hoja-barra { display: flex; align-items: center; gap: var(--espacio-8); background: var(--color-superficie); padding: var(--espacio-8) var(--espacio-12); font-size: var(--t-nota); font-weight: var(--peso-fuerte); }
-    .hoja-scroll { overflow-x: auto; }
-    .hoja table { width: 100%; border-collapse: collapse; font-size: var(--t-nota); white-space: nowrap; }
-    .hoja th { color: var(--color-texto-suave); font-weight: var(--peso-fuerte); padding: var(--espacio-8) var(--espacio-12); text-align: left; border-bottom: 1px solid var(--borde); }
-    .hoja td { padding: var(--espacio-8) var(--espacio-12); max-width: 160px; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid var(--borde); }
-    .hoja td:last-child { border-right: 0; }
-    .hoja .previas td { color: var(--color-texto-suave); font-style: italic; border-bottom: 1px solid var(--borde); }
-    @keyframes filaNueva {
-      0%   { opacity: 0; background: rgba(47, 107, 58, 0.22); }
-      40%  { opacity: 1; background: rgba(47, 107, 58, 0.16); }
-      100% { opacity: 1; background: rgba(47, 107, 58, 0.07); }
-    }
-    .fila-nueva td { opacity: 0; }
-    .paso.visible .fila-nueva td { animation: filaNueva 1.8s ease forwards; }
-    .paso.visible .fila-nueva td:nth-child(2) { animation-delay: 0.1s; }
-    .paso.visible .fila-nueva td:nth-child(3) { animation-delay: 0.2s; }
-    .paso.visible .fila-nueva td:nth-child(4) { animation-delay: 0.3s; }
-    .paso.visible .fila-nueva td:nth-child(5) { animation-delay: 0.4s; }
-    .paso.visible .fila-nueva td:nth-child(6) { animation-delay: 0.5s; }
-    .paso.visible .fila-nueva td:nth-child(7) { animation-delay: 0.6s; }
-
-    /* Correo y aviso de Telegram: reproducen el mensaje real (por eso llevan sus emojis) */
-    .tarjeta-vista { border: 1px solid var(--borde); border-radius: var(--radio-medio); background: var(--color-fondo); padding: var(--espacio-12) var(--espacio-16); line-height: 1.55; }
-    .tarjeta-vista .meta { font-size: var(--t-nota); color: var(--color-texto-suave); border-bottom: 1px solid var(--borde); padding-bottom: var(--espacio-8); margin-bottom: var(--espacio-8); }
-    .tarjeta-vista .meta b { color: var(--color-texto); }
-    .tarjeta-vista p + p { margin-top: var(--espacio-8); }
-    .nota-demo { margin-top: var(--espacio-12); padding: var(--espacio-12) var(--espacio-16); background: var(--color-superficie); border-radius: var(--radio-pequeno); font-size: var(--t-nota); }
-    .nota-demo ul { margin: var(--espacio-8) 0 var(--espacio-8) var(--espacio-16); }
-    .telegram .linea { display: block; overflow-wrap: anywhere; }
-    @keyframes aparece { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-    .aparece { animation: aparece 0.6s ease both; }
-
-    /* Cuenta atrás */
-    .cuenta { display: flex; align-items: center; justify-content: space-between; gap: var(--espacio-12); border: 1px solid var(--color-acento); border-radius: var(--radio-pequeno); padding: var(--espacio-12) var(--espacio-16); }
-    .cuenta .tiempo { font-size: 1.6rem; font-weight: var(--peso-fuerte); color: var(--color-acento); font-variant-numeric: tabular-nums; }
-    .cuenta.hecha { border-color: var(--color-correcto); }
-    .cuenta.hecha .tiempo { display: flex; align-items: center; gap: var(--espacio-8); font-size: 1rem; color: var(--color-correcto); }
-    .cuenta + div { margin-top: var(--espacio-16); }
-
-    /* Cierre */
-    .res-cierre { text-align: center; }
-    .res-cierre p { max-width: 44em; margin: 0 auto var(--espacio-12); text-wrap: balance; }
-    .res-cierre .res-pregunta { color: var(--color-texto-suave); }
-    .res-botones { display: flex; flex-wrap: wrap; gap: var(--espacio-12); justify-content: center; margin-top: var(--espacio-16); }
-    .res-botones .btn-primario { width: auto; margin-top: 0; }
-
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
     }
@@ -461,8 +515,10 @@
     <symbol id="i-reloj" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></symbol>
     <symbol id="i-pausa" viewBox="0 0 16 16"><path d="M6 4v8M10 4v8"/></symbol>
     <symbol id="i-persona" viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="3"/><path d="M2.5 14.5c.6-3 2.8-4.5 5.5-4.5s4.9 1.5 5.5 4.5"/></symbol>
-    <symbol id="i-abajo" viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></symbol>
     <symbol id="i-hoja" viewBox="0 0 16 16"><rect x="2" y="2.5" width="12" height="11" rx="1"/><path d="M2 6h12M2 9.5h12M6 6v7.5"/></symbol>
+    <symbol id="i-correo" viewBox="0 0 16 16"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="m2 4.5 6 4.5 6-4.5"/></symbol>
+    <symbol id="i-formulario" viewBox="0 0 16 16"><rect x="2.5" y="1.5" width="11" height="13" rx="1"/><path d="M5 5h6M5 8h6M5 11h3.5"/></symbol>
+    <symbol id="i-escudo" viewBox="0 0 16 16"><path d="M8 1.5 13.5 3.5v4c0 3.3-2.3 5.9-5.5 7-3.2-1.1-5.5-3.7-5.5-7v-4z"/><path d="m5.5 8 1.8 1.8L10.5 6.5"/></symbol>
     <symbol id="i-enlace" viewBox="0 0 16 16"><path d="M6.5 9.5a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2L7.6 4.2"/><path d="M9.5 6.5a3 3 0 0 0-4.2 0L3 8.8A3 3 0 0 0 7.2 13l1.2-1.2"/></symbol>
     <symbol id="i-cerrar" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></symbol>
   </svg>
@@ -471,149 +527,225 @@
 
   <div class="pagina">
 
-    <!-- ─── CABECERA ─── -->
-    <header class="cabecera">
+    <!-- ─── PORTADA: qué hace (titular), el dolor (subtítulo y pregunta) y probarlo ─── -->
+    <header class="portada">
+      <svg class="fondo-flujo" viewBox="0 0 1600 300" preserveAspectRatio="none" aria-hidden="true">
+        <path pathLength="1" d="M-20 230 C 160 230, 220 120, 380 110 S 620 210, 800 200 S 1060 70, 1220 80 S 1480 190, 1620 150"/>
+        <circle cx="90" cy="226" r="22"/><circle class="centro" cx="90" cy="226" r="6"/>
+        <circle cx="380" cy="110" r="22"/><circle class="centro" cx="380" cy="110" r="6"/>
+        <circle cx="1220" cy="80" r="22"/><circle class="centro" cx="1220" cy="80" r="6"/>
+        <circle cx="1520" cy="170" r="22"/><circle class="centro" cx="1520" cy="170" r="6"/>
+      </svg>
       <a class="logo" href="https://vicenterueda.com" aria-label="Vicente Rueda Gómez, ir a la web">
         <img src="logo/logo-color.svg" alt="Vicente Rueda Gómez" width="272" height="64">
       </a>
-      <h1>Alguien rellena un formulario. El sistema lo apunta, le responde y te avisa.</h1>
-      <div class="cabecera-pie">
-        <dl class="entra-sale">
-          <dt>Entra</dt><dd>Un contacto desde el formulario de tu web.</dd>
-          <dt>Sale</dt><dd>Una fila en tu hoja de cálculo, un email de respuesta, un aviso en tu móvil y un segundo email a los 5 minutos.</dd>
-        </dl>
-        <a href="#probar" class="ir-probar">Probar ahora ↓</a>
+      <p class="etiqueta aparece">Demo · Los contactos de tu web</p>
+      <h1 class="aparece">Cada contacto de tu web, registrado, respondido y en tu móvil al momento.</h1>
+      <p class="subtitulo aparece">Copiar sus datos, pasarlos a la hoja, contestarle, avisarte y acordarse de volver a escribirle. Aquí pasa solo, en segundos.</p>
+      <p class="pregunta aparece">¿Cuánto tiempo te lleva hoy cada contacto? ¿Y cuántos se quedan sin respuesta?</p>
+      <div class="cta aparece">
+        <a href="#probar" class="btn-primario">Pruébalo haciendo de cliente ↓</a>
+        <p class="personas oculto" id="pruebaSocial"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>
+          <span><b id="contadorPersonas"></b> <span id="textoContador">personas lo han probado</span></span></p>
       </div>
     </header>
 
-    <hr class="separador" style="margin: var(--espacio-24) auto var(--espacio-32)">
-
     <main>
-    <div class="contenido" id="contenido">
 
-      <!-- ─── CÓMO FUNCIONA: los 5 pasos ─── -->
+      <!-- ─── QUÉ PASA, PASO A PASO: la pieza que sale y lo que costaría a mano ─── -->
       <section aria-labelledby="t-pasos">
-        <div class="cab-seccion"><h2 class="etiqueta" id="t-pasos">Cómo funciona</h2></div>
-        <ol class="flujo flujo-inicio">
-          <li class="paso">
-            <div class="nodo" aria-hidden="true">1</div>
-            <div class="paso-cuerpo">
-              <h3>Rellenas el formulario</h3>
-              <p class="persona" id="persona-1"><b>Una persona tendría que…</b> copiar los datos de un correo o de una llamada.</p>
-              <p class="sistema"><b>El sistema…</b> recibe tus datos al instante, sin teclear nada.</p>
-              <button type="button" class="ver-persona" aria-expanded="false" aria-controls="persona-1">Sin automatizar <svg class="icono"><use href="#i-abajo"/></svg></button>
+        <div class="seccion-cab">
+          <p class="etiqueta">Cómo funciona</p>
+          <h2 class="titular" id="t-pasos">Qué pasa, paso a paso.</h2>
+        </div>
+        <ol class="recorrido" id="recorrido">
+          <li class="r-paso" style="--i: 0">
+            <div class="nodo r-nodo" aria-hidden="true">1</div>
+            <h3>El cliente escribe en tu web</h3>
+            <div class="r-pieza" aria-hidden="true">
+              <div class="pieza">
+                <div class="pieza-barra"><svg class="icono"><use href="#i-formulario"/></svg>Formulario de tu web</div>
+                <div class="pieza-cuerpo">
+                  <div class="mini-campo"><span>Nombre</span>Ana García</div>
+                  <div class="mini-campo"><span>Email</span>ana@ejemplo.com</div>
+                  <div class="mini-campo"><span>Mensaje</span>Quiero automatizar los presupuestos de mi tienda</div>
+                </div>
+              </div>
             </div>
+            <dl class="comparar">
+              <dt class="a-mano">A mano</dt><dd>Copiar sus datos de un correo o una llamada.</dd>
+              <dt class="auto">Automático</dt><dd>Llegan solos, sin teclear nada.</dd>
+            </dl>
           </li>
-          <li class="paso">
-            <div class="nodo" aria-hidden="true">2</div>
-            <div class="paso-cuerpo">
-              <h3>Se apunta en una hoja de cálculo</h3>
-              <p class="persona" id="persona-2"><b>Una persona tendría que…</b> abrir la hoja y pegar cada dato a mano.</p>
-              <p class="sistema"><b>El sistema…</b> añade una fila con nombre, email, mensaje y hora.</p>
-              <button type="button" class="ver-persona" aria-expanded="false" aria-controls="persona-2">Sin automatizar <svg class="icono"><use href="#i-abajo"/></svg></button>
+          <li class="r-paso" style="--i: 1">
+            <div class="nodo r-nodo" aria-hidden="true">2</div>
+            <h3>Queda registrado en tu hoja</h3>
+            <div class="r-pieza" aria-hidden="true">
+              <div class="pieza hoja">
+                <div class="pieza-barra"><svg class="icono"><use href="#i-hoja"/></svg>Hoja de cálculo · «Leads»</div>
+                <table>
+                  <thead><tr><th>Nombre</th><th>Email</th></tr></thead>
+                  <tbody><tr class="previas"><td colspan="2">registros anteriores…</td></tr><tr class="fila-nueva"><td>Ana</td><td>ana@ejemplo.com</td></tr></tbody>
+                </table>
+              </div>
             </div>
+            <dl class="comparar">
+              <dt class="a-mano">A mano</dt><dd>Abrir la hoja y pegar cada dato.</dd>
+              <dt class="auto">Automático</dt><dd>Una fila con nombre, email, mensaje y hora.</dd>
+            </dl>
           </li>
-          <li class="paso">
-            <div class="nodo" aria-hidden="true">3</div>
-            <div class="paso-cuerpo">
-              <h3>Te llega un email de confirmación</h3>
-              <p class="persona" id="persona-3"><b>Una persona tendría que…</b> escribir una respuesta cuando tenga un hueco.</p>
-              <p class="sistema"><b>El sistema…</b> te responde en cuanto envías el formulario.</p>
-              <button type="button" class="ver-persona" aria-expanded="false" aria-controls="persona-3">Sin automatizar <svg class="icono"><use href="#i-abajo"/></svg></button>
+          <li class="r-paso" style="--i: 2">
+            <div class="nodo r-nodo" aria-hidden="true">3</div>
+            <h3>Recibe respuesta al momento</h3>
+            <div class="r-pieza" aria-hidden="true">
+              <div class="pieza">
+                <div class="pieza-barra"><svg class="icono"><use href="#i-correo"/></svg>Correo · bandeja de entrada</div>
+                <div class="correo-cab">
+                  <dl><dt>Para</dt><dd>ana@ejemplo.com</dd></dl>
+                  <p class="asunto">Hemos recibido tu solicitud</p>
+                </div>
+                <div class="pieza-cuerpo">
+                  <p>Hola Ana,</p>
+                  <p>Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.</p>
+                </div>
+              </div>
             </div>
+            <dl class="comparar">
+              <dt class="a-mano">A mano</dt><dd>Escribirle cuando haya un hueco.</dd>
+              <dt class="auto">Automático</dt><dd>Un correo en segundos.</dd>
+            </dl>
           </li>
-          <li class="paso">
-            <div class="nodo" aria-hidden="true">4</div>
-            <div class="paso-cuerpo">
-              <h3>El negocio recibe un aviso en el móvil</h3>
-              <p class="persona" id="persona-4"><b>Una persona tendría que…</b> mirar el buzón varias veces al día.</p>
-              <p class="sistema"><b>El sistema…</b> manda un aviso por Telegram al móvil del negocio con tus datos.</p>
-              <button type="button" class="ver-persona" aria-expanded="false" aria-controls="persona-4">Sin automatizar <svg class="icono"><use href="#i-abajo"/></svg></button>
+          <li class="r-paso" style="--i: 3">
+            <div class="nodo r-nodo" aria-hidden="true">4</div>
+            <h3>Te avisa al móvil</h3>
+            <div class="r-pieza" aria-hidden="true">
+              <div class="pieza">
+                <div class="tg-cab"><span class="tg-avatar">DL</span><span>Demo Leads<small>bot de Telegram</small></span></div>
+                <div class="tg-burbuja">
+                  <strong class="linea">🔔 [Demo Leads] — Nuevo lead recibido</strong>
+                  <span class="linea">👤 Nombre: Ana García</span>
+                  <span class="linea">📧 Email: ana@ejemplo.com</span>
+                  <span class="linea">💬 Mensaje: Quiero automatizar…</span>
+                  <span class="tg-hora">10:42</span>
+                </div>
+              </div>
             </div>
+            <dl class="comparar">
+              <dt class="a-mano">A mano</dt><dd>Mirar el buzón varias veces al día.</dd>
+              <dt class="auto">Automático</dt><dd>Un mensaje de Telegram con sus datos.</dd>
+            </dl>
           </li>
-          <li class="paso">
-            <div class="nodo" aria-hidden="true">5</div>
-            <div class="paso-cuerpo">
-              <h3>A los 5 minutos, un segundo email</h3>
-              <p class="persona" id="persona-5"><b>Una persona tendría que…</b> acordarse de escribir otra vez.</p>
-              <p class="sistema"><b>El sistema…</b> envía el seguimiento solo, sin que nadie se acuerde.</p>
-              <button type="button" class="ver-persona" aria-expanded="false" aria-controls="persona-5">Sin automatizar <svg class="icono"><use href="#i-abajo"/></svg></button>
+          <li class="r-paso" style="--i: 4">
+            <div class="nodo r-nodo" aria-hidden="true">5</div>
+            <h3>Si nadie le ha contestado, vuelve a escribirle</h3>
+            <div class="r-pieza" aria-hidden="true">
+              <div class="pieza">
+                <div class="pieza-barra"><svg class="icono"><use href="#i-reloj"/></svg>Seguimiento</div>
+                <div class="pieza-cuerpo">
+                  <div class="mini-reloj"><svg class="icono"><use href="#i-reloj"/></svg>5:00</div>
+                  <p>Si nadie le ha contestado, le llega el segundo correo.</p>
+                </div>
+              </div>
             </div>
+            <dl class="comparar">
+              <dt class="a-mano">A mano</dt><dd>Acordarse de quién falta por contestar.</dd>
+              <dt class="auto">Automático</dt><dd>Lo detecta y le escribe (en la demo, a los 5 minutos; en un negocio real, por ejemplo, a las 24 horas).</dd>
+            </dl>
           </li>
         </ol>
+        <p class="aviso-falla"><svg class="icono" aria-hidden="true"><use href="#i-escudo"/></svg><span>Y si algo falla (la hoja o el correo), también te avisa, con el motivo. Nada se pierde en silencio.</span></p>
       </section>
 
-      <!-- ─── PRUÉBALO: formulario ─── -->
-      <section id="probar" aria-labelledby="t-probar">
-        <div class="cab-seccion"><h2 class="etiqueta" id="t-probar">Pruébalo</h2><span class="nota">Los campos con <span class="req">*</span> son obligatorios.</span></div>
+      <hr class="separador" style="margin: var(--espacio-64) auto var(--espacio-48)">
 
-        <div class="tarjeta">
-          <div id="errorGeneral" class="aviso error oculto" role="alert" tabindex="-1"></div>
+      <!-- ─── PROBAR: formulario y, al lado, lo que pasa al enviar ─── -->
+      <section class="probar" id="probar" aria-labelledby="t-probar">
 
-          <form id="leadForm" novalidate>
-            <input type="hidden" name="origen" value="web-form-demo">
+        <div>
+          <div class="tarjeta">
+            <div class="tarjeta-cab">
+              <h2 class="titular" id="t-probar">Haz de cliente</h2>
+              <span class="nota" id="notaObligatorios">Los campos con <span class="req">*</span> son obligatorios.</span>
+            </div>
 
-            <!-- Campo trampa: las personas no lo ven; los bots lo rellenan y el servidor los rechaza -->
-            <div class="trampa" aria-hidden="true">
-              <label>No rellenes este campo
-                <input type="text" name="web" tabindex="-1" autocomplete="off">
+            <div id="errorGeneral" class="aviso error oculto" role="alert" tabindex="-1"></div>
+
+            <form id="leadForm" novalidate>
+              <input type="hidden" name="origen" value="web-form-demo">
+
+              <!-- Campo trampa: las personas no lo ven; los bots lo rellenan y el servidor los rechaza -->
+              <div class="trampa" aria-hidden="true">
+                <label>No rellenes este campo
+                  <input type="text" name="web" tabindex="-1" autocomplete="off">
+                </label>
+              </div>
+
+              <div class="fila2">
+                <div class="campo">
+                  <label class="etiqueta-campo" for="nombre">Nombre <span class="req" aria-hidden="true">*</span></label>
+                  <input type="text" id="nombre" name="nombre" maxlength="60" autocomplete="given-name" required aria-required="true">
+                  <div class="error-campo oculto" id="error-nombre"></div>
+                </div>
+                <div class="campo">
+                  <label class="etiqueta-campo" for="apellido">Apellido <span class="opcional">(opcional)</span></label>
+                  <input type="text" id="apellido" name="apellido" maxlength="60" autocomplete="family-name">
+                </div>
+              </div>
+
+              <div class="campo">
+                <label class="etiqueta-campo" for="email">Email <span class="req" aria-hidden="true">*</span></label>
+                <input type="email" id="email" name="email" maxlength="254" autocomplete="email" required aria-required="true">
+                <div class="error-campo oculto" id="error-email"></div>
+              </div>
+
+              <div class="campo">
+                <label class="etiqueta-campo" for="mensaje">Mensaje <span class="opcional">(opcional)</span></label>
+                <textarea id="mensaje" name="mensaje" maxlength="400" placeholder="Por ejemplo: me gustaría automatizar los presupuestos de mi tienda"></textarea>
+                <div class="contador-msg" id="contadorMensaje">400 caracteres disponibles</div>
+              </div>
+
+              <label class="consentimiento">
+                <input type="checkbox" id="consentimiento" required aria-required="true">
+                <span>Acepto la <a href="#privacidad">política de privacidad</a>. <span class="req" aria-hidden="true">*</span></span>
               </label>
-            </div>
+              <div class="error-campo oculto" id="error-consentimiento"></div>
+              <p class="nota-info"><svg class="icono" aria-hidden="true"><use href="#i-info"/></svg><span>Te llegarán 2 emails al correo que escribas: uno ahora y otro a los 5 minutos. Tus datos se anonimizan a los 30 días.</span></p>
 
-            <div class="fila2">
-              <div class="campo">
-                <label class="etiqueta-campo" for="nombre">Nombre <span class="req" aria-hidden="true">*</span></label>
-                <input type="text" id="nombre" name="nombre" maxlength="60" autocomplete="given-name" required aria-required="true">
-                <div class="error-campo oculto" id="error-nombre"></div>
-              </div>
-              <div class="campo">
-                <label class="etiqueta-campo" for="apellido">Apellido <span class="opcional">(opcional)</span></label>
-                <input type="text" id="apellido" name="apellido" maxlength="60" autocomplete="family-name">
-              </div>
-            </div>
+              <button type="submit" class="btn-primario" id="btnEnviar">
+                <span class="spinner" id="spinner" aria-hidden="true"></span>
+                <span id="btnTexto">Probar la demo</span>
+              </button>
+              <p class="estado-envio oculto" id="estadoEnvio" role="status">Guardando tu solicitud y enviando tu primer correo… puede tardar unos segundos.</p>
+            </form>
 
-            <div class="campo">
-              <label class="etiqueta-campo" for="email">Email <span class="req" aria-hidden="true">*</span></label>
-              <input type="email" id="email" name="email" maxlength="254" autocomplete="email" required aria-required="true">
-              <div class="error-campo oculto" id="error-email"></div>
-            </div>
-
-            <div class="campo">
-              <label class="etiqueta-campo" for="mensaje">Mensaje <span class="opcional">(opcional)</span></label>
-              <textarea id="mensaje" name="mensaje" maxlength="400" placeholder="Por ejemplo: me gustaría automatizar los presupuestos de mi tienda"></textarea>
-              <div class="contador-msg" id="contadorMensaje">400 caracteres disponibles</div>
-            </div>
-
-            <label class="consentimiento">
-              <input type="checkbox" id="consentimiento" required aria-required="true">
-              <span>Acepto la <a href="#privacidad">política de privacidad</a>. <span class="req" aria-hidden="true">*</span></span>
-            </label>
-            <div class="error-campo oculto" id="error-consentimiento"></div>
-            <p class="nota-info"><svg class="icono" aria-hidden="true"><use href="#i-info"/></svg><span>Te llegarán 2 emails al correo que escribas: uno ahora y otro a los 5 minutos. Tus datos se anonimizan a los 30 días.</span></p>
-
-            <button type="submit" class="btn-primario" id="btnEnviar">
-              <span class="spinner" id="spinner" aria-hidden="true"></span>
-              <span id="btnTexto">Probar la demo</span>
-            </button>
-            <p class="estado-envio oculto" id="estadoEnvio" role="status">Guardando tu solicitud y enviando tu primer correo… puede tardar unos segundos.</p>
-          </form>
+            <!-- Tras enviar: lo rellena el JavaScript -->
+            <div class="enviado oculto" id="enviado"></div>
+          </div>
         </div>
 
-        <p class="personas oculto" id="pruebaSocial"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>
-          <span><span id="contadorPersonas"></span> <span id="textoContador">personas han probado la demo</span></span></p>
+        <!-- Lo que pasa al enviar: antes, los 5 pasos pendientes; después, lo que ha pasado de verdad -->
+        <div class="panel" id="panel" aria-live="polite">
+          <div class="panel-cab">
+            <h2 class="titular" id="t-panel" tabindex="-1">Lo que pasa al enviar</h2>
+            <p id="panelIntro">Envía el formulario y mira cada paso encenderse, de uno en uno.</p>
+          </div>
+          <ol class="flujo" id="panelLista">
+            <li class="paso pendiente"><div class="nodo" aria-hidden="true">1</div><div class="res-texto"><div class="res-fila"><h3>Recibido desde tu web</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>Tus datos, en cuanto envíes.</p></div></li>
+            <li class="paso pendiente"><div class="nodo" aria-hidden="true">2</div><div class="res-texto"><div class="res-fila"><h3>Registrado en tu hoja</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>La fila nueva de la hoja.</p></div></li>
+            <li class="paso pendiente"><div class="nodo" aria-hidden="true">3</div><div class="res-texto"><div class="res-fila"><h3>Respuesta enviada</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>El correo que te llega a ti.</p></div></li>
+            <li class="paso pendiente"><div class="nodo" aria-hidden="true">4</div><div class="res-texto"><div class="res-fila"><h3>Aviso en el móvil del negocio</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>El aviso que recibe el negocio.</p></div></li>
+            <li class="paso pendiente"><div class="nodo" aria-hidden="true">5</div><div class="res-texto"><div class="res-fila"><h3>Segundo correo si nadie contesta</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>El seguimiento, a los 5 minutos.</p></div></li>
+          </ol>
+        </div>
+
       </section>
-
-    </div><!-- /contenido -->
-
-    <!-- ─── RESULTADO: lo construye el JavaScript tras el envío ─── -->
-    <section class="oculto" id="resultado" aria-labelledby="t-resultado"></section>
     </main>
 
-    <hr class="separador" style="margin-top: var(--espacio-48)">
+    <hr class="separador" style="margin-top: var(--espacio-64)">
 
     <footer class="pie">
       <div>
-        <p>Vicente Rueda · automatización para pequeños negocios</p>
+        <p><b>Vicente Rueda</b> · automatización para pequeños negocios</p>
         <p>Demo hecha con n8n, Google Sheets, correo SMTP y Telegram.</p>
       </div>
       <button type="button" class="enlace" data-abrir-politica>Política de privacidad</button>
@@ -660,6 +792,7 @@
     const TIMEOUT_CONT_MS  = 8000;
     const URL_DEMO         = 'https://demo-leads.vicenterueda.com';
     const CONTACTO_EMAIL   = ''; // se rellena al decidir qué email publicar; vacío = el botón de contacto se oculta
+    const MS_ENTRE_PASOS   = 1500; // el resultado se enseña de uno en uno
 
     /* ── Modo simulación: SOLO en local (localhost, 127.0.0.1 o archivo abierto).
           En el dominio real se ignora aunque alguien escriba ?simular=… ── */
@@ -684,7 +817,8 @@
 
     const $ = (id) => document.getElementById(id);
     const mostrar = (el, si) => el.classList.toggle('oculto', !si);
-    const suave = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
+    const reducido = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const suave = () => (reducido() ? 'auto' : 'smooth');
 
     const form          = $('leadForm');
     const btnEnviar     = $('btnEnviar');
@@ -709,18 +843,24 @@
       return svg;
     }
 
-    /* ═══ Pasos en móvil: «Sin automatizar» abre lo que haría una persona ═══ */
-    document.querySelectorAll('.ver-persona').forEach((b) => b.addEventListener('click', () => {
-      const abrir = b.getAttribute('aria-expanded') !== 'true';
-      b.setAttribute('aria-expanded', String(abrir));
-      b.closest('.paso').classList.toggle('abierto', abrir);
-    }));
+    /* ═══ Recorrido: los 5 pasos se encienden de izquierda a derecha al llegar a ellos (una sola vez) ═══ */
+    (function encenderRecorrido() {
+      const rec = $('recorrido');
+      if (reducido() || !('IntersectionObserver' in window)) return; // sin animación: todo encendido desde el principio
+      rec.classList.add('por-encender');
+      const obs = new IntersectionObserver((entradas) => {
+        if (!entradas.some((e) => e.isIntersecting)) return;
+        rec.classList.remove('por-encender');
+        obs.disconnect();
+      }, { threshold: 0.2 });
+      obs.observe(rec);
+    })();
 
     /* ═══ Contador de personas (prueba social) ═══ */
     function pintarContador() {
       if (totalPersonas === null || totalPersonas < 1) { mostrar($('pruebaSocial'), false); return; }
-      $('contadorPersonas').textContent = totalPersonas.toLocaleString('es-ES');
-      $('textoContador').textContent = totalPersonas === 1 ? 'persona ha probado la demo' : 'personas han probado la demo';
+      $('contadorPersonas').textContent = totalPersonas === 1 ? '1 persona' : totalPersonas.toLocaleString('es-ES') + ' personas';
+      $('textoContador').textContent = totalPersonas === 1 ? 'lo ha probado' : 'lo han probado';
       mostrar($('pruebaSocial'), true);
     }
 
@@ -907,7 +1047,7 @@
       }
     });
 
-    /* ═══ Resultado: los 5 pasos con los datos reales del visitante ═══ */
+    /* ═══ Resultado: los 5 pasos con los datos reales del visitante, de uno en uno ═══ */
     function el(tag, clase, texto) {
       const n = document.createElement(tag);
       if (clase) n.className = clase;
@@ -915,36 +1055,57 @@
       return n;
     }
     const FECHA_FMT = { timeZone: 'Europe/Madrid', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-    const ICONO_ESTADO = { hecho: 'check', espera: 'reloj', fallo: 'alerta', apagado: 'pausa' };
+    const HORA_FMT  = { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' };
+    const ESTADOS = {
+      hecho:     { icono: 'check',  texto: 'Hecho' },
+      espera:    { icono: 'reloj',  texto: 'En espera' },
+      fallo:     { icono: 'alerta', texto: 'Ha fallado' },
+      apagado:   { icono: 'pausa',  texto: 'En pausa' },
+      pendiente: { icono: 'reloj',  texto: 'Pendiente' }
+    };
+    const panelInicial = $('panelLista').cloneNode(true); // para volver a empezar
     let temporizador = null;
+    let revelados = [];
 
-    function paso(estado, titulo, texto, ahorro, extra) {
-      const ancho = extra && extra.classList.contains('vista-hoja');
-      const li = el('li', 'paso ' + estado + (ancho ? ' ancho' : ''));
+    /* Pone un paso en su estado: color del nodo + icono + texto */
+    function ponerEstado(li, estado) {
+      li.dataset.estado = estado;
+      li.classList.remove('hecho', 'espera', 'fallo', 'apagado', 'pendiente');
+      li.classList.add(estado);
+      const e = ESTADOS[estado];
+      li.querySelector('.nodo').replaceChildren(estado === 'pendiente' ? li.dataset.numero : icono(e.icono));
+      li.querySelector('.estado-paso').replaceChildren(icono(e.icono), e.texto);
+    }
+
+    /* Un paso del resultado: llega «pendiente» y se enciende con su estado final al revelarse */
+    function paso(numero, estado, titulo, texto, extra) {
+      const li = el('li', 'paso esperando');
+      li.dataset.numero = String(numero);
+      li.dataset.final = estado;
       const nodo = el('div', 'nodo');
       nodo.setAttribute('aria-hidden', 'true');
-      nodo.append(icono(ICONO_ESTADO[estado]));
-      const cuerpo = el('div', 'res-cuerpo');
       const tx = el('div', 'res-texto');
-      tx.append(el('h3', '', titulo), el('p', '', texto));
-      if (ahorro) {
-        const p = el('p', 'res-ahorro');
-        p.append(el('b', '', 'Sin automatizar, '), 'una persona habría tenido que ' + ahorro);
-        tx.append(p);
-      }
-      cuerpo.append(tx);
-      if (extra) { const ex = el('div', 'res-extra'); ex.append(extra); cuerpo.append(ex); }
-      li.append(nodo, cuerpo);
+      const fila = el('div', 'res-fila');
+      fila.append(el('h3', '', titulo), el('span', 'estado-paso'));
+      tx.append(fila, el('p', '', texto));
+      if (extra) { const ex = el('div', 'res-extra'); ex.append(extra); tx.append(ex); }
+      li.append(nodo, tx);
+      ponerEstado(li, 'pendiente');
       return li;
     }
 
+    function revelar(li) {
+      li.classList.remove('esperando');
+      li.classList.add('visible');
+      ponerEstado(li, li.dataset.final);
+      if (!reducido()) li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
     function vistaHoja(r) {
-      const caja = el('div', 'vista-hoja');
-      caja.append(el('div', 'etiqueta vista-etiqueta', 'Así queda la hoja de cálculo'));
-      const hoja = el('div', 'hoja');
-      const barra = el('div', 'hoja-barra');
+      const caja = el('div');
+      const hoja = el('div', 'pieza hoja');
+      const barra = el('div', 'pieza-barra');
       barra.append(icono('hoja'), 'Hoja de cálculo · pestaña «Leads»');
-      hoja.append(barra);
       const scroll = el('div', 'hoja-scroll');
       scroll.tabIndex = 0; // se puede desplazar con el teclado si no cabe
       scroll.setAttribute('aria-label', 'Fila nueva de la hoja de cálculo');
@@ -958,7 +1119,7 @@
         .forEach((t) => { const td = el('td', '', t); td.title = t; nueva.append(td); });
       const thead = el('thead'); thead.append(cab);
       const tbody = el('tbody'); tbody.append(previas, nueva);
-      tabla.append(thead, tbody); scroll.append(tabla); hoja.append(scroll); caja.append(hoja);
+      tabla.append(thead, tbody); scroll.append(tabla); hoja.append(barra, scroll); caja.append(hoja);
       caja.append(el('p', 'nota-pie', 'La hora de la fila real puede ir unos segundos por detrás: si un servicio tarda en contestar, el sistema lo reintenta.'));
       return caja;
     }
@@ -967,24 +1128,27 @@
     function vistaCorreo(r, numero) {
       const primero = numero === 1;
       const caja = el('div');
-      caja.append(el('div', 'etiqueta vista-etiqueta', primero ? 'Así es el correo que recibes' : 'Así es el segundo correo'));
-      const t = el('div', 'tarjeta-vista');
-      const meta = el('div', 'meta');
-      meta.append(el('b', '', 'Equipo de Automatización'), document.createElement('br'),
-        'Asunto: ' + (primero ? 'Hemos recibido tu solicitud' : '¿Podemos ayudarte con tu solicitud?'));
+      const t = el('div', 'pieza');
+      const barra = el('div', 'pieza-barra');
+      barra.append(icono('correo'), 'Correo · bandeja de entrada');
+      const cab = el('div', 'correo-cab');
+      const dl = el('dl');
+      dl.append(el('dt', '', 'De'), el('dd', '', 'Equipo de Automatización'), el('dt', '', 'Para'), el('dd', '', r.email));
+      cab.append(dl, el('p', 'asunto', primero ? 'Hemos recibido tu solicitud' : '¿Podemos ayudarte con tu solicitud?'));
+      const cuerpo = el('div', 'pieza-cuerpo');
       const hola = el('p'); hola.append('Hola ', el('strong', '', r.nombre), ',');
-      t.append(meta, hola);
+      cuerpo.append(hola);
       if (primero) {
-        t.append(
+        cuerpo.append(
           el('p', '', 'Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.'),
           el('p', '', 'Nos pondremos en contacto contigo a la mayor brevedad posible.'));
       } else {
-        t.append(
+        cuerpo.append(
           el('p', '', 'Hace unos minutos recibimos tu solicitud y queríamos saber si necesitas algo más para poder ayudarte.'),
           el('p', '', 'Si nos cuentas un poco más de lo que buscas, respondiendo a este correo, podremos prepararte una propuesta a medida.'));
       }
       const firma = el('p'); firma.append('Un saludo, ', el('strong', '', 'Equipo de Automatización'));
-      t.append(firma);
+      cuerpo.append(firma);
       if (!primero) {
         const nota = el('div', 'nota-demo');
         nota.append(el('p', '', ''));
@@ -996,34 +1160,38 @@
          ['Recuperas el tiempo', ' que hoy dedicas a tareas repetitivas y manuales']]
           .forEach(([negrita, resto]) => { const li = el('li'); li.append(el('strong', '', negrita), resto); lista.append(li); });
         nota.append(lista, el('p', '', 'Si quieres ver cómo quedaría en tu caso, responde a este correo y te lo explicamos sin compromiso.'));
-        t.append(nota);
+        cuerpo.append(nota);
       }
+      t.append(barra, cab, cuerpo);
       caja.append(t, el('p', 'nota-pie', 'El correo real termina con un aviso sobre el tratamiento de tus datos.'));
       return caja;
     }
 
     function vistaTelegram(r) {
-      const caja = el('div');
-      caja.append(el('div', 'etiqueta vista-etiqueta', 'Así lo ve el negocio en su móvil'));
-      const t = el('div', 'tarjeta-vista telegram');
+      const t = el('div', 'pieza');
+      const cab = el('div', 'tg-cab');
+      const nombreBot = el('span', '', 'Demo Leads'); nombreBot.append(el('small', '', 'bot de Telegram'));
+      cab.append(el('span', 'tg-avatar', 'DL'), nombreBot);
+      const b = el('div', 'tg-burbuja');
       const l = (txt) => el('span', 'linea', txt);
       const nombreCompleto = r.nombre + (r.apellido ? ' ' + r.apellido : '');
       const msg = r.mensaje.length > 80 ? r.mensaje.slice(0, 80) + '...' : r.mensaje;
-      t.append(
+      b.append(
         el('strong', 'linea', '🔔 [Demo Leads] — Nuevo lead recibido'),
         l('👤 Nombre: ' + nombreCompleto),
         l('📧 Email: ' + r.email),
         l('💬 Mensaje: ' + (msg || '—')),
         l('🕐 Hora: ' + r.fecha.toLocaleString('es-ES', FECHA_FMT)),
-        l('🆔 ID: ' + (r.id || '—')));
-      caja.append(t);
-      return caja;
+        l('🆔 ID: ' + (r.id || '—')),
+        el('span', 'tg-hora', r.fecha.toLocaleTimeString('es-ES', HORA_FMT)));
+      t.append(cab, b);
+      return t;
     }
 
     function cuentaAtras(li, alTerminar) {
       const box = el('div', 'cuenta');
       box.setAttribute('role', 'timer');
-      const etiqueta = el('span', '', 'Email de seguimiento en');
+      const etiqueta = el('span', '', 'Segundo correo en');
       const tiempo = el('span', 'tiempo');
       box.append(etiqueta, tiempo);
       const fin = Date.now() + SEGUNDOS_SEGUIMIENTO * 1000; // con la hora real: si la pestaña se pausa, no se desfasa
@@ -1033,8 +1201,8 @@
           clearInterval(temporizador); temporizador = null;
           box.classList.add('hecha'); etiqueta.remove();
           tiempo.replaceChildren(icono('check'), 'Ya debería estar en tu bandeja de entrada');
-          li.className = 'paso hecho visible';
-          li.querySelector('.nodo').replaceChildren(icono('check'));
+          li.dataset.final = 'hecho';
+          if (!li.classList.contains('esperando')) ponerEstado(li, 'hecho');
           if (alTerminar) alTerminar();
           return;
         }
@@ -1045,52 +1213,21 @@
       return box;
     }
 
+    function pararTiempos() {
+      clearInterval(temporizador); temporizador = null;
+      revelados.forEach(clearTimeout); revelados = [];
+    }
+
     function mostrarResultado(r) {
       form.reset(); // los datos del visitante no se quedan en el formulario
       actualizarContadorMsg();
-      clearInterval(temporizador);
+      pararTiempos();
       const ok = r.tipo === 'ok';
-      const caja = $('resultado');
-      caja.replaceChildren();
 
-      /* Cabecera */
-      const cab = el('div', 'res-cab');
-      const insignia = el('div', 'aviso ' + (ok ? 'correcto' : 'parcial'));
-      insignia.append(icono(ok ? 'check' : 'alerta'), el('b', '', ok ? 'Automatización ejecutada' : 'Guardado, pero con un fallo'));
-      const h = el('h2', 'titular', ok ? 'Cuatro tareas hechas sin que nadie tocara nada' : 'Hemos guardado tu solicitud, pero no hemos podido enviarte el correo');
-      h.id = 't-resultado'; h.tabIndex = -1;
-      cab.append(insignia, h, el('p', '', ok ? 'Esto es lo que acaba de pasar con tu solicitud, paso a paso.' : 'Esto es lo que ha pasado con tu solicitud, paso a paso.'));
-
-      /* Los 5 pasos, en la misma línea de flujo */
-      const lista = el('ol', 'flujo flujo-res');
-      lista.append(
-        paso('hecho', '1 · Has rellenado el formulario', 'Tus datos han llegado al sistema.', 'atender el contacto y pedir los datos uno a uno.'),
-        paso('hecho', '2 · Se ha apuntado en la hoja de cálculo',
-          'Tu solicitud se ha guardado como una fila nueva' + (r.id ? ' (ID: ' + r.id + ').' : '.'),
-          'copiar los datos a una hoja, a mano.', vistaHoja(r)));
-      if (ok) {
-        lista.append(
-          paso('hecho', '3 · Te hemos enviado un email', 'Hemos enviado un correo a ' + r.email + '. Si no lo ves, mira en la carpeta de spam.',
-            'leer el mensaje, redactar la respuesta y enviarla.', vistaCorreo(r, 1)),
-          paso('hecho', '4 · Se avisa al móvil del negocio', 'Ahora mismo se avisa por Telegram a quien gestiona el negocio, con tus datos.',
-            'reenviar el contacto al responsable o llamarle.', vistaTelegram(r)));
-        const ex = el('div');
-        const li5 = paso('espera', '5 · A los 5 minutos, un segundo email',
-          'Llegará a ' + r.email + ' con el asunto «¿Podemos ayudarte con tu solicitud?». Cuando termine la cuenta atrás verás aquí lo que dice. Aunque cierres esta página, llegará igualmente.',
-          'acordarse de volver a escribirte.', ex);
-        ex.append(cuentaAtras(li5, () => { // al llegar a cero se muestra lo que dice el segundo correo
-          const correo2 = vistaCorreo(r, 2); correo2.classList.add('aparece'); ex.append(correo2);
-        }));
-        lista.append(li5);
-      } else {
-        lista.append(
-          paso('fallo', '3 · No hemos podido enviar el correo', 'No hemos podido enviar el correo a ' + r.email + '. El responsable ya ha recibido un aviso con la causa.'),
-          paso('apagado', '4 · Aviso al móvil del negocio', 'En pausa: el sistema se detiene si falla el primer correo.'),
-          paso('apagado', '5 · Segundo email a los 5 minutos', 'En pausa: el sistema se detiene si falla el primer correo.'));
-      }
-
-      /* Cierre */
-      const cierre = el('div', 'res-cierre');
+      /* Izquierda: el formulario deja sitio al aviso y al cierre */
+      const enviado = $('enviado');
+      const aviso = el('div', 'aviso ' + (ok ? 'correcto' : 'parcial'));
+      aviso.append(icono(ok ? 'check' : 'alerta'), el('b', '', ok ? 'Enviado. Mira cómo avanza, paso a paso.' : 'Guardado, pero no hemos podido enviarte el correo.'));
       const resumen = el('p');
       if (ok) resumen.append(el('strong', '', 'Con cada contacto nuevo pasa lo mismo, a cualquier hora y sin que nadie intervenga.'));
       else resumen.append(el('strong', '', 'Un sistema bien hecho avisa de cada fallo. '), 'En esta demo, el responsable recibe un aviso para poder resolverlo.');
@@ -1099,6 +1236,7 @@
       if (CONTACTO_EMAIL) {
         const a = el('a', 'btn-primario', 'Quiero saber más');
         a.href = 'mailto:' + CONTACTO_EMAIL + '?subject=' + encodeURIComponent('Quiero automatizar mis leads');
+        a.style.width = 'auto'; a.style.marginTop = '0';
         botones.append(a);
       }
       const compartir = el('button', 'btn-secundario'); compartir.type = 'button';
@@ -1107,19 +1245,46 @@
       const otra = el('button', 'btn-secundario', '← Probar con otro email'); otra.type = 'button';
       otra.addEventListener('click', reiniciar);
       botones.append(compartir, otra);
-      cierre.append(resumen, pregunta, botones);
+      enviado.replaceChildren(aviso, resumen, pregunta, botones);
+      mostrar(form, false); mostrar($('notaObligatorios'), false);
+      mostrar(enviado, true);
 
-      const sep = el('hr', 'separador'); sep.style.margin = 'var(--espacio-48) auto';
-      caja.append(cab, lista, sep, cierre);
-      mostrar($('contenido'), false);
-      mostrar(caja, true);
-      caja.scrollIntoView({ behavior: suave(), block: 'start' });
-      h.focus({ preventScroll: true });
+      /* Derecha: los 5 pasos, con lo que ha pasado de verdad */
+      $('t-panel').textContent = ok ? 'Tu demo en marcha' : 'Guardado, pero con un fallo';
+      $('panelIntro').textContent = ok ? 'Cada paso se enciende cuando le toca, de uno en uno.' : 'Esto es lo que ha pasado con tu solicitud, paso a paso.';
+      const nombreCompleto = r.nombre + (r.apellido ? ' ' + r.apellido : '');
+      const lista = el('ol', 'flujo');
+      lista.id = 'panelLista';
+      lista.append(
+        paso(1, 'hecho', 'Recibido desde tu web', nombreCompleto + ' · ' + r.email),
+        paso(2, 'hecho', 'Registrado en tu hoja', 'Una fila nueva en la pestaña «Leads»' + (r.id ? ' (ID: ' + r.id + ').' : '.'), vistaHoja(r)));
+      if (ok) {
+        lista.append(
+          paso(3, 'hecho', 'Respuesta enviada', 'Un correo a ' + r.email + ', en segundos. Si no lo ves, mira en la carpeta de spam.', vistaCorreo(r, 1)),
+          paso(4, 'hecho', 'Aviso en el móvil del negocio', 'Quien gestiona el negocio recibe tus datos por Telegram, al momento.', vistaTelegram(r)));
+        const ex = el('div');
+        const li5 = paso(5, 'espera', 'Segundo correo si nadie contesta',
+          'En un negocio real solo llega si nadie le ha contestado (por ejemplo, a las 24 horas). En la demo llega siempre, a los 5 minutos, a ' + r.email + ', con el asunto «¿Podemos ayudarte con tu solicitud?», aunque cierres esta página.', ex);
+        ex.append(cuentaAtras(li5, () => { // al llegar a cero se muestra lo que dice el segundo correo
+          const correo2 = vistaCorreo(r, 2); correo2.classList.add('aparece'); ex.append(correo2);
+        }));
+        lista.append(li5);
+      } else {
+        lista.append(
+          paso(3, 'fallo', 'No se pudo enviar la respuesta', 'No hemos podido enviar el correo a ' + r.email + '. El responsable ya ha recibido un aviso con la causa.'),
+          paso(4, 'apagado', 'Aviso en el móvil del negocio', 'En pausa: el sistema se detiene si falla el primer correo.'),
+          paso(5, 'apagado', 'Segundo correo si nadie contesta', 'En pausa: el sistema se detiene si falla el primer correo.'));
+      }
+      $('panelLista').replaceWith(lista);
 
-      /* Los pasos aparecen uno a uno */
+      const panel = $('panel');
+      panel.scrollIntoView({ behavior: suave(), block: 'start' });
+      $('t-panel').focus({ preventScroll: true });
+
+      /* Los pasos se encienden de uno en uno */
       const pasos = lista.querySelectorAll('.paso');
-      const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      pasos.forEach((li, i) => setTimeout(() => li.classList.add('visible'), reducido ? 0 : 250 + i * 600));
+      if (reducido()) { pasos.forEach(revelar); return; }
+      pasos.forEach((li, i) => revelados.push(setTimeout(() => revelar(li), 600 + i * MS_ENTRE_PASOS)));
     }
 
     function compartirDemo(texto) {
@@ -1131,11 +1296,15 @@
     }
 
     function reiniciar() {
-      clearInterval(temporizador); temporizador = null;
+      pararTiempos();
       limpiarErrores();
-      mostrar($('resultado'), false);
-      mostrar($('contenido'), true);
+      mostrar($('enviado'), false);
+      mostrar(form, true); mostrar($('notaObligatorios'), true);
+      $('t-panel').textContent = 'Lo que pasa al enviar';
+      $('panelIntro').textContent = 'Envía el formulario y mira cada paso encenderse, de uno en uno.';
+      $('panelLista').replaceWith(panelInicial.cloneNode(true));
       $('probar').scrollIntoView({ behavior: suave(), block: 'start' });
+      $('nombre').focus({ preventScroll: true });
     }
 
     /* Política de privacidad en ventana emergente (<dialog>: Escape cierra y el foco queda atrapado dentro) */
