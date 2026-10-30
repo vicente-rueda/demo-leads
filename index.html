@@ -87,12 +87,11 @@
     /* ─── PORTADA: una pantalla entera para una sola idea ─── */
     .portada {
       position: relative; text-align: center;
-      min-height: calc(100svh - var(--espacio-24));
       display: flex; flex-direction: column; align-items: center;
     }
-    body.con-banner .portada { min-height: calc(100svh - var(--espacio-48)); }
     .portada > *:not(.fondo-flujo) { position: relative; z-index: 1; }
-    .portada-centro { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--espacio-48) 0; }
+    .portada-centro { display: flex; flex-direction: column; align-items: center; padding: var(--espacio-48) 0 var(--espacio-128); }
+    @media (min-width: 1024px) { .portada-centro { padding: var(--espacio-64) 0 var(--espacio-128); } }
     .logo { display: inline-block; line-height: 0; }
     .logo img { height: 48px; width: auto; }
     @media (min-width: 1024px) { .logo img { height: 56px; } }
@@ -101,7 +100,8 @@
     .fondo-flujo {
       position: absolute; z-index: 0; pointer-events: none;
       left: 50%; transform: translateX(-50%);
-      top: 12%; width: 100vw; max-width: 1920px; height: 76%;
+      top: 0; width: 100vw; max-width: 1920px; height: 100%;
+      overflow: hidden; /* el dibujo se recorta: nunca ensancha la página */
     }
     .fondo-flujo path { fill: none; stroke: var(--color-principal); stroke-dasharray: 1; animation: dibuja 2s ease-out both; }
     .fondo-flujo .lejos { stroke-opacity: 0.10; stroke-width: 10; }
@@ -110,10 +110,10 @@
     .fondo-flujo circle.halo { fill: var(--color-principal); fill-opacity: 0.07; stroke: none; }
     .fondo-flujo circle.centro { fill: var(--color-principal); fill-opacity: 0.45; stroke: none; }
     @keyframes dibuja { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-    @media (max-width: 599px) { .fondo-flujo { top: 6%; height: 88%; } }
 
     .portada .etiqueta { margin-bottom: var(--espacio-12); }
     h1 { font-size: 1.9rem; max-width: 22em; margin: 0 auto var(--espacio-16); }
+    @media (min-width: 1280px) { h1 { max-width: none; } } /* en pantallas anchas cabe en una línea */
     @media (min-width: 600px)  { h1 { font-size: 2.1rem; } }
     @media (min-width: 1024px) { h1 { font-size: 2.4rem; } }
     .subtitulo { font-size: var(--t-paso); max-width: 34em; margin: 0 auto var(--espacio-24); text-wrap: balance; }
@@ -127,8 +127,6 @@
     .portada-centro .aparece:nth-child(3) { animation-delay: 0.2s; }
     .portada-centro .aparece:nth-child(4) { animation-delay: 0.3s; }
     .portada-centro .aparece:nth-child(5) { animation-delay: 0.4s; }
-    .bajar { display: inline-flex; align-items: center; gap: var(--espacio-4); margin-bottom: var(--espacio-16); font-size: var(--t-nota); color: var(--color-texto-suave); text-decoration: none; }
-    .bajar:hover { color: var(--color-principal); }
 
     .personas { display: inline-flex; align-items: center; gap: var(--espacio-8); font-size: var(--t-nota); color: var(--color-texto-suave); }
     .personas b { color: var(--color-texto); }
@@ -268,12 +266,13 @@
 
     /* Al bajar, cada paso aparece cuando llega (solo con JavaScript y sin «reducir movimiento») */
     .con-movimiento .r-bloque { transition: opacity 0.5s ease, transform 0.5s ease; }
-    .con-movimiento .r-paso:not(.visto) .r-bloque { opacity: 0; transform: translateY(24px); }
+    .con-movimiento:not(.escena) .r-paso:not(.visto) .r-bloque { opacity: 0; transform: translateY(24px); }
 
     /* La lista de pasos, fija a la izquierda en pantallas anchas: se enciende el paso que estás viendo */
     .r-nav { display: none; }
     @media (min-width: 1024px) {
-      .recorrido { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: var(--espacio-96); }
+      .escenario { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: var(--espacio-32) var(--espacio-96); }
+      .escenario .seccion-cab { grid-column: 1 / -1; }
       .r-nav { display: block; position: sticky; top: calc(50vh - 160px); align-self: start; }
       .r-nav ol { list-style: none; }
       .r-nav li { position: relative; padding-bottom: var(--espacio-24); }
@@ -292,7 +291,22 @@
       .r-paso + .r-paso { margin-top: 0; }
       .r-bloque h3 { font-size: 1.8rem; }
     }
-    @media (min-width: 1400px) { .recorrido { gap: var(--espacio-128); } }
+    @media (min-width: 1400px) { .escenario { column-gap: var(--espacio-128); } }
+    .escenario .seccion-cab { margin-bottom: 0; }
+    @media (max-width: 1023px) { .escenario .seccion-cab { margin-bottom: var(--espacio-32); } }
+
+    /* Escena: la zona de pasos se queda fija y, al hacer scroll, un paso sustituye al otro (bajar = siguiente, subir = anterior).
+       La activa el JavaScript solo si cabe en la pantalla y sin «reducir movimiento»; si no, los pasos van uno debajo de otro. */
+    .recorrido.escena { height: calc(5 * 60vh); }
+    .escena .escenario { position: sticky; top: var(--arriba, 0px); display: grid; } /* --arriba la calcula el JavaScript para dejarla centrada */
+    .escena .r-nav { position: static; align-self: center; }
+    .escena .r-pasos { display: grid; grid-template-columns: minmax(0, 1fr); align-self: center; }
+    @media (max-width: 1023px) { .escena .escenario { grid-template-columns: minmax(0, 1fr); } }
+    .escena .r-paso { grid-area: 1 / 1; min-height: 0; margin: 0; display: block; }
+    .escena .r-paso + .r-paso { margin-top: 0; }
+    .escena .r-paso .r-bloque { opacity: 0; transform: translateY(32px); transition: opacity 0.35s ease, transform 0.35s ease; }
+    .escena .r-paso.pasado .r-bloque { transform: translateY(-32px); }
+    .escena .r-paso.activo .r-bloque { opacity: 1; transform: none; }
 
     .aviso-falla {
       display: flex; gap: var(--espacio-8); align-items: flex-start;
@@ -515,7 +529,6 @@
     <symbol id="i-reloj" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></symbol>
     <symbol id="i-pausa" viewBox="0 0 16 16"><path d="M6 4v8M10 4v8"/></symbol>
     <symbol id="i-persona" viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="3"/><path d="M2.5 14.5c.6-3 2.8-4.5 5.5-4.5s4.9 1.5 5.5 4.5"/></symbol>
-    <symbol id="i-abajo" viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></symbol>
     <symbol id="i-hoja" viewBox="0 0 16 16"><rect x="2" y="2.5" width="12" height="11" rx="1"/><path d="M2 6h12M2 9.5h12M6 6v7.5"/></symbol>
     <symbol id="i-correo" viewBox="0 0 16 16"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="m2 4.5 6 4.5 6-4.5"/></symbol>
     <symbol id="i-formulario" viewBox="0 0 16 16"><rect x="2.5" y="1.5" width="11" height="13" rx="1"/><path d="M5 5h6M5 8h6M5 11h3.5"/></symbol>
@@ -530,14 +543,14 @@
 
     <!-- ─── PORTADA: qué hace (titular), el dolor (subtítulo y pregunta) y probarlo ─── -->
     <header class="portada">
-      <svg class="fondo-flujo" viewBox="0 0 1600 650" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <path class="lejos" pathLength="1" d="M-40 179 C 140 179, 230 553, 430 569 S 680 590, 800 590 S 1050 588, 1170 569 S 1460 179, 1640 163"/>
-        <path class="cerca" pathLength="1" d="M-40 179 C 140 179, 230 553, 430 569 S 680 590, 800 590 S 1050 588, 1170 569 S 1460 179, 1640 163"/>
-        <circle class="halo" cx="146" cy="311" r="44"/><circle cx="146" cy="311" r="18"/><circle class="centro" cx="146" cy="311" r="6"/>
-        <circle class="halo" cx="430" cy="569" r="44"/><circle cx="430" cy="569" r="18"/><circle class="centro" cx="430" cy="569" r="6"/>
-        <circle class="halo" cx="800" cy="590" r="44"/><circle cx="800" cy="590" r="18"/><circle class="centro" cx="800" cy="590" r="6"/>
-        <circle class="halo" cx="1170" cy="569" r="44"/><circle cx="1170" cy="569" r="18"/><circle class="centro" cx="1170" cy="569" r="6"/>
-        <circle class="halo" cx="1458" cy="280" r="44"/><circle cx="1458" cy="280" r="18"/><circle class="centro" cx="1458" cy="280" r="6"/>
+      <svg class="fondo-flujo" viewBox="0 0 1600 560" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <path class="lejos" pathLength="1" d="M-40 152 C 140 152, 230 470, 430 484 S 680 500, 800 500 S 1050 500, 1170 484 S 1460 152, 1640 139"/>
+        <path class="cerca" pathLength="1" d="M-40 152 C 140 152, 230 470, 430 484 S 680 500, 800 500 S 1050 500, 1170 484 S 1460 152, 1640 139"/>
+        <circle class="halo" cx="146" cy="264" r="44"/><circle cx="146" cy="264" r="18"/><circle class="centro" cx="146" cy="264" r="6"/>
+        <circle class="halo" cx="430" cy="484" r="44"/><circle cx="430" cy="484" r="18"/><circle class="centro" cx="430" cy="484" r="6"/>
+        <circle class="halo" cx="800" cy="500" r="44"/><circle cx="800" cy="500" r="18"/><circle class="centro" cx="800" cy="500" r="6"/>
+        <circle class="halo" cx="1170" cy="484" r="44"/><circle cx="1170" cy="484" r="18"/><circle class="centro" cx="1170" cy="484" r="6"/>
+        <circle class="halo" cx="1458" cy="238" r="44"/><circle cx="1458" cy="238" r="18"/><circle class="centro" cx="1458" cy="238" r="6"/>
       </svg>
       <a class="logo" href="https://vicenterueda.com" aria-label="Vicente Rueda Gómez, ir a la web">
         <img src="logo/logo-color.svg" alt="Vicente Rueda Gómez" width="272" height="64">
@@ -553,18 +566,18 @@
             <span><b id="contadorPersonas"></b> <span id="textoContador">personas lo han probado</span></span></p>
         </div>
       </div>
-      <a class="bajar" href="#t-pasos">Mira qué pasa, paso a paso <svg class="icono" aria-hidden="true"><use href="#i-abajo"/></svg></a>
     </header>
 
     <main>
 
       <!-- ─── QUÉ PASA, PASO A PASO: un paso cada vez, con la pieza que sale y lo que costaría a mano ─── -->
       <section class="banda" aria-labelledby="t-pasos">
-        <div class="seccion-cab">
-          <p class="etiqueta">Cómo funciona</p>
-          <h2 class="titular" id="t-pasos">Qué pasa, paso a paso.</h2>
-        </div>
         <div class="recorrido" id="recorrido">
+          <div class="escenario">
+            <div class="seccion-cab">
+              <p class="etiqueta">Cómo funciona</p>
+              <h2 class="titular" id="t-pasos">Qué pasa, paso a paso.</h2>
+            </div>
           <nav class="r-nav" aria-label="Los 5 pasos">
             <ol>
               <li><a href="#paso-1"><span class="nodo" aria-hidden="true">1</span><span>El cliente escribe en tu web</span></a></li>
@@ -683,6 +696,7 @@
             </div>
           </li>
           </ol>
+          </div>
         </div>
         <p class="aviso-falla"><svg class="icono" aria-hidden="true"><use href="#i-escudo"/></svg><span>Y si algo falla (la hoja o el correo), también te avisa, con el motivo. Nada se pierde en silencio.</span></p>
       </section>
@@ -872,24 +886,69 @@
       return svg;
     }
 
-    /* ═══ Recorrido: cada paso aparece al llegar a él y, en pantallas anchas, la lista fija enciende el que estás viendo ═══ */
+    /* ═══ Recorrido: los 5 pasos ═══
+       Escena (si cabe en la pantalla y sin «reducir movimiento»): la zona queda fija y el paso que se ve depende de cuánto has bajado.
+       Si no cabe: uno debajo de otro, cada uno aparece al llegar y la lista fija enciende el que cruza el centro. */
     (function recorrido() {
-      const pasos = [...document.querySelectorAll('.r-paso')];
-      const nav = [...document.querySelectorAll('.r-nav li')];
-      if (!('IntersectionObserver' in window)) { pasos.forEach((p) => p.classList.add('visto')); return; }
-      if (!reducido()) $('recorrido').classList.add('con-movimiento');
-      const aparecer = new IntersectionObserver((entradas) => entradas.forEach((e) => {
-        if (e.isIntersecting) { e.target.classList.add('visto'); aparecer.unobserve(e.target); }
-      }), { threshold: 0.15 });
-      const marcar = (activo) => nav.forEach((li, j) => {
-        li.classList.toggle('hecho', j < activo);
-        li.classList.toggle('activo', j === activo);
-      });
-      const enCentro = new IntersectionObserver((entradas) => entradas.forEach((e) => {
-        if (e.isIntersecting) marcar(pasos.indexOf(e.target));
-      }), { rootMargin: '-45% 0px -45% 0px' }); // cuenta como «viendo» el paso que cruza el centro de la pantalla
-      pasos.forEach((p) => { aparecer.observe(p); enCentro.observe(p); });
-      marcar(0);
+      const rec = $('recorrido');
+      const pasos = [...rec.querySelectorAll('.r-paso')];
+      const nav = [...rec.querySelectorAll('.r-nav li')];
+      let activo = -1, enEscena = false, pendiente = false;
+
+      function marcar(i) {
+        if (i === activo) return;
+        activo = i;
+        pasos.forEach((p, j) => { p.classList.toggle('activo', j === i); p.classList.toggle('pasado', j < i); });
+        nav.forEach((li, j) => { li.classList.toggle('hecho', j < i); li.classList.toggle('activo', j === i); });
+      }
+      function segunScroll() {
+        pendiente = false;
+        if (!enEscena) return;
+        const r = rec.getBoundingClientRect();
+        const arriba = parseFloat(rec.style.getPropertyValue('--arriba')) || 0;
+        const fijo = r.height - rec.querySelector('.escenario').offsetHeight; // tramo de scroll en el que la zona está fija
+        const avance = Math.min(Math.max((arriba - r.top) / fijo, 0), 0.999);
+        marcar(Math.floor(avance * pasos.length));
+      }
+      function decidir() {
+        rec.classList.add('escena');
+        const alto = rec.querySelector('.seccion-cab').offsetHeight + 32 +
+          Math.max(rec.querySelector('.r-pasos').offsetHeight, rec.querySelector('.r-nav').offsetHeight); // con los pasos apilados mide el más alto
+        enEscena = !reducido() && alto <= innerHeight - 48;
+        rec.classList.toggle('escena', enEscena);
+        const banner = document.body.classList.contains('con-banner') ? $('bannerSim').offsetHeight : 0;
+        rec.style.setProperty('--arriba', Math.max(banner, (innerHeight - alto + banner) / 2) + 'px');
+        activo = -1;
+        if (enEscena) segunScroll(); else marcar(0);
+      }
+
+      addEventListener('scroll', () => { if (!pendiente) { pendiente = true; requestAnimationFrame(segunScroll); } }, { passive: true });
+      let espera = null;
+      addEventListener('resize', () => { clearTimeout(espera); espera = setTimeout(decidir, 200); });
+
+      /* En la escena, los enlaces de la lista llevan al tramo de scroll de cada paso */
+      nav.forEach((li, i) => li.querySelector('a').addEventListener('click', (e) => {
+        if (!enEscena) return;
+        e.preventDefault();
+        const r = rec.getBoundingClientRect();
+        const arriba = parseFloat(rec.style.getPropertyValue('--arriba')) || 0;
+        const fijo = r.height - rec.querySelector('.escenario').offsetHeight;
+        scrollTo({ top: scrollY + r.top - arriba + (i + 0.5) / pasos.length * fijo, behavior: suave() });
+      }));
+
+      /* Sin escena */
+      if ('IntersectionObserver' in window) {
+        if (!reducido()) rec.classList.add('con-movimiento');
+        const aparecer = new IntersectionObserver((entradas) => entradas.forEach((e) => {
+          if (e.isIntersecting) { e.target.classList.add('visto'); aparecer.unobserve(e.target); }
+        }), { threshold: 0.15 });
+        const enCentro = new IntersectionObserver((entradas) => entradas.forEach((e) => {
+          if (e.isIntersecting && !enEscena) marcar(pasos.indexOf(e.target));
+        }), { rootMargin: '-45% 0px -45% 0px' });
+        pasos.forEach((p) => { aparecer.observe(p); enCentro.observe(p); });
+      } else pasos.forEach((p) => p.classList.add('visto'));
+
+      decidir();
     })();
 
     /* ═══ Contador de personas (prueba social) ═══ */
