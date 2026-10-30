@@ -1,0 +1,125 @@
+/* ==========================================================================
+   Identidad visual de Vicente Rueda — paleta «C2 Lavanda sobria»
+   Fuente única: mi-universo/identidad-visual/identidad.css (guía: identidad.md)
+   Cada proyecto la copia a su repo junto con la carpeta fuentes/.
+   Cerrada el 30/10/2026.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Fuentes — alojadas en la propia web (sin Google Fonts ni CDN)
+   Licencia de ambas: SIL Open Font License 1.1 (OFL.txt de cada repo, que se
+   copia a fuentes/ junto a los .woff2).
+
+   Newsreader (titulares) — https://github.com/productiontype/Newsreader
+     fonts/static/woff2/Newsreader16pt-SemiBold.woff2
+   Instrument Sans (texto) — https://github.com/Instrument/instrument-sans
+     fonts/webfonts/InstrumentSans-Regular.woff2
+     fonts/webfonts/InstrumentSans-SemiBold.woff2
+   -------------------------------------------------------------------------- */
+@font-face {
+  font-family: "Newsreader";
+  src: url("fuentes/Newsreader16pt-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("fuentes/InstrumentSans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Instrument Sans";
+  src: url("fuentes/InstrumentSans-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* ---- Colores ------------------------------------------------------------
+     Contraste WCAG 2.x comprobado (fondo / superficie). Todo texto ≥ 4,5:1. */
+  --color-fondo:        #f8f6fb; /* casi blanco con velo lila */
+  --color-superficie:   #ece7f5; /* cajas y tarjetas (lavanda) */
+  --color-texto:        #1f1b2b; /* 15,7 / 13,9 */
+  --color-texto-suave:  #5b5668; /*  6,6 /  5,8 */
+  --color-principal:    #5a4691; /*  7,2 /  6,4 — enlaces, botones, logo */
+  --color-sobre-principal: #ffffff; /* texto del botón: 7,7 */
+  --color-acento:       #7a5c00; /*  5,8 /  5,2 — mostaza, solo detalles */
+  --color-correcto:     #2f6b3a; /*  6,0 /  5,3 — siempre con icono y texto */
+  --color-error:        #a63a2b; /*  6,0 /  5,3 — siempre con icono y texto */
+  --color-separador:    #8a74c4; /*  3,6 /  3,2 — decorativo, nunca texto */
+
+  /* ---- Fuentes ---------------------------------------------------------- */
+  --fuente-titulares: "Newsreader", Georgia, "Times New Roman", serif;
+  --fuente-texto: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --peso-normal: 400;
+  --peso-fuerte: 600;
+
+  /* ---- Tamaños de texto (no se cambian) ----------------------------------
+     En una página adaptable, 13/14/15 px es el tamaño BASE según la pantalla
+     (móvil 13, tablet ≥ 600 px 14, escritorio ≥ 1024 px 15, en html{font-size})
+     y todo lo demás se escala en rem. Así lo hace demo-leads. Estas tres
+     variables son para piezas de tamaño fijo (presentaciones, documentos). */
+  --texto-pequeno: 13px; /* notas, etiquetas, pies */
+  --texto-base:    14px; /* párrafos */
+  --texto-grande:  15px; /* entradillas, botones */
+  --texto-titular: 30px; /* referencia de la comparación; cada proyecto lo ajusta */
+
+  /* ---- Espaciado: escala cerrada, el número es su medida en px ----------
+     Fijada el 30/10/2026 con el rediseño de demo-leads (propuesta B3).
+     Solo estas medidas para márgenes, rellenos y huecos. */
+  --espacio-4:   4px;  /* etiqueta → su campo; título → su texto */
+  --espacio-8:   8px;  /* icono → texto; líneas de una misma lista */
+  --espacio-12:  12px; /* titular → entradilla; cabecera de sección → contenido */
+  --espacio-16:  16px; /* entre pasos, entre campos */
+  --espacio-24:  24px; /* relleno de tarjetas en móvil */
+  --espacio-32:  32px; /* relleno de tarjetas en escritorio */
+  --espacio-48:  48px; /* entre bloques; contenido → separador del pie */
+  --espacio-64:  64px; /* margen lateral en escritorio */
+  --espacio-96:  96px; /* hueco entre columnas (1024–1399 px) */
+  --espacio-128: 128px; /* hueco entre columnas (≥ 1400 px) */
+
+  /* ---- Radios de esquina: poco redondeado = sobrio y fiable ------------- */
+  --radio-pequeno: 4px; /* botón, campos de texto, avisos */
+  --radio-medio:   8px; /* tarjetas */
+  --radio-redondo: 50%; /* círculos (nodos del flujo, avatares) */
+
+  /* ---- Anchos ------------------------------------------------------------ */
+  --ancho-maximo: 1520px; /* caja de la página centrada, márgenes laterales incluidos */
+  --ancho-lectura: 40em;  /* ~70 caracteres por línea */
+
+  /* ---- Separador: línea de 1 px que se desvanece a los lados ------------ */
+  --separador-grosor: 1px;
+  --separador-linea: linear-gradient(to right,
+                       transparent, var(--color-separador) 50%, transparent);
+}
+
+/* Separador listo para usar: <hr class="separador">
+   La línea es un BORDE, no un fondo: los navegadores ajustan los bordes a un
+   píxel entero. Pintada como fondo de 1 px, al caer entre dos píxeles se
+   repartía en dos medias líneas casi invisibles (corregido el 30/10/2026). */
+.separador {
+  position: relative;
+  height: 0;
+  border: 0;
+  border-top: var(--separador-grosor) solid var(--color-separador);
+  border-image: var(--separador-linea) 1;
+  overflow: visible;
+}
+
+/* Adorno central: rombo pequeño en mostaza, centrado sobre la línea */
+.separador::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--separador-grosor) / -2);
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: var(--color-acento);
+  transform: translate(-50%, -50%) rotate(45deg);
+}

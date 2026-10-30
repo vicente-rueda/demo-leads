@@ -4,555 +4,447 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Demo · Captación y seguimiento automático de clientes</title>
+  <meta name="description" content="Alguien rellena un formulario y el sistema lo apunta en una hoja, le responde por email, avisa al negocio y hace el seguimiento solo. Pruébalo con tu email.">
+  <meta name="theme-color" content="#f8f6fb">
+  <link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="logo/favicon-180.png">
+  <link rel="preload" href="fuentes/InstrumentSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fuentes/Newsreader16pt-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Identidad visual (colores, fuentes, espaciado, esquinas): siempre antes de los estilos propios -->
+  <link rel="stylesheet" href="identidad.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --fondo: #090e1a;
-      --panel: rgba(10, 16, 30, 0.82);
-      --borde: rgba(99,102,241,0.22);
-      --borde-suave: rgba(100,116,139,0.22);
-      --texto: #f1f5f9;
-      --texto-suave: #b4c0d3;
-      --texto-tenue: #8b9ab0;
-      --acento: #a5b4fc;
-      --primario: #6366f1;
-      --primario-oscuro: #4f46e5;
-      --ok: #4ade80;
-      --aviso: #fbbf24;
-      --error: #f87171;
+      /* Bordes finos: el texto suave de la identidad con transparencia (decorativos) */
+      --borde: rgba(91, 86, 104, 0.28);
+      --borde-campo: var(--color-texto-suave);
       /* Escala de texto (rem): solo estos niveles, para que todas las secciones se vean iguales */
-      --t-lectura: 0.92rem;
-      --t-secundario: 0.85rem;
-      --t-sub: 1.05rem;
-      --t-etiqueta: 0.75rem;
-      --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      --t-nota: 0.87rem;
+      --t-etiqueta: 0.8rem;
+      --t-paso: 1.05rem;
+      --tam-nodo: 32px;
     }
 
     /* Tamaño base: todo el texto está en rem, así que escala junto.
-       móvil 13px < tablet 14px < escritorio 15px */
+       móvil 13px < tablet 14px < escritorio 15px (no se cambia) */
     html { scroll-behavior: smooth; font-size: 13px; }
     @media (min-width: 600px)  { html { font-size: 14px; } }
     @media (min-width: 1024px) { html { font-size: 15px; } }
 
     body {
-      font-family: var(--fuente);
-      background: var(--fondo);
-      color: var(--texto);
+      font-family: var(--fuente-texto);
+      font-weight: var(--peso-normal);
+      background: var(--color-fondo);
+      color: var(--color-texto);
       line-height: 1.5;
-      padding: 24px 16px 48px;
       overflow-x: hidden;
     }
 
-    /* ─── FONDO ─── */
-    .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-    .bg::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 70% 60% at 15% 15%, rgba(99,102,241,0.18) 0%, transparent 55%),
-        radial-gradient(ellipse 60% 70% at 85% 85%, rgba(59,130,246,0.14) 0%, transparent 55%),
-        radial-gradient(ellipse 50% 50% at 50% 50%, rgba(139,92,246,0.07) 0%, transparent 65%);
-      animation: bgPulse 10s ease-in-out infinite alternate;
-    }
-    @keyframes bgPulse {
-      from { opacity: 0.7; transform: scale(1); }
-      to   { opacity: 1;   transform: scale(1.06); }
-    }
-
     .pagina {
-      position: relative;
-      z-index: 1;
       width: 100%;
-      max-width: 760px;
+      max-width: var(--ancho-maximo);
       margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+      padding: var(--espacio-24) var(--espacio-16) var(--espacio-48);
     }
+    @media (min-width: 600px)  { .pagina { padding: var(--espacio-24) var(--espacio-32) var(--espacio-48); } }
+    @media (min-width: 1024px) { .pagina { padding: var(--espacio-24) var(--espacio-64) var(--espacio-48); } }
 
-    /* Pasos y formulario: en móvil/tablet uno debajo del otro; en escritorio, lado a lado */
-    .contenido { display: flex; flex-direction: column; gap: 20px; }
-    .lateral { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-
-    :focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
-
-    a { color: var(--acento); }
-
+    :focus-visible { outline: 2px solid var(--color-principal); outline-offset: 2px; }
+    a { color: var(--color-principal); }
+    strong, b { font-weight: var(--peso-fuerte); }
     .oculto { display: none !important; }
 
-    /* ─── PANEL GENÉRICO ─── */
-    .panel {
-      background: var(--panel);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid var(--borde);
-      border-radius: 20px;
-      padding: 32px 28px;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
-    }
+    .icono { width: 1em; height: 1em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
-    h2 { font-size: 1.3rem; line-height: 1.3; margin-bottom: 8px; }
-    .intro { font-size: var(--t-lectura); color: var(--texto-suave); margin-bottom: 22px; }
+    /* Separador de la identidad, corto y centrado */
+    .separador { max-width: 26rem; margin: var(--espacio-16) auto; }
+
+    /* Etiqueta en mayúsculas (mostaza: solo detalles) */
+    .etiqueta {
+      font-size: var(--t-etiqueta);
+      font-weight: var(--peso-fuerte);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-acento);
+    }
 
     /* ─── CABECERA ─── */
-    .hero { text-align: center; }
+    /* Cabecera centrada, como una portada: logo (con su separador dentro), titular y ENTRA/SALE */
+    .cabecera { text-align: center; }
+    .logo { display: inline-block; line-height: 0; margin-bottom: var(--espacio-24); }
+    .logo img { height: 48px; width: auto; }
+    @media (min-width: 1024px) { .logo img { height: 64px; } .logo { margin-bottom: var(--espacio-32); } }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(99,102,241,0.13);
-      border: 1px solid rgba(99,102,241,0.28);
-      color: var(--acento);
-      font-size: var(--t-etiqueta);
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      padding: 4px 12px;
-      border-radius: 20px;
-      margin-bottom: 14px;
+    h1, h2.titular {
+      font-family: var(--fuente-titulares);
+      font-weight: var(--peso-fuerte);
+      line-height: 1.15;
+      letter-spacing: -0.005em;
+      text-wrap: balance; /* reparte las líneas: sin palabras sueltas al final */
     }
+    h1 { font-size: 1.9rem; max-width: 24em; margin: 0 auto var(--espacio-16); }
+    @media (min-width: 600px)  { h1 { font-size: 2.1rem; } }
+    @media (min-width: 1024px) { h1 { font-size: 2.4rem; } }
 
-    .prueba-social {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 18px;
-      font-size: var(--t-secundario);
-      color: var(--texto-tenue);
-    }
-    .prueba-social .punto {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--ok);
-      animation: pulse 1.8s ease-in-out infinite;
-      flex-shrink: 0;
-    }
-    .prueba-social b { color: var(--acento); font-weight: 700; }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.7); }
-    }
-
-    /* Un único h1: qué es la demo + el ahorro. Ancho completo para que no se parta en muchas líneas */
-    .hero h1 {
-      font-size: 1.4rem;
-      line-height: 1.25;
-      margin: 0 auto 14px;
-      max-width: 34em;
-      text-wrap: balance; /* reparte las líneas por igual: sin palabras sueltas al final */
-    }
-    @media (min-width: 600px)  { .hero h1 { font-size: 1.7rem; } }
-    @media (min-width: 1024px) { .hero h1 { font-size: 2rem; max-width: none; } }
-    .hero .subtitulo { font-size: 1rem; color: var(--texto-suave); max-width: 56em; margin: 0 auto 22px; text-wrap: pretty; }
-    @media (min-width: 1024px) { .hero .subtitulo { max-width: 72em; } }
-
-    .btn-secundario {
-      display: inline-block;
-      padding: 11px 24px;
-      border: 1px solid rgba(99,102,241,0.5);
-      border-radius: 10px;
-      color: var(--texto);
-      text-decoration: none;
-      font-weight: 600;
-      font-size: var(--t-lectura);
-      transition: background 0.2s;
-    }
-    .btn-secundario:hover { background: rgba(99,102,241,0.12); }
-
-    /* ─── AHORRO ─── */
-    .ahorro-lista {
-      list-style: none;
+    .cabecera-pie { display: flex; flex-direction: column; align-items: center; gap: var(--espacio-12); }
+    .entra-sale {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: var(--espacio-8) var(--espacio-24);
+      max-width: 36em;
+      font-size: var(--t-paso);
+      text-align: left;
     }
-    .ahorro-lista li {
-      background: rgba(99,102,241,0.07);
-      border: 1px solid rgba(99,102,241,0.18);
-      border-radius: 14px;
-      padding: 14px 16px;
-      font-size: var(--t-lectura);
-      color: var(--texto-suave);
+    .entra-sale dt {
+      font-size: var(--t-etiqueta);
+      font-weight: var(--peso-fuerte);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-principal);
+      padding-top: 0.2em;
     }
-    .ahorro-cab { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-    .ahorro-lista .icono { font-size: 1.3rem; line-height: 1; flex-shrink: 0; }
-    .ahorro-lista strong { color: var(--texto); font-size: var(--t-sub); }
+    /* Solo hace falta cuando el formulario no está al lado (móvil y tablet) */
+    .ir-probar { font-size: var(--t-nota); white-space: nowrap; }
+    @media (min-width: 1024px) { .ir-probar { display: none; } }
 
-    /* ─── MAPA DE 5 PASOS ─── */
-    .pasos { list-style: none; display: flex; flex-direction: column; gap: 14px; counter-reset: paso; }
+    /* ─── CONTENIDO: flujo a la izquierda, formulario a la derecha ─── */
+    .contenido { display: grid; gap: var(--espacio-48); }
+    @media (min-width: 1024px) {
+      .contenido { grid-template-columns: minmax(0, 1fr) 440px; gap: var(--espacio-96); align-items: start; }
+    }
+    @media (min-width: 1400px) { .contenido { gap: var(--espacio-128); } }
 
+    .cab-seccion { display: flex; align-items: baseline; justify-content: space-between; gap: var(--espacio-12); margin-bottom: var(--espacio-16); }
+    .cab-seccion .nota { font-size: var(--t-nota); color: var(--color-texto-suave); }
+
+    /* ─── LÍNEA DE FLUJO (los 5 pasos y el resultado usan la misma) ─── */
+    .flujo { list-style: none; max-width: var(--ancho-lectura); }
     .paso {
       position: relative;
       display: grid;
-      grid-template-columns: 40px 1fr;
-      gap: 14px;
+      grid-template-columns: var(--tam-nodo) minmax(0, 1fr);
+      gap: var(--espacio-16);
+      padding-bottom: var(--espacio-16);
     }
-    .paso:not(:last-child)::after {
+    .paso:last-child { padding-bottom: 0; }
+    /* El tramo de línea que une este nodo con el siguiente */
+    .paso:not(:last-child)::before {
       content: '';
       position: absolute;
-      left: 19px;
-      top: 42px;
-      bottom: -14px;
-      width: 2px;
-      background: var(--borde-suave);
+      left: calc(var(--tam-nodo) / 2 - 0.75px);
+      top: var(--tam-nodo);
+      bottom: 0;
+      width: 1.5px;
+      background: var(--color-principal);
+      transform-origin: top;
+      animation: trazo 0.5s ease-out both;
     }
-    .paso-num {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      background: rgba(99,102,241,0.18);
-      border: 1px solid rgba(99,102,241,0.4);
-      color: var(--acento);
-      font-weight: 700;
-      font-size: var(--t-sub);
+    .flujo .paso:nth-child(2)::before { animation-delay: 0.15s; }
+    .flujo .paso:nth-child(3)::before { animation-delay: 0.3s; }
+    .flujo .paso:nth-child(4)::before { animation-delay: 0.45s; }
+    @keyframes trazo { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+    .nodo {
+      width: var(--tam-nodo); height: var(--tam-nodo);
+      border-radius: var(--radio-redondo);
+      border: 1.5px solid var(--color-principal);
+      background: var(--color-fondo);
+      color: var(--color-principal);
+      font-weight: var(--peso-fuerte);
       display: flex; align-items: center; justify-content: center;
+      position: relative; z-index: 1;
     }
-    .paso-cuerpo h3 { font-size: var(--t-sub); margin: 6px 0 10px; }
+    .nodo .icono { width: 16px; height: 16px; stroke-width: 2; }
 
-    .comparativa {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .comparativa > div {
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: var(--t-lectura);
-      line-height: 1.45;
-    }
-    .comparativa .etiqueta {
-      display: block;
-      font-size: var(--t-etiqueta);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 4px;
-    }
-    .persona { background: rgba(100,116,139,0.1); border: 1px solid var(--borde-suave); color: var(--texto-suave); }
-    .persona .etiqueta { color: var(--texto-tenue); }
-    .sistema { background: rgba(34,197,94,0.07); border: 1px solid rgba(34,197,94,0.25); color: var(--texto); }
-    .sistema .etiqueta { color: var(--ok); }
+    .paso-cuerpo { display: flex; flex-direction: column; gap: var(--espacio-4); min-width: 0; padding-top: 0.25em; }
+    .paso-cuerpo h3 { font-size: var(--t-paso); font-weight: var(--peso-fuerte); line-height: 1.35; margin-bottom: var(--espacio-4); }
+    .persona { color: var(--color-texto-suave); }
+    .persona b { color: var(--color-texto-suave); }
+    .sistema b { color: var(--color-principal); }
 
-    .cierre-mapa {
-      margin-top: 18px;
-      padding-top: 16px;
-      border-top: 1px solid var(--borde-suave);
-      font-size: var(--t-lectura);
-      color: var(--texto-suave);
+    /* Móvil: cada paso muestra «El sistema…»; lo que haría una persona se abre al tocar */
+    .ver-persona {
+      display: none;
+      align-self: flex-start;
+      align-items: center; gap: var(--espacio-4);
+      background: none; border: 0; padding: var(--espacio-4) 0;
+      font: inherit; font-size: var(--t-nota); color: var(--color-texto-suave);
+      text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
     }
-    .cierre-mapa strong { color: var(--texto); }
+    .ver-persona .icono { transition: transform 0.2s; }
+    .ver-persona[aria-expanded="true"] .icono { transform: rotate(180deg); }
+    @media (max-width: 599px) {
+      .flujo-inicio .persona { display: none; order: 3; }
+      .flujo-inicio .paso.abierto .persona { display: block; }
+      .ver-persona { display: inline-flex; order: 2; }
+    }
+
+    /* Pantallas anchas: «Una persona…» y «El sistema…» lado a lado, para comparar de un vistazo */
+    @media (min-width: 1400px) {
+      .flujo-inicio { max-width: none; }
+      .flujo-inicio .paso-cuerpo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--espacio-4) var(--espacio-32); }
+      .flujo-inicio .paso-cuerpo h3 { grid-column: 1 / -1; }
+    }
 
     /* ─── FORMULARIO ─── */
-    .fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-    .campo { margin-bottom: 14px; }
-    .campo label.etiqueta-campo {
-      display: block;
-      font-size: var(--t-secundario);
-      font-weight: 600;
-      color: var(--texto-suave);
-      margin-bottom: 6px;
+    .tarjeta {
+      background: var(--color-superficie);
+      border-radius: var(--radio-medio);
+      padding: var(--espacio-24);
     }
-    .campo .opcional { font-weight: 400; color: var(--texto-tenue); }
-    .req { color: var(--error); font-weight: 700; }
+    @media (min-width: 1024px) {
+      .tarjeta { padding: var(--espacio-32); }
+      .tarjeta .campo { margin-bottom: var(--espacio-12); }
+      .tarjeta .campo textarea { min-height: 64px; }
+      .cab-seccion { margin-bottom: var(--espacio-12); }
+    }
+
+    .fila2 { display: grid; gap: 0 var(--espacio-16); }
+    @media (min-width: 600px) { .fila2 { grid-template-columns: 1fr 1fr; } }
+
+    .campo { margin-bottom: var(--espacio-16); }
+    .etiqueta-campo { display: block; font-weight: var(--peso-fuerte); margin-bottom: var(--espacio-4); }
+    .opcional { font-weight: var(--peso-normal); color: var(--color-texto-suave); }
 
     .campo input[type="text"],
     .campo input[type="email"],
     .campo textarea {
       width: 100%;
-      padding: 12px 14px;
-      background: rgba(30, 41, 59, 0.75);
-      border: 1px solid rgba(100,116,139,0.4);
-      border-radius: 10px;
-      color: var(--texto);
+      min-height: 44px;
+      padding: var(--espacio-8) var(--espacio-12);
+      background: var(--color-fondo);
+      border: 1px solid var(--borde-campo);
+      border-radius: var(--radio-pequeno);
+      color: var(--color-texto);
       font-family: inherit;
       font-size: max(16px, 1rem); /* nunca menos de 16px: evita el zoom automático en iPhone */
-      transition: border-color 0.2s, box-shadow 0.2s;
       -webkit-appearance: none;
       appearance: none;
     }
-    .campo textarea { resize: vertical; min-height: 96px; line-height: 1.5; }
-    .campo input::placeholder, .campo textarea::placeholder { color: #94a3b8; }
-    .campo input:focus, .campo textarea:focus {
-      outline: none;
-      border-color: var(--primario);
-      box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
-    }
-    .campo [aria-invalid="true"] { border-color: var(--error); }
+    .campo textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+    .campo input::placeholder, .campo textarea::placeholder { color: var(--color-texto-suave); }
+    .campo input:focus-visible, .campo textarea:focus-visible { outline: 2px solid var(--color-principal); outline-offset: 1px; border-color: var(--color-principal); }
+    .campo [aria-invalid="true"] { border-color: var(--color-error); border-width: 2px; }
 
-    .contador { font-size: var(--t-secundario); color: var(--texto-tenue); text-align: right; margin-top: 4px; }
-    .contador.aviso { color: var(--aviso); }
-    .contador.peligro { color: var(--error); }
+    .contador-msg { font-size: var(--t-nota); color: var(--color-texto-suave); text-align: right; margin-top: var(--espacio-4); }
+    .contador-msg.aviso { color: var(--color-acento); }
+    .contador-msg.peligro { color: var(--color-error); }
 
     /* Campo trampa: fuera de pantalla, no con display:none (algunos bots lo ignoran) */
-    .trampa {
-      position: absolute;
-      left: -10000px;
-      top: auto;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-    }
+    .trampa { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
 
-    .consentimiento {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      margin: 18px 0 6px;
-      font-size: var(--t-lectura);
-      color: var(--texto-suave);
+    .consentimiento { display: flex; gap: var(--espacio-12); align-items: flex-start; margin-top: var(--espacio-4); }
+    .consentimiento input { width: 20px; height: 20px; margin-top: 1px; flex-shrink: 0; accent-color: var(--color-principal); }
+    .req { color: var(--color-error); }
+
+    .nota-info { display: flex; gap: var(--espacio-8); align-items: flex-start; margin-top: var(--espacio-12); font-size: var(--t-nota); color: var(--color-texto-suave); }
+    .nota-info .icono { margin-top: 0.25em; }
+
+    /* Error junto a un campo: icono + texto (el icono es una máscara del color del texto) */
+    .error-campo { display: flex; gap: var(--espacio-4); align-items: flex-start; color: var(--color-error); font-size: var(--t-nota); margin-top: var(--espacio-4); }
+    .error-campo::before {
+      content: ''; width: 1em; height: 1em; margin-top: 0.2em; flex-shrink: 0; background: currentColor;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 1.5 15 14H1z'/%3E%3Cpath d='M8 6v4M8 12v.01'/%3E%3C/svg%3E") center / contain no-repeat;
+              mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 1.5 15 14H1z'/%3E%3Cpath d='M8 6v4M8 12v.01'/%3E%3C/svg%3E") center / contain no-repeat;
     }
-    .consentimiento input {
-      width: 20px; height: 20px;
-      margin-top: 2px;
+    .consentimiento + .error-campo { margin-left: 32px; }
+
+    /* Avisos: siempre icono + texto (componente «Aviso» del Design System) */
+    .aviso {
+      display: flex; gap: var(--espacio-8); align-items: flex-start;
+      padding: var(--espacio-12) var(--espacio-16);
+      border: 1px solid currentColor;
+      border-radius: var(--radio-pequeno);
+      background: var(--color-fondo);
+    }
+    .aviso .icono { margin-top: 0.25em; }
+    .aviso.error    { color: var(--color-error); }
+    .aviso.correcto { color: var(--color-correcto); }
+    .aviso.parcial  { color: var(--color-acento); }
+    .aviso span { color: var(--color-texto); }
+    .aviso b { color: inherit; }
+    #errorGeneral { margin-bottom: var(--espacio-16); }
+
+    .btn-primario {
+      width: 100%;
+      margin-top: var(--espacio-16);
+      padding: var(--espacio-12) var(--espacio-24);
+      background: var(--color-principal);
+      color: var(--color-sobre-principal);
+      border: 0;
+      border-radius: var(--radio-pequeno);
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: var(--peso-fuerte);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: var(--espacio-8);
+      text-decoration: none;
+    }
+    .btn-primario:hover:not(:disabled) { box-shadow: inset 0 0 0 999px rgba(31, 27, 43, 0.15); }
+    .btn-primario:disabled { opacity: 0.7; cursor: progress; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-top-color: var(--color-sobre-principal);
+      border-radius: var(--radio-redondo);
+      animation: gira 0.65s linear infinite;
+      display: none;
       flex-shrink: 0;
-      accent-color: var(--primario);
     }
+    @keyframes gira { to { transform: rotate(360deg); } }
 
-    .error-campo { color: var(--error); font-size: var(--t-secundario); margin-top: 4px; }
+    .estado-envio { margin-top: var(--espacio-12); text-align: center; font-size: var(--t-nota); color: var(--color-texto-suave); }
 
-    .nota-envio { font-size: var(--t-secundario); color: var(--texto-tenue); margin: 8px 0 0 30px; }
+    .personas { display: flex; align-items: center; gap: var(--espacio-8); margin-top: var(--espacio-12); font-size: var(--t-nota); color: var(--color-texto-suave); }
 
-    .estado-envio { margin-top: 12px; text-align: center; font-size: var(--t-secundario); color: var(--texto-suave); }
+    /* Botón secundario: sin relleno */
+    .btn-secundario {
+      display: inline-flex; align-items: center; gap: var(--espacio-8);
+      padding: var(--espacio-8) var(--espacio-16);
+      min-height: 40px;
+      background: none;
+      border: 1px solid var(--color-principal);
+      border-radius: var(--radio-pequeno);
+      color: var(--color-principal);
+      font-family: inherit; font-size: 1rem; font-weight: var(--peso-fuerte);
+      cursor: pointer; text-decoration: none;
+    }
+    .btn-secundario:hover { background: var(--color-superficie); }
 
     /* Solo visible en local, para no confundir una simulación con una petición real */
     .banner-sim {
       position: fixed; left: 0; right: 0; top: 0; z-index: 10;
-      background: var(--aviso); color: #1f1300;
-      font-size: max(11px, 0.78rem); font-weight: 600;
-      padding: 6px 12px; text-align: center;
+      background: var(--color-acento); color: var(--color-sobre-principal);
+      font-size: var(--t-etiqueta); font-weight: var(--peso-fuerte);
+      padding: var(--espacio-4) var(--espacio-12); text-align: center;
+    }
+    body.con-banner .pagina { padding-top: var(--espacio-64); }
+
+    /* ─── PIE ─── */
+    .pie { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--espacio-8) var(--espacio-24); font-size: var(--t-nota); color: var(--color-texto-suave); }
+    .pie p + p { margin-top: var(--espacio-4); }
+    .enlace {
+      background: none; border: 0; padding: 0; font: inherit;
+      color: var(--color-principal); text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
     }
 
-    .error-general {
-      background: rgba(239,68,68,0.1);
-      border: 1px solid rgba(239,68,68,0.4);
-      color: #fecaca;
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: var(--t-lectura);
-      margin-bottom: 16px;
-    }
-    .error-general ul { margin: 6px 0 0 18px; }
-
-    .btn-primario {
-      width: 100%;
-      margin-top: 18px;
-      padding: 14px 20px;
-      background: linear-gradient(135deg, var(--primario) 0%, var(--primario-oscuro) 100%);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-family: inherit;
-      font-size: var(--t-sub);
-      font-weight: 600;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
-    }
-    .btn-primario:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(99,102,241,0.42); }
-    .btn-primario:active:not(:disabled) { transform: translateY(0); }
-    .btn-primario:disabled { opacity: 0.65; cursor: not-allowed; }
-
-    .spinner {
-      width: 16px; height: 16px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.65s linear infinite;
-      display: none;
-      flex-shrink: 0;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ─── PRIVACIDAD Y PIE ─── */
-    /* Política: ventana emergente. En la página solo hay un enlace discreto en el pie */
-    .enlace-pie {
-      background: none; border: none; padding: 0; font: inherit; color: inherit;
-      text-decoration: underline; cursor: pointer;
-    }
-    .enlace-pie:hover { color: var(--texto-suave); }
-
+    /* ─── POLÍTICA DE PRIVACIDAD (ventana emergente) ─── */
     dialog#privacidad {
       width: calc(100% - 32px); max-width: 760px; max-height: 86vh;
       margin: auto; padding: 0; overflow: auto;
-      background: #0f172a; color: var(--texto);
-      border: 1px solid var(--borde); border-radius: 16px;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+      background: var(--color-fondo); color: var(--color-texto);
+      border: 1px solid var(--borde); border-radius: var(--radio-medio);
+      box-shadow: 0 24px 64px rgba(31, 27, 43, 0.25);
     }
-    dialog#privacidad::backdrop { background: rgba(0,0,0,0.7); }
+    dialog#privacidad::backdrop { background: rgba(31, 27, 43, 0.55); }
     .dlg-cab {
       position: sticky; top: 0; z-index: 1;
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
-      padding: 16px 24px; background: #0f172a; border-bottom: 1px solid var(--borde-suave);
+      display: flex; align-items: center; justify-content: space-between; gap: var(--espacio-12);
+      padding: var(--espacio-16) var(--espacio-24); background: var(--color-fondo); border-bottom: 1px solid var(--borde);
     }
-    .dlg-cab h2 { margin: 0; font-size: 1.15rem; }
+    .dlg-cab h2 { font-family: var(--fuente-titulares); font-weight: var(--peso-fuerte); font-size: 1.4rem; }
     .dlg-cerrar {
-      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-      background: rgba(100,116,139,0.15); border: 1px solid var(--borde-suave);
-      color: var(--texto); font-size: 1rem; cursor: pointer;
+      width: 36px; height: 36px; border-radius: var(--radio-redondo); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: 1px solid var(--color-texto-suave); color: var(--color-texto); cursor: pointer;
     }
-    .dlg-cerrar:hover { background: rgba(100,116,139,0.3); }
-    .dlg-cuerpo { padding: 8px 24px 24px; font-size: var(--t-lectura); color: var(--texto-suave); line-height: 1.55; }
-    .dlg-cuerpo dt { margin-top: 16px; font-weight: 700; color: var(--texto); }
-    .dlg-cuerpo dd { margin: 4px 0 0; }
+    .dlg-cerrar:hover { background: var(--color-superficie); }
+    .dlg-cuerpo { padding: var(--espacio-8) var(--espacio-24) var(--espacio-24); line-height: 1.55; }
+    .dlg-cuerpo dt { margin-top: var(--espacio-16); font-weight: var(--peso-fuerte); }
+    .dlg-cuerpo dd { margin: var(--espacio-4) 0 0; color: var(--color-texto); }
     @media (min-width: 600px) {
-      .dlg-cuerpo { display: grid; grid-template-columns: 11em 1fr; column-gap: 24px; }
-      .dlg-cuerpo dt { margin-top: 0; padding: 14px 0; border-top: 1px solid rgba(100,116,139,0.18); }
-      .dlg-cuerpo dd { margin: 0; padding: 14px 0; border-top: 1px solid rgba(100,116,139,0.18); }
+      .dlg-cuerpo { display: grid; grid-template-columns: 11em 1fr; column-gap: var(--espacio-24); }
+      .dlg-cuerpo dt { margin-top: 0; padding: var(--espacio-12) 0; border-top: 1px solid var(--borde); }
+      .dlg-cuerpo dd { margin: 0; padding: var(--espacio-12) 0; border-top: 1px solid var(--borde); }
       .dlg-cuerpo dt:first-of-type, .dlg-cuerpo dt:first-of-type + dd { border-top: none; }
     }
+    /* Huecos que se rellenan al desplegar (build args del Dockerfile) */
+    .marcador { background: var(--color-superficie); border: 1px dashed var(--color-acento); color: var(--color-acento); border-radius: var(--radio-pequeno); padding: 0 var(--espacio-4); }
 
-    .marcador {
-      background: rgba(251,191,36,0.15);
-      border: 1px dashed var(--aviso);
-      color: var(--aviso);
-      border-radius: 4px;
-      padding: 0 4px;
-    }
-
-    footer { text-align: center; font-size: max(11px, 0.78rem); color: var(--texto-tenue); padding-top: 8px; }
-
-
-    /* ─── RESULTADO ─── */
-    .res-cab { text-align: center; margin-bottom: 22px; }
-    .insignia {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: var(--t-secundario); font-weight: 600;
-      padding: 5px 14px; border-radius: 20px; margin-bottom: 12px;
-    }
-    .insignia.ok    { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.3);  color: var(--ok); }
-    .insignia.aviso { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); color: var(--aviso); }
-    .res-cab h2 { font-size: 1.5rem; max-width: 30em; margin: 0 auto 6px; text-wrap: balance; }
+    /* ─── RESULTADO: la misma línea de flujo, con lo que ha pasado de verdad ─── */
+    .res-cab { margin-bottom: var(--espacio-32); max-width: 48em; }
+    .res-cab .aviso { display: inline-flex; margin-bottom: var(--espacio-16); }
+    .res-cab h2 { font-size: 1.7rem; margin-bottom: var(--espacio-8); }
+    @media (min-width: 1024px) { .res-cab h2 { font-size: 2rem; } }
     .res-cab h2:focus { outline: none; }
-    .res-cab p { font-size: var(--t-lectura); color: var(--texto-suave); }
+    .res-cab p { color: var(--color-texto-suave); font-size: var(--t-paso); }
 
-    .pasos-res { list-style: none; display: flex; flex-direction: column; gap: 14px; }
-    .pr {
-      display: grid;
-      grid-template-columns: 40px minmax(0, 1fr);
-      gap: 10px 14px;
-      padding: 16px;
-      border: 1px solid var(--borde-suave);
-      border-radius: 14px;
-      background: rgba(100,116,139,0.06);
-      opacity: 0;
-      transform: translateY(12px);
-      transition: opacity 0.45s ease, transform 0.45s ease;
+    .flujo-res { max-width: none; }
+    .flujo-res .paso { padding-bottom: var(--espacio-32); opacity: 0; transform: translateY(12px); transition: opacity 0.45s ease, transform 0.45s ease; }
+    .flujo-res .paso.visible { opacity: 1; transform: none; }
+    .flujo-res .paso:last-child { padding-bottom: 0; }
+    .flujo-res .paso::before { animation: none; }
+    .res-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--espacio-16); min-width: 0; padding-top: 0.25em; }
+    .res-extra, .res-texto { min-width: 0; }
+    .res-texto p + p { margin-top: var(--espacio-4); }
+    .res-texto h3 { font-size: var(--t-paso); font-weight: var(--peso-fuerte); margin-bottom: var(--espacio-4); }
+    .res-ahorro { color: var(--color-texto-suave); }
+    .res-ahorro b { color: var(--color-texto-suave); }
+    @media (min-width: 1024px) {
+      .res-cuerpo { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: var(--espacio-48); }
+      .paso.ancho .res-cuerpo { grid-template-columns: minmax(0, 1fr); gap: var(--espacio-16); }
     }
-    .pr.visible { opacity: 1; transform: none; }
-    .pr.hecho  { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.05); }
-    .pr.espera { border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.05); }
-    .pr.fallo  { border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.06); }
-    .pr.apagado.visible { opacity: 0.55; }
-    .pr-icono {
-      width: 40px; height: 40px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem; background: rgba(100,116,139,0.18);
-    }
-    .pr.hecho  .pr-icono { background: rgba(34,197,94,0.18); }
-    .pr.espera .pr-icono { background: rgba(251,191,36,0.18); }
-    .pr.fallo  .pr-icono { background: rgba(239,68,68,0.2); }
-    .pr-texto h3 { font-size: var(--t-sub); margin-bottom: 4px; }
-    .pr-desc { font-size: var(--t-lectura); color: var(--texto); }
-    .pr-ahorro { margin-top: 8px; font-size: var(--t-secundario); color: var(--texto-tenue); }
-    .pr-extra { grid-column: 1 / -1; min-width: 0; }
 
-    .vista-etiqueta { font-size: var(--t-etiqueta); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--texto-tenue); margin-bottom: 6px; }
+    /* Estado de cada nodo */
+    .paso.hecho  .nodo { border-color: var(--color-correcto); color: var(--color-correcto); }
+    .paso.espera .nodo { border-color: var(--color-acento);   color: var(--color-acento); }
+    .paso.fallo  .nodo { border-color: var(--color-error);    color: var(--color-error); }
+    .paso.apagado .nodo { border-color: var(--color-texto-suave); color: var(--color-texto-suave); border-style: dashed; }
+    .paso.apagado .res-texto { color: var(--color-texto-suave); }
+    .paso.fallo .res-texto h3 { color: var(--color-error); }
+
+    .vista-etiqueta { margin-bottom: var(--espacio-8); }
+    .nota-pie { margin-top: var(--espacio-8); font-size: var(--t-nota); color: var(--color-texto-suave); }
 
     /* Hoja de cálculo */
-    .hoja { border: 1px solid var(--borde-suave); border-radius: 12px; overflow: hidden; background: rgba(10,16,30,0.7); }
-    .hoja-barra { background: rgba(15,80,50,0.35); border-bottom: 1px solid var(--borde-suave); padding: 7px 12px; font-size: var(--t-secundario); font-weight: 500; color: var(--ok); }
+    .hoja { border: 1px solid var(--borde); border-radius: var(--radio-medio); overflow: hidden; background: var(--color-fondo); }
+    .hoja-barra { display: flex; align-items: center; gap: var(--espacio-8); background: var(--color-superficie); padding: var(--espacio-8) var(--espacio-12); font-size: var(--t-nota); font-weight: var(--peso-fuerte); }
     .hoja-scroll { overflow-x: auto; }
-    .hoja table { width: 100%; border-collapse: collapse; font-size: var(--t-secundario); white-space: nowrap; }
-    .hoja th { background: rgba(20,30,50,0.9); color: var(--texto-tenue); font-weight: 600; padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--borde-suave); }
-    .hoja td { padding: 7px 10px; color: #e2e8f0; max-width: 150px; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid rgba(100,116,139,0.1); }
-    .hoja .previas td { color: var(--texto-tenue); font-style: italic; }
+    .hoja table { width: 100%; border-collapse: collapse; font-size: var(--t-nota); white-space: nowrap; }
+    .hoja th { color: var(--color-texto-suave); font-weight: var(--peso-fuerte); padding: var(--espacio-8) var(--espacio-12); text-align: left; border-bottom: 1px solid var(--borde); }
+    .hoja td { padding: var(--espacio-8) var(--espacio-12); max-width: 160px; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid var(--borde); }
+    .hoja td:last-child { border-right: 0; }
+    .hoja .previas td { color: var(--color-texto-suave); font-style: italic; border-bottom: 1px solid var(--borde); }
     @keyframes filaNueva {
-      0%   { opacity: 0; background: rgba(34,197,94,0.3); }
-      40%  { opacity: 1; background: rgba(34,197,94,0.2); }
-      100% { opacity: 1; background: rgba(34,197,94,0.07); }
+      0%   { opacity: 0; background: rgba(47, 107, 58, 0.22); }
+      40%  { opacity: 1; background: rgba(47, 107, 58, 0.16); }
+      100% { opacity: 1; background: rgba(47, 107, 58, 0.07); }
     }
     .fila-nueva td { opacity: 0; }
-    .pr.visible .fila-nueva td { animation: filaNueva 1.8s ease forwards; }
-    .pr.visible .fila-nueva td:nth-child(2) { animation-delay: 0.1s; }
-    .pr.visible .fila-nueva td:nth-child(3) { animation-delay: 0.2s; }
-    .pr.visible .fila-nueva td:nth-child(4) { animation-delay: 0.3s; }
-    .pr.visible .fila-nueva td:nth-child(5) { animation-delay: 0.4s; }
-    .pr.visible .fila-nueva td:nth-child(6) { animation-delay: 0.5s; }
-    .pr.visible .fila-nueva td:nth-child(7) { animation-delay: 0.6s; }
+    .paso.visible .fila-nueva td { animation: filaNueva 1.8s ease forwards; }
+    .paso.visible .fila-nueva td:nth-child(2) { animation-delay: 0.1s; }
+    .paso.visible .fila-nueva td:nth-child(3) { animation-delay: 0.2s; }
+    .paso.visible .fila-nueva td:nth-child(4) { animation-delay: 0.3s; }
+    .paso.visible .fila-nueva td:nth-child(5) { animation-delay: 0.4s; }
+    .paso.visible .fila-nueva td:nth-child(6) { animation-delay: 0.5s; }
+    .paso.visible .fila-nueva td:nth-child(7) { animation-delay: 0.6s; }
 
-    /* Correo y aviso de Telegram */
-    .tarjeta-vista { border: 1px solid var(--borde-suave); border-radius: 12px; background: rgba(10,16,30,0.7); padding: 12px 14px; font-size: var(--t-lectura); color: var(--texto-suave); line-height: 1.55; }
-    .tarjeta-vista .meta { font-size: var(--t-secundario); color: var(--texto-tenue); border-bottom: 1px solid rgba(100,116,139,0.15); padding-bottom: 8px; margin-bottom: 8px; }
-    .tarjeta-vista .meta b { color: var(--texto); }
-    .tarjeta-vista strong { color: var(--texto); }
-    .tarjeta-vista p + p { margin-top: 6px; }
-    .nota-demo ul { margin: 6px 0 6px 18px; }
-    .nota-demo p + p { margin-top: 6px; }
-    .nota-demo { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--primario); background: rgba(99,102,241,0.12); border-radius: 0 8px 8px 0; font-size: var(--t-secundario); }
-    .tarjeta-vista .pie-correo { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(100,116,139,0.15); font-size: var(--t-etiqueta); color: var(--texto-tenue); line-height: 1.45; }
-    .pr-extra .cuenta + div { margin-top: 12px; }
-    .nota-pie { margin-top: 6px; font-size: var(--t-etiqueta); color: var(--texto-tenue); }
+    /* Correo y aviso de Telegram: reproducen el mensaje real (por eso llevan sus emojis) */
+    .tarjeta-vista { border: 1px solid var(--borde); border-radius: var(--radio-medio); background: var(--color-fondo); padding: var(--espacio-12) var(--espacio-16); line-height: 1.55; }
+    .tarjeta-vista .meta { font-size: var(--t-nota); color: var(--color-texto-suave); border-bottom: 1px solid var(--borde); padding-bottom: var(--espacio-8); margin-bottom: var(--espacio-8); }
+    .tarjeta-vista .meta b { color: var(--color-texto); }
+    .tarjeta-vista p + p { margin-top: var(--espacio-8); }
+    .nota-demo { margin-top: var(--espacio-12); padding: var(--espacio-12) var(--espacio-16); background: var(--color-superficie); border-radius: var(--radio-pequeno); font-size: var(--t-nota); }
+    .nota-demo ul { margin: var(--espacio-8) 0 var(--espacio-8) var(--espacio-16); }
+    .telegram .linea { display: block; overflow-wrap: anywhere; }
     @keyframes aparece { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
     .aparece { animation: aparece 0.6s ease both; }
-    .telegram { border-color: rgba(56,189,248,0.3); }
-    .telegram .linea { display: block; overflow-wrap: anywhere; }
 
     /* Cuenta atrás */
-    .cuenta { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 12px; padding: 12px 16px; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.25); font-size: var(--t-lectura); color: var(--texto-suave); }
-    .cuenta .tiempo { font-size: 1.6rem; font-weight: 700; color: var(--aviso); font-variant-numeric: tabular-nums; }
-    .cuenta.hecha { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.3); }
-    .cuenta.hecha .tiempo { font-size: var(--t-lectura); color: var(--ok); }
+    .cuenta { display: flex; align-items: center; justify-content: space-between; gap: var(--espacio-12); border: 1px solid var(--color-acento); border-radius: var(--radio-pequeno); padding: var(--espacio-12) var(--espacio-16); }
+    .cuenta .tiempo { font-size: 1.6rem; font-weight: var(--peso-fuerte); color: var(--color-acento); font-variant-numeric: tabular-nums; }
+    .cuenta.hecha { border-color: var(--color-correcto); }
+    .cuenta.hecha .tiempo { display: flex; align-items: center; gap: var(--espacio-8); font-size: 1rem; color: var(--color-correcto); }
+    .cuenta + div { margin-top: var(--espacio-16); }
 
     /* Cierre */
-    .res-cierre { margin-top: 20px; border-top: 1px solid var(--borde-suave); padding-top: 18px; text-align: center; }
-    .res-cierre p { font-size: var(--t-lectura); color: var(--texto-suave); max-width: 44em; margin: 0 auto 12px; }
-    .res-cierre strong { color: var(--texto); }
-    /* La pregunta final va en una sola línea en pantallas anchas; en estrechas se reparte sin dejar una palabra sola */
-    .res-cierre .res-pregunta { max-width: none; text-wrap: balance; }
-    .res-botones { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 4px; }
-    .btn-cta { display: inline-block; padding: 11px 24px; border-radius: 10px; background: linear-gradient(135deg, var(--primario) 0%, var(--primario-oscuro) 100%); color: #fff; text-decoration: none; font-weight: 600; font-size: var(--t-lectura); }
-    .btn-texto { background: none; border: 1px solid rgba(100,116,139,0.4); color: var(--texto-suave); font-family: inherit; font-size: var(--t-lectura); padding: 10px 20px; border-radius: 10px; cursor: pointer; }
-    .btn-texto:hover { border-color: rgba(99,102,241,0.6); color: var(--acento); }
-
-    @media (min-width: 1024px) {
-      .pr { grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1.3fr); }
-      .pr-extra { grid-column: auto; }
-      /* La hoja tiene 7 columnas: en escritorio ocupa todo el ancho, debajo del texto */
-      .pr.ancho .pr-texto { grid-column: 2 / -1; }
-      .pr.ancho .pr-extra { grid-column: 2 / -1; }
-    }
-
-    /* ─── MÓVIL (< 600px) ─── */
-    @media (max-width: 599px) {
-      body { padding: 16px 12px 40px; }
-      .panel { padding: 24px 18px; border-radius: 16px; }
-      .ahorro-lista { grid-template-columns: 1fr; }
-      .comparativa { grid-template-columns: 1fr; }
-      .fila2 { grid-template-columns: 1fr; gap: 0; }
-      .nota-envio { margin-left: 0; }
-    }
-
-    /* ─── ESCRITORIO (≥ 1024px): ancho aprovechado y dos columnas ─── */
-    @media (min-width: 1024px) {
-      body { padding: 32px 32px 56px; }
-      .pagina { max-width: 1280px; gap: 24px; }
-      .panel { padding: 36px 36px; }
-      .contenido {
-        display: grid;
-        grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-        gap: 24px;
-        align-items: start;
-      }
-    }
-
-    /* El formulario se queda fijo mientras lees los pasos, solo si la pantalla es lo bastante alta */
-    @media (min-width: 1024px) and (min-height: 780px) {
-      .lateral { position: sticky; top: 24px; }
-    }
+    .res-cierre { text-align: center; }
+    .res-cierre p { max-width: 44em; margin: 0 auto var(--espacio-12); text-wrap: balance; }
+    .res-cierre .res-pregunta { color: var(--color-texto-suave); }
+    .res-botones { display: flex; flex-wrap: wrap; gap: var(--espacio-12); justify-content: center; margin-top: var(--espacio-16); }
+    .res-botones .btn-primario { width: auto; margin-top: 0; }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -561,173 +453,180 @@
 </head>
 <body>
 
-  <div class="banner-sim oculto" id="bannerSim" role="status"></div>
-  <div class="bg" aria-hidden="true"></div>
+  <!-- Iconos de línea (se usan con <svg class="icono"><use href="#i-…"/></svg>) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="M2.5 8.5 6 12l7.5-8"/></symbol>
+    <symbol id="i-alerta" viewBox="0 0 16 16"><path d="M8 1.5 15 14H1z"/><path d="M8 6v4M8 12v.01"/></symbol>
+    <symbol id="i-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4M8 5v.01"/></symbol>
+    <symbol id="i-reloj" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5V8l2.5 1.5"/></symbol>
+    <symbol id="i-pausa" viewBox="0 0 16 16"><path d="M6 4v8M10 4v8"/></symbol>
+    <symbol id="i-persona" viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="3"/><path d="M2.5 14.5c.6-3 2.8-4.5 5.5-4.5s4.9 1.5 5.5 4.5"/></symbol>
+    <symbol id="i-abajo" viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></symbol>
+    <symbol id="i-hoja" viewBox="0 0 16 16"><rect x="2" y="2.5" width="12" height="11" rx="1"/><path d="M2 6h12M2 9.5h12M6 6v7.5"/></symbol>
+    <symbol id="i-enlace" viewBox="0 0 16 16"><path d="M6.5 9.5a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2L7.6 4.2"/><path d="M9.5 6.5a3 3 0 0 0-4.2 0L3 8.8A3 3 0 0 0 7.2 13l1.2-1.2"/></symbol>
+    <symbol id="i-cerrar" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></symbol>
+  </svg>
 
-  <main class="pagina">
+  <div class="banner-sim oculto" id="bannerSim" role="status"></div>
+
+  <div class="pagina">
 
     <!-- ─── CABECERA ─── -->
-    <header class="panel hero">
-      <div class="badge">⚡ Demo en vivo</div>
-      <p class="prueba-social oculto" id="pruebaSocial"><span class="punto" aria-hidden="true"></span>
-        <span><b id="contadorPersonas"></b> <span id="textoContador">personas ya han probado esta demo</span></span></p>
-      <!-- TÍTULO PROVISIONAL: se decide al crear la demo. Alternativas en notas del paso 4b. -->
-      <h1>Un formulario, y el resto se hace solo.</h1>
-      <p class="subtitulo">Rellena tu nombre y tu email y mira, paso a paso, cómo el sistema apunta tu contacto, te responde, avisa al negocio y te hace el seguimiento.</p>
-      <a href="#probar" class="btn-secundario">Probarlo ahora ↓</a>
+    <header class="cabecera">
+      <a class="logo" href="https://vicenterueda.com" aria-label="Vicente Rueda Gómez, ir a la web">
+        <img src="logo/logo-color.svg" alt="Vicente Rueda Gómez" width="272" height="64">
+      </a>
+      <h1>Alguien rellena un formulario. El sistema lo apunta, le responde y te avisa.</h1>
+      <div class="cabecera-pie">
+        <dl class="entra-sale">
+          <dt>Entra</dt><dd>Un contacto desde el formulario de tu web.</dd>
+          <dt>Sale</dt><dd>Una fila en tu hoja de cálculo, un email de respuesta, un aviso en tu móvil y un segundo email a los 5 minutos.</dd>
+        </dl>
+        <a href="#probar" class="ir-probar">Probar ahora ↓</a>
+      </div>
     </header>
 
-    <!-- ─── LO QUE TE AHORRAS ─── -->
-    <section class="panel" aria-labelledby="t-ahorro">
-      <h2 id="t-ahorro">Lo que te ahorras</h2>
-      <p class="intro">Son las tareas repetitivas de cualquier negocio que recibe contactos por web.</p>
-      <ul class="ahorro-lista">
-        <li><div class="ahorro-cab"><span class="icono" aria-hidden="true">⏱️</span><strong>Tiempo</strong></div>Nadie dedica horas a copiar datos, escribir respuestas y reenviar avisos.</li>
-        <li><div class="ahorro-cab"><span class="icono" aria-hidden="true">💶</span><strong>Costes</strong></div>El trabajo repetitivo no consume horas de personal y funciona a cualquier hora, también de noche y en festivos.</li>
-        <li><div class="ahorro-cab"><span class="icono" aria-hidden="true">🤝</span><strong>Clientes</strong></div>Nadie espera horas una respuesta ni se queda sin seguimiento por un olvido.</li>
-      </ul>
-    </section>
+    <hr class="separador" style="margin: var(--espacio-24) auto var(--espacio-32)">
 
+    <main>
     <div class="contenido" id="contenido">
 
-    <!-- ─── MAPA DE 5 PASOS ─── -->
-    <section class="panel" aria-labelledby="t-pasos">
-      <h2 id="t-pasos">Qué pasa cuando alguien rellena el formulario</h2>
-      <p class="intro">Son 5 pasos. Debajo de cada uno ves lo que tendría que hacer una persona y lo que hace el sistema.</p>
-
-      <ol class="pasos">
-        <li class="paso">
-          <div class="paso-num" aria-hidden="true">1</div>
-          <div class="paso-cuerpo">
-            <h3>Rellenas el formulario</h3>
-            <div class="comparativa">
-              <div class="persona"><span class="etiqueta">👤 Una persona tendría que</span>Atender llamadas o emails y pedir los datos uno a uno al cliente.</div>
-              <div class="sistema"><span class="etiqueta">⚙️ El sistema</span>El cliente deja sus datos solo, a cualquier hora, y llegan ordenados.</div>
+      <!-- ─── CÓMO FUNCIONA: los 5 pasos ─── -->
+      <section aria-labelledby="t-pasos">
+        <div class="cab-seccion"><h2 class="etiqueta" id="t-pasos">Cómo funciona</h2></div>
+        <ol class="flujo flujo-inicio">
+          <li class="paso">
+            <div class="nodo" aria-hidden="true">1</div>
+            <div class="paso-cuerpo">
+              <h3>Rellenas el formulario</h3>
+              <p class="persona" id="persona-1"><b>Una persona tendría que…</b> copiar los datos de un correo o de una llamada.</p>
+              <p class="sistema"><b>El sistema…</b> recibe tus datos al instante, sin teclear nada.</p>
+              <button type="button" class="ver-persona" aria-expanded="false" aria-controls="persona-1">Sin automatizar <svg class="icono"><use href="#i-abajo"/></svg></button>
             </div>
-          </div>
-        </li>
-        <li class="paso">
-          <div class="paso-num" aria-hidden="true">2</div>
-          <div class="paso-cuerpo">
-            <h3>Se apunta en una hoja de cálculo</h3>
-            <div class="comparativa">
-              <div class="persona"><span class="etiqueta">👤 Una persona tendría que</span>Copiar nombre, email y mensaje a una hoja, contacto a contacto.</div>
-              <div class="sistema"><span class="etiqueta">⚙️ El sistema</span>Añade una fila nueva al instante y sin errores de copia.</div>
+          </li>
+          <li class="paso">
+            <div class="nodo" aria-hidden="true">2</div>
+            <div class="paso-cuerpo">
+              <h3>Se apunta en una hoja de cálculo</h3>
+              <p class="persona" id="persona-2"><b>Una persona tendría que…</b> abrir la hoja y pegar cada dato a mano.</p>
+              <p class="sistema"><b>El sistema…</b> añade una fila con nombre, email, mensaje y hora.</p>
+              <button type="button" class="ver-persona" aria-expanded="false" aria-controls="persona-2">Sin automatizar <svg class="icono"><use href="#i-abajo"/></svg></button>
             </div>
-          </div>
-        </li>
-        <li class="paso">
-          <div class="paso-num" aria-hidden="true">3</div>
-          <div class="paso-cuerpo">
-            <h3>Te llega un email de confirmación</h3>
-            <div class="comparativa">
-              <div class="persona"><span class="etiqueta">👤 Una persona tendría que</span>Ver el mensaje, redactar la respuesta y enviarla. A veces horas después.</div>
-              <div class="sistema"><span class="etiqueta">⚙️ El sistema</span>Responde de inmediato, de día o de noche.</div>
+          </li>
+          <li class="paso">
+            <div class="nodo" aria-hidden="true">3</div>
+            <div class="paso-cuerpo">
+              <h3>Te llega un email de confirmación</h3>
+              <p class="persona" id="persona-3"><b>Una persona tendría que…</b> escribir una respuesta cuando tenga un hueco.</p>
+              <p class="sistema"><b>El sistema…</b> te responde en cuanto envías el formulario.</p>
+              <button type="button" class="ver-persona" aria-expanded="false" aria-controls="persona-3">Sin automatizar <svg class="icono"><use href="#i-abajo"/></svg></button>
             </div>
-          </div>
-        </li>
-        <li class="paso">
-          <div class="paso-num" aria-hidden="true">4</div>
-          <div class="paso-cuerpo">
-            <h3>El negocio recibe un aviso en el móvil</h3>
-            <div class="comparativa">
-              <div class="persona"><span class="etiqueta">👤 Una persona tendría que</span>Reenviar el contacto al responsable o llamarle para avisarle.</div>
-              <div class="sistema"><span class="etiqueta">⚙️ El sistema</span>Manda un aviso automático por Telegram con tu nombre, tu email y las primeras palabras de tu mensaje.</div>
+          </li>
+          <li class="paso">
+            <div class="nodo" aria-hidden="true">4</div>
+            <div class="paso-cuerpo">
+              <h3>El negocio recibe un aviso en el móvil</h3>
+              <p class="persona" id="persona-4"><b>Una persona tendría que…</b> mirar el buzón varias veces al día.</p>
+              <p class="sistema"><b>El sistema…</b> manda un aviso por Telegram al móvil del negocio con tus datos.</p>
+              <button type="button" class="ver-persona" aria-expanded="false" aria-controls="persona-4">Sin automatizar <svg class="icono"><use href="#i-abajo"/></svg></button>
             </div>
-          </div>
-        </li>
-        <li class="paso">
-          <div class="paso-num" aria-hidden="true">5</div>
-          <div class="paso-cuerpo">
-            <h3>A los 5 minutos, un segundo email</h3>
-            <div class="comparativa">
-              <div class="persona"><span class="etiqueta">👤 Una persona tendría que</span>Acordarse de volver a escribir. Y a veces no pasa.</div>
-              <div class="sistema"><span class="etiqueta">⚙️ El sistema</span>El seguimiento sale solo, sin que nadie se acuerde.</div>
+          </li>
+          <li class="paso">
+            <div class="nodo" aria-hidden="true">5</div>
+            <div class="paso-cuerpo">
+              <h3>A los 5 minutos, un segundo email</h3>
+              <p class="persona" id="persona-5"><b>Una persona tendría que…</b> acordarse de escribir otra vez.</p>
+              <p class="sistema"><b>El sistema…</b> envía el seguimiento solo, sin que nadie se acuerde.</p>
+              <button type="button" class="ver-persona" aria-expanded="false" aria-controls="persona-5">Sin automatizar <svg class="icono"><use href="#i-abajo"/></svg></button>
             </div>
-          </div>
-        </li>
-      </ol>
+          </li>
+        </ol>
+      </section>
 
-      <p class="cierre-mapa"><strong>Cuantos más contactos recibe un negocio, más se nota el ahorro:</strong> cada contacto nuevo cuesta el mismo trabajo a una persona y ninguno al sistema.</p>
-    </section>
+      <!-- ─── PRUÉBALO: formulario ─── -->
+      <section id="probar" aria-labelledby="t-probar">
+        <div class="cab-seccion"><h2 class="etiqueta" id="t-probar">Pruébalo</h2><span class="nota">Los campos con <span class="req">*</span> son obligatorios.</span></div>
 
-    <div class="lateral">
+        <div class="tarjeta">
+          <div id="errorGeneral" class="aviso error oculto" role="alert" tabindex="-1"></div>
 
-    <!-- ─── FORMULARIO ─── -->
-    <section class="panel" id="probar" aria-labelledby="t-probar">
-      <h2 id="t-probar">Pruébalo ahora</h2>
-      <p class="intro">Usa un email al que tengas acceso: es donde llegarán los correos. Los campos marcados con <span class="req" aria-hidden="true">*</span> son obligatorios.</p>
+          <form id="leadForm" novalidate>
+            <input type="hidden" name="origen" value="web-form-demo">
 
-      <div id="errorGeneral" class="error-general oculto" role="alert" tabindex="-1"></div>
+            <!-- Campo trampa: las personas no lo ven; los bots lo rellenan y el servidor los rechaza -->
+            <div class="trampa" aria-hidden="true">
+              <label>No rellenes este campo
+                <input type="text" name="web" tabindex="-1" autocomplete="off">
+              </label>
+            </div>
 
-      <form id="leadForm" novalidate>
-        <input type="hidden" name="origen" value="web-form-demo">
+            <div class="fila2">
+              <div class="campo">
+                <label class="etiqueta-campo" for="nombre">Nombre <span class="req" aria-hidden="true">*</span></label>
+                <input type="text" id="nombre" name="nombre" maxlength="60" autocomplete="given-name" required aria-required="true">
+                <div class="error-campo oculto" id="error-nombre"></div>
+              </div>
+              <div class="campo">
+                <label class="etiqueta-campo" for="apellido">Apellido <span class="opcional">(opcional)</span></label>
+                <input type="text" id="apellido" name="apellido" maxlength="60" autocomplete="family-name">
+              </div>
+            </div>
 
-        <!-- Campo trampa: las personas no lo ven; los bots lo rellenan y el servidor los rechaza -->
-        <div class="trampa" aria-hidden="true">
-          <label>No rellenes este campo
-            <input type="text" name="web" tabindex="-1" autocomplete="off">
-          </label>
+            <div class="campo">
+              <label class="etiqueta-campo" for="email">Email <span class="req" aria-hidden="true">*</span></label>
+              <input type="email" id="email" name="email" maxlength="254" autocomplete="email" required aria-required="true">
+              <div class="error-campo oculto" id="error-email"></div>
+            </div>
+
+            <div class="campo">
+              <label class="etiqueta-campo" for="mensaje">Mensaje <span class="opcional">(opcional)</span></label>
+              <textarea id="mensaje" name="mensaje" maxlength="400" placeholder="Por ejemplo: me gustaría automatizar los presupuestos de mi tienda"></textarea>
+              <div class="contador-msg" id="contadorMensaje">400 caracteres disponibles</div>
+            </div>
+
+            <label class="consentimiento">
+              <input type="checkbox" id="consentimiento" required aria-required="true">
+              <span>Acepto la <a href="#privacidad">política de privacidad</a>. <span class="req" aria-hidden="true">*</span></span>
+            </label>
+            <div class="error-campo oculto" id="error-consentimiento"></div>
+            <p class="nota-info"><svg class="icono" aria-hidden="true"><use href="#i-info"/></svg><span>Te llegarán 2 emails al correo que escribas: uno ahora y otro a los 5 minutos. Tus datos se anonimizan a los 30 días.</span></p>
+
+            <button type="submit" class="btn-primario" id="btnEnviar">
+              <span class="spinner" id="spinner" aria-hidden="true"></span>
+              <span id="btnTexto">Probar la demo</span>
+            </button>
+            <p class="estado-envio oculto" id="estadoEnvio" role="status">Guardando tu solicitud y enviando tu primer correo… puede tardar unos segundos.</p>
+          </form>
         </div>
 
-        <div class="fila2">
-          <div class="campo">
-            <label class="etiqueta-campo" for="nombre">Nombre <span class="req" aria-hidden="true">*</span></label>
-            <input type="text" id="nombre" name="nombre" maxlength="60" autocomplete="given-name" required aria-required="true">
-            <div class="error-campo oculto" id="error-nombre"></div>
-          </div>
-          <div class="campo">
-            <label class="etiqueta-campo" for="apellido">Apellido <span class="opcional">(opcional)</span></label>
-            <input type="text" id="apellido" name="apellido" maxlength="60" autocomplete="family-name">
-          </div>
-        </div>
+        <p class="personas oculto" id="pruebaSocial"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>
+          <span><span id="contadorPersonas"></span> <span id="textoContador">personas han probado la demo</span></span></p>
+      </section>
 
-        <div class="campo">
-          <label class="etiqueta-campo" for="email">Email <span class="req" aria-hidden="true">*</span></label>
-          <input type="email" id="email" name="email" maxlength="254" autocomplete="email" required aria-required="true">
-          <div class="error-campo oculto" id="error-email"></div>
-        </div>
-
-        <div class="campo">
-          <label class="etiqueta-campo" for="mensaje">Mensaje <span class="opcional">(opcional)</span></label>
-          <textarea id="mensaje" name="mensaje" maxlength="400" placeholder="Por ejemplo: me gustaría automatizar los presupuestos de mi tienda"></textarea>
-          <div class="contador" id="contadorMensaje">400 caracteres disponibles</div>
-        </div>
-
-        <label class="consentimiento">
-          <input type="checkbox" id="consentimiento" required aria-required="true">
-          <span><span class="req" aria-hidden="true">*</span> He leído y acepto la <a href="#privacidad">política de privacidad</a>. Entiendo que recibiré dos correos: uno ahora y otro a los 5 minutos.</span>
-        </label>
-        <div class="error-campo oculto" id="error-consentimiento" style="margin-left:30px"></div>
-        <p class="nota-envio">Tus datos se anonimizan automáticamente a los 30 días.</p>
-
-        <button type="submit" class="btn-primario" id="btnEnviar">
-          <span class="spinner" id="spinner" aria-hidden="true"></span>
-          <span id="btnTexto">Probar la automatización →</span>
-        </button>
-        <p class="estado-envio oculto" id="estadoEnvio" role="status">Guardando tu solicitud y enviando tu primer correo… puede tardar unos segundos.</p>
-      </form>
-    </section>
-
-    </div><!-- /lateral -->
     </div><!-- /contenido -->
 
     <!-- ─── RESULTADO: lo construye el JavaScript tras el envío ─── -->
-    <section class="panel oculto" id="resultado" aria-labelledby="t-resultado"></section>
+    <section class="oculto" id="resultado" aria-labelledby="t-resultado"></section>
+    </main>
 
-    <footer>
-      Demo de automatización con n8n, Google Sheets, correo SMTP y Telegram ·
-      <button type="button" class="enlace-pie" data-abrir-politica>Política de privacidad</button>
+    <hr class="separador" style="margin-top: var(--espacio-48)">
+
+    <footer class="pie">
+      <div>
+        <p>Vicente Rueda · automatización para pequeños negocios</p>
+        <p>Demo hecha con n8n, Google Sheets, correo SMTP y Telegram.</p>
+      </div>
+      <button type="button" class="enlace" data-abrir-politica>Política de privacidad</button>
     </footer>
 
-  </main>
+  </div>
 
 
   <!-- ─── POLÍTICA DE PRIVACIDAD (ventana emergente; no es asesoramiento legal: conviene revisarla antes de publicar) ─── -->
   <dialog id="privacidad" aria-labelledby="t-priv">
     <div class="dlg-cab">
       <h2 id="t-priv">Política de privacidad</h2>
-      <button type="button" class="dlg-cerrar" id="cerrarPolitica" aria-label="Cerrar la política de privacidad">✕</button>
+      <button type="button" class="dlg-cerrar" id="cerrarPolitica" aria-label="Cerrar la política de privacidad"><svg class="icono" aria-hidden="true"><use href="#i-cerrar"/></svg></button>
     </div>
     <dl class="dlg-cuerpo">
       <dt>Responsable</dt>
@@ -741,7 +640,7 @@
       <dt>Cuánto tiempo</dt>
       <dd>Los datos personales se anonimizan automáticamente a los 30 días. Si quieres que se borren antes, responde a cualquiera de los correos o escribe al contacto: necesitaremos tu email para localizar el registro. El historial de versiones de la hoja de cálculo y el chat de Telegram pueden conservar copias durante un tiempo.</dd>
       <dt>Quién más los recibe</dt>
-      <dd>Google (hoja de cálculo y correo), Telegram y el servidor donde funciona el sistema de automatización. Alguno de ellos puede tratar los datos fuera de la Unión Europea.</dd>
+      <dd>Google (hoja de cálculo), el proveedor de correo, Telegram y el servidor donde funciona el sistema de automatización. Alguno de ellos puede tratar los datos fuera de la Unión Europea.</dd>
       <dt>Tus derechos</dt>
       <dd>Acceso, rectificación, supresión, oposición, limitación y portabilidad. Para ejercerlos, escribe al contacto. Si crees que no se han respetado, puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).</dd>
       <dt>Cookies</dt>
@@ -798,11 +697,30 @@
     let enviando = false;
     let totalPersonas = null; // null = el contador no está disponible
 
+    /* Icono de línea del sprite de arriba */
+    function icono(nombre) {
+      const ns = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('class', 'icono');
+      svg.setAttribute('aria-hidden', 'true');
+      const use = document.createElementNS(ns, 'use');
+      use.setAttribute('href', '#i-' + nombre);
+      svg.append(use);
+      return svg;
+    }
+
+    /* ═══ Pasos en móvil: «Sin automatizar» abre lo que haría una persona ═══ */
+    document.querySelectorAll('.ver-persona').forEach((b) => b.addEventListener('click', () => {
+      const abrir = b.getAttribute('aria-expanded') !== 'true';
+      b.setAttribute('aria-expanded', String(abrir));
+      b.closest('.paso').classList.toggle('abierto', abrir);
+    }));
+
     /* ═══ Contador de personas (prueba social) ═══ */
     function pintarContador() {
       if (totalPersonas === null || totalPersonas < 1) { mostrar($('pruebaSocial'), false); return; }
       $('contadorPersonas').textContent = totalPersonas.toLocaleString('es-ES');
-      $('textoContador').textContent = totalPersonas === 1 ? 'persona ya ha probado esta demo' : 'personas ya han probado esta demo';
+      $('textoContador').textContent = totalPersonas === 1 ? 'persona ha probado la demo' : 'personas han probado la demo';
       mostrar($('pruebaSocial'), true);
     }
 
@@ -825,7 +743,7 @@
     function actualizarContadorMsg() {
       const quedan = MAX_MENSAJE - mensaje.value.length;
       contadorMsg.textContent = quedan + ' caracteres disponibles';
-      contadorMsg.className = 'contador' + (quedan < 40 ? ' peligro' : quedan < 100 ? ' aviso' : '');
+      contadorMsg.className = 'contador-msg' + (quedan < 40 ? ' peligro' : quedan < 100 ? ' aviso' : '');
     }
     mensaje.addEventListener('input', actualizarContadorMsg);
 
@@ -877,7 +795,7 @@
     }
 
     function mostrarErrorGeneral(texto) {
-      errorGeneral.textContent = texto;
+      errorGeneral.replaceChildren(icono('alerta'), el('span', '', texto));
       mostrar(errorGeneral, true);
       errorGeneral.scrollIntoView({ behavior: suave(), block: 'center' });
       errorGeneral.focus({ preventScroll: true });
@@ -996,28 +914,40 @@
       if (texto !== undefined) n.textContent = texto;
       return n;
     }
-    const recortar = (t, max) => (t.length > max ? t.slice(0, max) + '…' : t);
     const FECHA_FMT = { timeZone: 'Europe/Madrid', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const ICONO_ESTADO = { hecho: 'check', espera: 'reloj', fallo: 'alerta', apagado: 'pausa' };
     let temporizador = null;
 
-    function paso(estado, icono, titulo, texto, ahorro, extra) {
-      const li = el('li', 'pr ' + estado + (extra && extra.classList.contains('vista-hoja') ? ' ancho' : ''));
-      const ic = el('div', 'pr-icono', icono);
-      ic.setAttribute('aria-hidden', 'true');
-      const tx = el('div', 'pr-texto');
-      tx.append(el('h3', '', titulo), el('p', 'pr-desc', texto));
-      if (ahorro) tx.append(el('p', 'pr-ahorro', '👤 Sin automatizar: una persona habría tenido que ' + ahorro));
-      li.append(ic, tx);
-      if (extra) { const ex = el('div', 'pr-extra'); ex.append(extra); li.append(ex); }
+    function paso(estado, titulo, texto, ahorro, extra) {
+      const ancho = extra && extra.classList.contains('vista-hoja');
+      const li = el('li', 'paso ' + estado + (ancho ? ' ancho' : ''));
+      const nodo = el('div', 'nodo');
+      nodo.setAttribute('aria-hidden', 'true');
+      nodo.append(icono(ICONO_ESTADO[estado]));
+      const cuerpo = el('div', 'res-cuerpo');
+      const tx = el('div', 'res-texto');
+      tx.append(el('h3', '', titulo), el('p', '', texto));
+      if (ahorro) {
+        const p = el('p', 'res-ahorro');
+        p.append(el('b', '', 'Sin automatizar, '), 'una persona habría tenido que ' + ahorro);
+        tx.append(p);
+      }
+      cuerpo.append(tx);
+      if (extra) { const ex = el('div', 'res-extra'); ex.append(extra); cuerpo.append(ex); }
+      li.append(nodo, cuerpo);
       return li;
     }
 
     function vistaHoja(r) {
       const caja = el('div', 'vista-hoja');
-      caja.append(el('div', 'vista-etiqueta', 'Así queda la hoja de cálculo'));
+      caja.append(el('div', 'etiqueta vista-etiqueta', 'Así queda la hoja de cálculo'));
       const hoja = el('div', 'hoja');
-      hoja.append(el('div', 'hoja-barra', '📊 Hoja de cálculo · pestaña «Leads»'));
+      const barra = el('div', 'hoja-barra');
+      barra.append(icono('hoja'), 'Hoja de cálculo · pestaña «Leads»');
+      hoja.append(barra);
       const scroll = el('div', 'hoja-scroll');
+      scroll.tabIndex = 0; // se puede desplazar con el teclado si no cabe
+      scroll.setAttribute('aria-label', 'Fila nueva de la hoja de cálculo');
       const tabla = el('table');
       const cab = el('tr');
       ['ID', 'Nombre', 'Apellido', 'Email', 'Mensaje', 'Fecha', 'Origen'].forEach((t) => cab.append(el('th', '', t)));
@@ -1029,6 +959,7 @@
       const thead = el('thead'); thead.append(cab);
       const tbody = el('tbody'); tbody.append(previas, nueva);
       tabla.append(thead, tbody); scroll.append(tabla); hoja.append(scroll); caja.append(hoja);
+      caja.append(el('p', 'nota-pie', 'La hora de la fila real puede ir unos segundos por detrás: si un servicio tarda en contestar, el sistema lo reintenta.'));
       return caja;
     }
 
@@ -1036,7 +967,7 @@
     function vistaCorreo(r, numero) {
       const primero = numero === 1;
       const caja = el('div');
-      caja.append(el('div', 'vista-etiqueta', primero ? 'Así es el correo que recibes' : 'Así es el segundo correo'));
+      caja.append(el('div', 'etiqueta vista-etiqueta', primero ? 'Así es el correo que recibes' : 'Así es el segundo correo'));
       const t = el('div', 'tarjeta-vista');
       const meta = el('div', 'meta');
       meta.append(el('b', '', 'Equipo de Automatización'), document.createElement('br'),
@@ -1073,7 +1004,7 @@
 
     function vistaTelegram(r) {
       const caja = el('div');
-      caja.append(el('div', 'vista-etiqueta', 'Así lo ve el negocio en su móvil'));
+      caja.append(el('div', 'etiqueta vista-etiqueta', 'Así lo ve el negocio en su móvil'));
       const t = el('div', 'tarjeta-vista telegram');
       const l = (txt) => el('span', 'linea', txt);
       const nombreCompleto = r.nombre + (r.apellido ? ' ' + r.apellido : '');
@@ -1100,9 +1031,10 @@
         const quedan = Math.max(0, Math.round((fin - Date.now()) / 1000));
         if (quedan === 0) {
           clearInterval(temporizador); temporizador = null;
-          box.classList.add('hecha'); etiqueta.textContent = ''; tiempo.textContent = 'Ya debería estar en tu bandeja 📩';
-          li.className = 'pr hecho visible';
-          li.querySelector('.pr-icono').textContent = '✅';
+          box.classList.add('hecha'); etiqueta.remove();
+          tiempo.replaceChildren(icono('check'), 'Ya debería estar en tu bandeja de entrada');
+          li.className = 'paso hecho visible';
+          li.querySelector('.nodo').replaceChildren(icono('check'));
           if (alTerminar) alTerminar();
           return;
         }
@@ -1123,38 +1055,38 @@
 
       /* Cabecera */
       const cab = el('div', 'res-cab');
-      cab.append(el('div', 'insignia ' + (ok ? 'ok' : 'aviso'), ok ? '✅ Automatización ejecutada' : '⚠️ Guardado, pero con un fallo'));
-      const h = el('h2', '', ok ? 'Cuatro tareas hechas sin que nadie tocara nada' : 'Hemos guardado tu solicitud, pero no hemos podido enviarte el correo');
+      const insignia = el('div', 'aviso ' + (ok ? 'correcto' : 'parcial'));
+      insignia.append(icono(ok ? 'check' : 'alerta'), el('b', '', ok ? 'Automatización ejecutada' : 'Guardado, pero con un fallo'));
+      const h = el('h2', 'titular', ok ? 'Cuatro tareas hechas sin que nadie tocara nada' : 'Hemos guardado tu solicitud, pero no hemos podido enviarte el correo');
       h.id = 't-resultado'; h.tabIndex = -1;
-      cab.append(h, el('p', '', ok ? 'Esto es lo que acaba de pasar con tu solicitud, paso a paso.' : 'Esto es lo que ha pasado con tu solicitud, paso a paso.'));
+      cab.append(insignia, h, el('p', '', ok ? 'Esto es lo que acaba de pasar con tu solicitud, paso a paso.' : 'Esto es lo que ha pasado con tu solicitud, paso a paso.'));
 
-      /* Los 5 pasos */
-      const lista = el('ol', 'pasos-res');
+      /* Los 5 pasos, en la misma línea de flujo */
+      const lista = el('ol', 'flujo flujo-res');
       lista.append(
-        paso('hecho', '✅', '1 · Has rellenado el formulario', 'Tus datos han llegado al sistema.', 'atender el contacto y pedir los datos uno a uno.'),
-        paso('hecho', '✅', '2 · Se ha apuntado en la hoja de cálculo',
+        paso('hecho', '1 · Has rellenado el formulario', 'Tus datos han llegado al sistema.', 'atender el contacto y pedir los datos uno a uno.'),
+        paso('hecho', '2 · Se ha apuntado en la hoja de cálculo',
           'Tu solicitud se ha guardado como una fila nueva' + (r.id ? ' (ID: ' + r.id + ').' : '.'),
           'copiar los datos a una hoja, a mano.', vistaHoja(r)));
       if (ok) {
         lista.append(
-          paso('hecho', '✅', '3 · Te hemos enviado un email', 'Hemos enviado un correo a ' + r.email + '. Si no lo ves, mira en la carpeta de spam.',
+          paso('hecho', '3 · Te hemos enviado un email', 'Hemos enviado un correo a ' + r.email + '. Si no lo ves, mira en la carpeta de spam.',
             'leer el mensaje, redactar la respuesta y enviarla.', vistaCorreo(r, 1)),
-          paso('hecho', '📱', '4 · Se avisa al móvil del negocio', 'Ahora mismo se avisa por Telegram a quien gestiona el negocio, con tus datos.',
+          paso('hecho', '4 · Se avisa al móvil del negocio', 'Ahora mismo se avisa por Telegram a quien gestiona el negocio, con tus datos.',
             'reenviar el contacto al responsable o llamarle.', vistaTelegram(r)));
-        const li5 = paso('espera', '⏳', '5 · A los 5 minutos, un segundo email',
+        const ex = el('div');
+        const li5 = paso('espera', '5 · A los 5 minutos, un segundo email',
           'Llegará a ' + r.email + ' con el asunto «¿Podemos ayudarte con tu solicitud?». Cuando termine la cuenta atrás verás aquí lo que dice. Aunque cierres esta página, llegará igualmente.',
-          'acordarse de volver a escribirte.');
-        const ex = el('div', 'pr-extra');
+          'acordarse de volver a escribirte.', ex);
         ex.append(cuentaAtras(li5, () => { // al llegar a cero se muestra lo que dice el segundo correo
           const correo2 = vistaCorreo(r, 2); correo2.classList.add('aparece'); ex.append(correo2);
         }));
-        li5.append(ex);
         lista.append(li5);
       } else {
         lista.append(
-          paso('fallo', '⚠️', '3 · No hemos podido enviar el correo', 'No hemos podido enviar el correo a ' + r.email + '.'),
-          paso('apagado', '⏸️', '4 · Aviso al móvil del negocio', 'No se ha realizado: el sistema se detiene si falla el primer correo.'),
-          paso('apagado', '⏸️', '5 · Segundo email a los 5 minutos', 'No se ha realizado: el sistema se detiene si falla el primer correo.'));
+          paso('fallo', '3 · No hemos podido enviar el correo', 'No hemos podido enviar el correo a ' + r.email + '. El responsable ya ha recibido un aviso con la causa.'),
+          paso('apagado', '4 · Aviso al móvil del negocio', 'En pausa: el sistema se detiene si falla el primer correo.'),
+          paso('apagado', '5 · Segundo email a los 5 minutos', 'En pausa: el sistema se detiene si falla el primer correo.'));
       }
 
       /* Cierre */
@@ -1165,34 +1097,36 @@
       const pregunta = el('p', 'res-pregunta', '¿Cuánto tiempo pierde tu negocio en tareas así? Cuéntanos tu caso y vemos qué se puede automatizar.');
       const botones = el('div', 'res-botones');
       if (CONTACTO_EMAIL) {
-        const a = el('a', 'btn-cta', 'Quiero saber más →');
+        const a = el('a', 'btn-primario', 'Quiero saber más');
         a.href = 'mailto:' + CONTACTO_EMAIL + '?subject=' + encodeURIComponent('Quiero automatizar mis leads');
         botones.append(a);
       }
-      const compartir = el('button', 'btn-texto', '🔗 Compartir esta demo'); compartir.type = 'button';
-      compartir.addEventListener('click', () => compartirDemo(compartir));
-      const otra = el('button', 'btn-texto', '← Probar con otro email'); otra.type = 'button';
+      const compartir = el('button', 'btn-secundario'); compartir.type = 'button';
+      compartir.append(icono('enlace'), el('span', '', 'Compartir esta demo'));
+      compartir.addEventListener('click', () => compartirDemo(compartir.lastChild));
+      const otra = el('button', 'btn-secundario', '← Probar con otro email'); otra.type = 'button';
       otra.addEventListener('click', reiniciar);
       botones.append(compartir, otra);
       cierre.append(resumen, pregunta, botones);
 
-      caja.append(cab, lista, cierre);
+      const sep = el('hr', 'separador'); sep.style.margin = 'var(--espacio-48) auto';
+      caja.append(cab, lista, sep, cierre);
       mostrar($('contenido'), false);
       mostrar(caja, true);
       caja.scrollIntoView({ behavior: suave(), block: 'start' });
       h.focus({ preventScroll: true });
 
       /* Los pasos aparecen uno a uno */
-      const pasos = lista.querySelectorAll('.pr');
+      const pasos = lista.querySelectorAll('.paso');
       const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
       pasos.forEach((li, i) => setTimeout(() => li.classList.add('visible'), reducido ? 0 : 250 + i * 600));
     }
 
-    function compartirDemo(btn) {
-      const original = btn.textContent;
-      const aviso = (t) => { btn.textContent = t; setTimeout(() => { btn.textContent = original; }, 2500); };
+    function compartirDemo(texto) {
+      const original = texto.textContent;
+      const aviso = (t) => { texto.textContent = t; setTimeout(() => { texto.textContent = original; }, 2500); };
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(URL_DEMO).then(() => aviso('✅ ¡Enlace copiado!'), () => aviso(URL_DEMO));
+        navigator.clipboard.writeText(URL_DEMO).then(() => aviso('Enlace copiado'), () => aviso(URL_DEMO));
       } else aviso(URL_DEMO);
     }
 
@@ -1209,7 +1143,7 @@
     const abrirPolitica = (e) => { if (e) e.preventDefault(); if (!dialogo.open) dialogo.showModal(); };
     document.querySelectorAll('a[href="#privacidad"], [data-abrir-politica]').forEach((n) => n.addEventListener('click', abrirPolitica));
     $('cerrarPolitica').addEventListener('click', () => dialogo.close());
-    dialogo.addEventListener('click', (e) => { if (e.target === dialogo) dialogo.close(); }); // clic en el fondo oscuro
+    dialogo.addEventListener('click', (e) => { if (e.target === dialogo) dialogo.close(); }); // clic en el fondo
     if (location.hash === '#privacidad') abrirPolitica();
 
     /* ═══ Arranque ═══ */
@@ -1217,6 +1151,7 @@
       const b = $('bannerSim');
       b.textContent = 'MODO SIMULACIÓN (' + MODO_SIM + '): no se envía nada a n8n. Cambia con ?simular=200 | 202 | 400 | 400-trampa | 502 | 429 | 500 | timeout | red | real';
       mostrar(b, true);
+      document.body.classList.add('con-banner');
     }
     cargarContador();
   })();

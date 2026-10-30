@@ -302,7 +302,7 @@
         "resource": "message",
         "operation": "sendMessage",
         "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
-        "text": "=⚠️ [Demo Leads] No se pudo registrar el lead {{ $(\"Validar y limpiar datos\").item.json.id }} en Google Sheets.\nError: {{ $json.error?.message ?? \"sin detalle\" }}",
+        "text": "=⚠️ [Demo Leads] — No se pudo registrar el lead {{ $(\"Validar y limpiar datos\").item.json.id }} en Google Sheets.\nError: {{ $json.error?.message ?? $json.error ?? \"sin detalle\" }}",
         "additionalFields": {
           "appendAttribution": false
         }
@@ -348,7 +348,7 @@
         "resource": "message",
         "operation": "sendMessage",
         "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
-        "text": "=⚠️ [Demo Leads] El lead {{ $(\"Validar y limpiar datos\").item.json.id }} se registró, pero falló el email de confirmación.\nError: {{ $json.error?.message ?? \"sin detalle\" }}",
+        "text": "=⚠️ [Demo Leads] — El lead {{ $(\"Validar y limpiar datos\").item.json.id }} se registró, pero falló el email de confirmación.\nError: {{ $json.error?.message ?? $json.error ?? \"sin detalle\" }}",
         "additionalFields": {
           "appendAttribution": false
         }
@@ -394,7 +394,7 @@
         "resource": "message",
         "operation": "sendMessage",
         "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
-        "text": "=⚠️ [Demo Leads] Falló el email de seguimiento del lead {{ $(\"Validar y limpiar datos\").item.json.id }}.\nError: {{ $json.error?.message ?? \"sin detalle\" }}",
+        "text": "=⚠️ [Demo Leads] — Falló el email de seguimiento del lead {{ $(\"Validar y limpiar datos\").item.json.id }}.\nError: {{ $json.error?.message ?? $json.error ?? \"sin detalle\" }}",
         "additionalFields": {
           "appendAttribution": false
         }

@@ -9,7 +9,9 @@ ARG CONTACTO_EMAIL=""
 # Si está vacía, la web usa la que trae index.html.
 ARG N8N_BASE_URL=""
 
-COPY index.html /usr/share/nginx/html/index.html
+COPY index.html identidad.css /usr/share/nginx/html/
+COPY fuentes /usr/share/nginx/html/fuentes
+COPY logo /usr/share/nginx/html/logo
 
 RUN if [ -n "$RESPONSABLE_NOMBRE" ]; then \
       sed -i "s|<span class=\"marcador\">\[NOMBRE DEL RESPONSABLE\]</span>|$RESPONSABLE_NOMBRE|" /usr/share/nginx/html/index.html; \
