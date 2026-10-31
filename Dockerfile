@@ -9,7 +9,8 @@ ARG CONTACTO_EMAIL=""
 # Si está vacía, la web usa la que trae index.html.
 ARG N8N_BASE_URL=""
 
-COPY index.html identidad.css /usr/share/nginx/html/
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY index.html identidad.css compartir.png /usr/share/nginx/html/
 COPY fuentes /usr/share/nginx/html/fuentes
 COPY logo /usr/share/nginx/html/logo
 
@@ -21,7 +22,12 @@ RUN if [ -n "$RESPONSABLE_NOMBRE" ]; then \
     fi; \
     if [ -n "$N8N_BASE_URL" ]; then \
       sed -i "s|https://n8n.vicenterueda.com/webhook/|$N8N_BASE_URL/webhook/|g" /usr/share/nginx/html/index.html; \
+      sed -i "s|connect-src 'self' https://n8n.vicenterueda.com;|connect-src 'self' $N8N_BASE_URL;|" /etc/nginx/conf.d/default.conf; \
     fi
+
+# Si la configuración de nginx tuviera un error, la construcción falla aquí y la
+# web publicada sigue funcionando (sin esto, fallaría al arrancar el contenedor).
+RUN nginx -t
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

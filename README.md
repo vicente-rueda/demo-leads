@@ -130,6 +130,7 @@ Los tres flujos están en `n8n/`. Los nodos que llaman a un servicio externo rei
 - **El CORS de los webhooks solo admite el dominio de la demo**, y un límite de peticiones por IP en el proxy inverso frena los envíos masivos.
 - **n8n no guarda las ejecuciones correctas** (`saveDataSuccessExecution: none`), para no acumular datos personales en su base de datos.
 - **Sin recursos de terceros en la web:** las fuentes, el logo y los estilos se sirven desde el mismo dominio. La web no hace ninguna petición a Google Fonts ni a ningún CDN.
+- **El servidor web no va «de serie»** (`nginx.conf`): no dice su versión, obliga a usar HTTPS (HSTS), impide que otra web la meta en un marco, limita con una política de seguridad de contenido (CSP) qué puede cargar la página y a dónde puede conectarse (solo a sí misma y a n8n), comprime el texto y deja en caché lo que no cambia. Los datos del visitante se muestran siempre como texto, nunca como HTML.
 
 ## Qué hay en el repositorio
 
@@ -139,7 +140,9 @@ Los tres flujos están en `n8n/`. Los nodos que llaman a un servicio externo rei
 | `identidad.css` | La identidad visual compartida: colores (con modo oscuro automático), tipografía, espacios y sombras, como variables CSS. |
 | `fuentes/` | Newsreader e Instrument Sans en `woff2`, servidas desde la propia web, cada una con su licencia SIL OFL 1.1 (`*-OFL.txt`). |
 | `logo/` | Logo en color y en blanco (para el modo oscuro) y favicon en SVG y PNG. |
-| `Dockerfile` | Imagen `nginx:alpine` que sirve la web. Recibe al construirse los datos del responsable de la política de privacidad. |
+| `Dockerfile` | Imagen `nginx:alpine` que sirve la web. Recibe al construirse los datos del responsable de la política de privacidad y comprueba la configuración de nginx antes de darla por buena. |
+| `nginx.conf` | Configuración del servidor web: cabeceras de seguridad, compresión y caché. |
+| `compartir.png` | Imagen de 1200 × 630 que muestran LinkedIn, WhatsApp y otras redes al compartir el enlace. |
 | `n8n/demo-leads-captura.json` | Flujo principal: formulario, registro, correos, aviso, segundo correo si nadie atiende el contacto y contador. |
 | `n8n/demo-leads-errores.json` | Red de seguridad: avisa por Telegram si otro flujo falla de forma no prevista. |
 | `n8n/demo-leads-limpieza.json` | Flujo programado: cada día anonimiza los datos personales de los contactos con más de 30 días. |
