@@ -327,7 +327,8 @@
     .r-progreso li.hecho .nodo { border-color: var(--color-principal); color: var(--color-principal); }
     .r-progreso li.activo .nodo { background: var(--color-principal); border-color: var(--color-principal); color: var(--color-sobre-principal); box-shadow: 0 0 0 6px var(--color-fondo), var(--sombra-2); transform: scale(1.12); }
     .r-progreso li.activo a { color: var(--color-texto); }
-    @media (max-width: 599px) { .r-progreso a span:last-child { display: none; } } /* en móvil, solo los números */
+    /* en móvil, solo los números: el texto se oculta a la vista, pero los lectores de pantalla lo siguen leyendo */
+    @media (max-width: 599px) { .r-progreso a span:last-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
 
     /* Escena: la zona queda fija y, al hacer scroll, un paso sustituye al otro (bajar = siguiente, subir = anterior).
        La activa el JavaScript solo si cabe en la pantalla y sin «reducir movimiento»; si no, los pasos van uno debajo de otro. */
@@ -636,11 +637,11 @@
             </div>
           <nav class="r-progreso" aria-label="Los 5 pasos">
             <ol>
-                <li><a href="#paso-1" aria-label="Paso 1: Escribe"><span class="nodo" aria-hidden="true">1</span><span>Escribe</span></a></li>
-                <li><a href="#paso-2" aria-label="Paso 2: Se registra"><span class="nodo" aria-hidden="true">2</span><span>Se registra</span></a></li>
-                <li><a href="#paso-3" aria-label="Paso 3: Responde"><span class="nodo" aria-hidden="true">3</span><span>Responde</span></a></li>
-                <li><a href="#paso-4" aria-label="Paso 4: Te avisa"><span class="nodo" aria-hidden="true">4</span><span>Te avisa</span></a></li>
-                <li><a href="#paso-5" aria-label="Paso 5: Seguimiento"><span class="nodo" aria-hidden="true">5</span><span>Seguimiento</span></a></li>
+                <li><a href="#paso-1"><span class="nodo" aria-hidden="true">1</span><span>Escribe</span></a></li>
+                <li><a href="#paso-2"><span class="nodo" aria-hidden="true">2</span><span>Se registra</span></a></li>
+                <li><a href="#paso-3"><span class="nodo" aria-hidden="true">3</span><span>Responde</span></a></li>
+                <li><a href="#paso-4"><span class="nodo" aria-hidden="true">4</span><span>Te avisa</span></a></li>
+                <li><a href="#paso-5"><span class="nodo" aria-hidden="true">5</span><span>Seguimiento</span></a></li>
             </ol>
           </nav>
           <ol class="r-pasos">
