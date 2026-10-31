@@ -46,14 +46,14 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        60,
-        60
+        40,
+        100
       ],
       "parameters": {
-        "content": "## Red de seguridad\nSe dispara cuando un workflow falla de una forma que no estaba prevista (un nodo sin salida de error, una caída a mitad de camino...). Los fallos previstos ya avisan desde el propio flujo.\n\n**Después de importar:** publica este workflow y, en «Demo Leads - Captura y seguimiento» → Ajustes → *Error workflow*, selecciónalo.",
+        "content": "### Red de seguridad\nSe dispara cuando cualquier flujo de la demo falla de una forma no prevista (un nodo sin salida de error, una caída a mitad de camino…) y avisa por Telegram con el flujo, el nodo, el error y el enlace a la ejecución. Los fallos previstos ya avisan desde su propio flujo.\n\n**Tras importar:** publícalo y elígelo en Ajustes → *Error workflow* de los otros dos flujos.",
         "color": 3,
-        "width": 480,
-        "height": 240
+        "width": 520,
+        "height": 420
       }
     }
   ],

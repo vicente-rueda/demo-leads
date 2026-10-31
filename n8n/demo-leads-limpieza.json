@@ -284,14 +284,14 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        60,
-        60
+        40,
+        140
       ],
       "parameters": {
-        "content": "## Limpieza de datos personales\nCada día anonimiza (Nombre, Apellido, Email y Mensaje → «(borrado)») los leads de más de 30 días. La fila se conserva sin datos personales, así el contador de leads no baja.\n\nSi falla algo, salta el workflow de errores: **selecciónalo en Ajustes → Error workflow** tras importar.\n\nLímite conocido: el historial de versiones de Google Sheets puede conservar valores antiguos durante un tiempo.",
-        "color": 6,
-        "width": 560,
-        "height": 260
+        "content": "### Limpieza de datos personales · cada día a las 04:00\nLee la hoja, elige los leads de más de 30 días y sustituye Nombre, Apellido, Email y Mensaje por «(borrado)». La fila se conserva sin datos personales: el contador no baja y queda la fecha del consentimiento. Al acabar, resumen por Telegram.\n\nSi algo falla, salta el flujo de errores (elígelo en Ajustes → *Error workflow* tras importar). Límite conocido: el historial de versiones de Google Sheets puede conservar valores antiguos un tiempo.",
+        "color": 7,
+        "width": 1180,
+        "height": 400
       }
     }
   ],

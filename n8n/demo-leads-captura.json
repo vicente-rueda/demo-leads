@@ -26,7 +26,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        340,
+        320,
         300
       ],
       "parameters": {
@@ -42,7 +42,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        580,
+        540,
         300
       ],
       "parameters": {
@@ -72,7 +72,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        820,
+        1000,
         300
       ],
       "parameters": {
@@ -239,7 +239,7 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        1060,
+        1220,
         300
       ],
       "parameters": {
@@ -270,7 +270,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1300,
+        1440,
         300
       ],
       "parameters": {
@@ -288,7 +288,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        1540,
+        1800,
         300
       ],
       "parameters": {
@@ -333,7 +333,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1780,
+        2020,
         300
       ],
       "parameters": {
@@ -363,7 +363,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        2020,
+        2320,
         300
       ],
       "parameters": {
@@ -379,7 +379,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        2260,
+        2540,
         300
       ],
       "parameters": {
@@ -423,7 +423,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2500,
+        2760,
         300
       ],
       "parameters": {
@@ -454,7 +454,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        2740,
+        2980,
         120
       ],
       "parameters": {
@@ -627,7 +627,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        3220,
+        3420,
         520
       ],
       "parameters": {
@@ -656,7 +656,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2740,
+        2980,
         300
       ],
       "parameters": {
@@ -686,7 +686,7 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        2980,
+        3200,
         300
       ],
       "parameters": {
@@ -717,7 +717,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        3220,
+        3420,
         300
       ],
       "parameters": {
@@ -890,7 +890,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2980,
+        3200,
         520
       ],
       "parameters": {
@@ -919,8 +919,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1060,
-        520
+        1110,
+        700
       ],
       "parameters": {
         "resource": "message",
@@ -948,8 +948,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1300,
-        520
+        1330,
+        700
       ],
       "parameters": {
         "respondWith": "json",
@@ -965,8 +965,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1300,
-        700
+        1330,
+        520
       ],
       "parameters": {
         "resource": "message",
@@ -994,8 +994,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1540,
-        700
+        1550,
+        520
       ],
       "parameters": {
         "respondWith": "json",
@@ -1011,7 +1011,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2500,
+        2760,
         520
       ],
       "parameters": {
@@ -1040,7 +1040,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        820,
+        760,
         120
       ],
       "parameters": {
@@ -1058,7 +1058,7 @@
       "typeVersion": 2.1,
       "position": [
         100,
-        1000
+        1080
       ],
       "parameters": {
         "httpMethod": "GET",
@@ -1076,8 +1076,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        340,
-        1000
+        320,
+        1080
       ],
       "parameters": {
         "resource": "sheet",
@@ -1119,8 +1119,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        580,
-        1000
+        540,
+        1080
       ],
       "parameters": {
         "respondWith": "json",
@@ -1144,8 +1144,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        580,
-        1160
+        540,
+        1230
       ],
       "parameters": {
         "respondWith": "json",
@@ -1161,46 +1161,78 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        60,
+        40,
         -200
       ],
       "parameters": {
-        "content": "## Demo de captación de leads\nFormulario → validar (datos, consentimiento y correo temporal) → registrar en Sheets → email de confirmación → «ok» al formulario → aviso por Telegram → espera del plazo → comprobar si alguien lo atendió → si no, aviso al negocio y segundo email.\n\nSin secretos en el flujo: Telegram, Sheets y el correo (SMTP) usan credenciales de n8n. Al importar: sustituye los marcadores `REEMPLAZAR_…` (chat de Telegram, ID de la hoja, remitente de los correos) y elige tu credencial en cada nodo que la use.",
-        "color": 4,
-        "width": 760,
-        "height": 200
-      }
-    },
-    {
-      "id": "e599843a-3c04-7d13-be3f-cb567a7ffb98",
-      "name": "Nota - Errores",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        820,
-        -200
-      ],
-      "parameters": {
-        "content": "## Política de errores\n- Si falla **Sheets** al registrar: aviso a Telegram y el formulario recibe 502.\n- Si falla el **primer email**: el lead ya está guardado → aviso y el formulario recibe 202.\n- Si falla **Telegram** o la lectura del total: el visitante no se entera, el flujo sigue.\n- Cada llamada externa reintenta 3 veces (5 s) y, si falla, el aviso lleva la causa real.",
-        "color": 3,
-        "width": 760,
-        "height": 230
-      }
-    },
-    {
-      "id": "bec6b772-1c09-11c6-5de3-d573f1ce2600",
-      "name": "Nota - Seguimiento",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        1600,
-        -200
-      ],
-      "parameters": {
-        "content": "## Segundo correo con sentido\nPasado el plazo (`PLAZO_MINUTOS`: 5 min en la demo; en un negocio real, p. ej. 24 h) se vuelve a leer la fila del lead. Si la columna **Atendido** tiene «Sí», no se envía nada. Si no, se avisa al negocio por Telegram («lleva X sin respuesta») y el cliente recibe su siguiente paso por correo. En la columna **Seguimiento** queda anotado qué pasó.\n\nEl plazo, el texto y el número de correos se adaptan a lo que necesite la automatización de cada cliente.",
+        "content": "## Demo Leads · Captura y seguimiento\nHace solo lo que una persona tendría que hacer a mano al recibir un contacto: **apuntarlo, contestarle, avisar al negocio y acordarse de hacer seguimiento**. Se lee de izquierda a derecha en 4 bloques; debajo, el contador de la web.\n\n**Errores:** cada llamada a un servicio externo reintenta 3 veces (5 s entre intentos). Si sigue fallando, la fila de abajo de cada bloque avisa por Telegram con la causa real y el formulario recibe un código que dice la verdad. Lo no previsto lo recoge el flujo «Demo Leads - Alerta de errores».\n\n**Sin secretos:** Sheets, correo (SMTP) y Telegram usan credenciales de n8n. Al importar, sustituye los marcadores `REEMPLAZAR_…` (ID de la hoja, chat de Telegram, remitente) y elige tu credencial en cada nodo que la use.",
         "color": 6,
-        "width": 800,
-        "height": 270
+        "width": 1660,
+        "height": 160
+      }
+    },
+    {
+      "id": "e65b3321-9f16-b150-0a45-5b4f463713b8",
+      "name": "Nota - 1 Recibir y validar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        40,
+        0
+      ],
+      "parameters": {
+        "content": "### 1 · Recibir y validar\nEl formulario llega al webhook. Se recortan y limpian los datos, se valida el email (sin comas ni espacios, para no enviar a varias direcciones), se exige el consentimiento y se rechazan los correos temporales y los envíos con el campo trampa relleno.\n\nSi algo no vale → **400** con el motivo, y no se guarda ni se envía nada.",
+        "color": 7,
+        "width": 860,
+        "height": 880
+      }
+    },
+    {
+      "id": "f78d98a7-958e-b17a-3b81-12acf8b6479d",
+      "name": "Nota - 2 Guardar y confirmar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        940,
+        0
+      ],
+      "parameters": {
+        "content": "### 2 · Guardar y confirmar\nEl lead se registra en Google Sheets (en modo `RAW`: una celda que empiece por `=` no se ejecuta como fórmula) y recibe el correo de confirmación. Solo entonces el formulario recibe el **200**: el «ok» es verdad.\n\n**Abajo:** si falla el registro → aviso y **502**; si falla solo el correo, el lead ya está guardado → aviso y **202**.",
+        "color": 7,
+        "width": 760,
+        "height": 880
+      }
+    },
+    {
+      "id": "557d46a2-71f8-ac83-bd7b-3ba64317d844",
+      "name": "Nota - 3 Avisar al negocio",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1740,
+        0
+      ],
+      "parameters": {
+        "content": "### 3 · Avisar al negocio\nAviso por Telegram con los datos del lead y el total acumulado. El visitante ya tiene su respuesta: si Telegram o la lectura del total fallan, el flujo sigue.",
+        "color": 7,
+        "width": 480,
+        "height": 880
+      }
+    },
+    {
+      "id": "21c2a1e6-cc26-fdfd-da52-61c25c834a72",
+      "name": "Nota - 4 Segundo correo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2260,
+        0
+      ],
+      "parameters": {
+        "content": "### 4 · Segundo correo con sentido\nPasado el plazo (`PLAZO_MINUTOS`: 5 min en la demo; en un negocio real, p. ej. 24 h) se vuelve a leer la fila. Si la columna **Atendido** tiene «Sí», se anota y no se envía nada. Si no, aviso al negocio («lleva X sin respuesta»), segundo correo con el siguiente paso y anotación en **Seguimiento**. El plazo, el texto y el número de correos se adaptan a cada negocio.\n\n**Abajo:** avisos con la causa si falla la lectura, el correo o la anotación. Si falla la lectura, el correo sale igualmente, una sola vez.",
+        "color": 7,
+        "width": 1320,
+        "height": 880
       }
     },
     {
@@ -1209,14 +1241,14 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        60,
-        880
+        40,
+        940
       ],
       "parameters": {
-        "content": "## Contador de la web\nLee la celda `Total` de la pestaña `Stats` (en la hoja es una fórmula `=COUNTA(Leads!A:A)-1`, así no hay carreras ni escrituras). La respuesta se puede cachear 30 s.",
-        "color": 5,
-        "width": 440,
-        "height": 200
+        "content": "### Contador de la web\nLa web muestra cuántas personas han probado la demo. Se lee la celda `Total` de la pestaña `Stats`, que en la hoja es la fórmula `=COUNTA(Leads!A:A)-1`: sin escrituras ni carreras. Respuesta cacheable 30 s.\n\nSi Sheets falla → **503** y la web no muestra el contador.",
+        "color": 7,
+        "width": 860,
+        "height": 480
       }
     }
   ],

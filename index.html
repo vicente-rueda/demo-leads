@@ -839,7 +839,8 @@
     <hr class="separador" style="margin: var(--espacio-48) auto var(--espacio-16)">
 
     <footer class="pie">
-      <span><b>Vicente Rueda</b>, automatización para pequeños negocios</span>
+      <span>© <span id="anio">2026</span> <b>Vicente Rueda</b></span>
+      <span>Automatización para pequeños negocios</span>
       <span><button type="button" class="enlace" data-abrir-politica>Política de privacidad</button></span>
     </footer>
 
@@ -1461,6 +1462,7 @@
     /* Política de privacidad en ventana emergente (<dialog>: Escape cierra y el foco queda atrapado dentro) */
     const dialogo = $('privacidad');
     const abrirPolitica = (e) => { if (e) e.preventDefault(); if (!dialogo.open) dialogo.showModal(); };
+    document.getElementById('anio').textContent = new Date().getFullYear();
     document.querySelectorAll('a[href="#privacidad"], [data-abrir-politica]').forEach((n) => n.addEventListener('click', abrirPolitica));
     $('cerrarPolitica').addEventListener('click', () => dialogo.close());
     dialogo.addEventListener('click', (e) => { if (e.target === dialogo) dialogo.close(); }); // clic en el fondo
