@@ -138,7 +138,12 @@ Qué se ha comprobado y qué no:
 
 - ✅ Web probada en simulación con todos los estados de respuesta (200, 202, 400, 502, 429, otros, tiempo agotado y sin conexión), sin errores en consola, sin desbordes entre 320 y 1600 px de ancho, y con contraste de texto de al menos 4,5:1.
 - ✅ Flujos validados con el validador del SDK de n8n; el código de validación ejecutado con entradas maliciosas (varios destinatarios, HTML, fórmulas, campo trampa, cuerpo vacío); la lógica de limpieza ejecutada con filas simuladas.
-- ✅ **Probado de extremo a extremo** con la web desplegada contra el n8n real: lead correcto (fila en la hoja, correo de confirmación, aviso por Telegram y segundo correo a los 5 minutos), datos no válidos (tres casos con código 400), Google Sheets caído (la web lo dice con honestidad, no se guarda nada y llega una alerta) y correo caído (el lead queda guardado, la web avisa de que no se pudo enviar el correo y llega una alerta).
+- ✅ **Probado de extremo a extremo** con la web desplegada contra el n8n real (31/10/2026):
+  - **Lead correcto, atendido:** con «Sí» en `Atendido`, a los 5 minutos no se envía nada y `Seguimiento` queda en «No hace falta (atendido)».
+  - **Lead correcto, sin atender:** fila con la fecha del consentimiento, correo de confirmación, aviso por Telegram y, a los 5 minutos, aviso «lleva 5 minutos sin respuesta», segundo correo y `Seguimiento` en «Enviado».
+  - **Datos no válidos:** email con coma, nombre vacío, campo trampa, sin consentimiento y correos temporales (incluido un subdominio de un servicio desechable), todos con código 400 y sin fila ni correo.
+  - **Google Sheets sin acceso:** la web lo dice con honestidad, no se guarda nada y llega una alerta con la causa; si el acceso se pierde durante la espera, avisos con la causa al comprobar y al anotar el seguimiento, y un solo correo.
+  - **Correo caído:** el lead queda guardado, la web avisa de que no se pudo enviar el correo y llega una alerta con la causa.
 - ✅ CORS comprobado con `curl`: responde solo al origen de la web. Límite de peticiones por IP comprobado en el proxy inverso.
 - ❌ No se ha probado con lector de pantalla, Safari ni Firefox.
 
