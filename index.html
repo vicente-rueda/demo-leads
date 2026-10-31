@@ -685,7 +685,7 @@
                 <div class="pieza">
                   <div class="pieza-barra"><svg class="icono"><use href="#i-correo"/></svg>Correo · bandeja de entrada</div>
                   <div class="correo-cab">
-                    <dl><dt>De</dt><dd>Equipo de Automatización</dd><dt>Para</dt><dd>ana@ejemplo.com</dd></dl>
+                    <dl><dt>De</dt><dd>Equipo de Atención al Cliente</dd><dt>Para</dt><dd>ana@ejemplo.com</dd></dl>
                     <p class="asunto">Hemos recibido tu solicitud</p>
                   </div>
                   <div class="pieza-cuerpo">
@@ -800,11 +800,11 @@
               </div>
 
               <label class="consentimiento">
-                <input type="checkbox" id="consentimiento" required aria-required="true">
+                <input type="checkbox" id="consentimiento" name="consentimiento" value="si" required aria-required="true">
                 <span>Acepto la <a href="#privacidad">política de privacidad</a>. <span class="req" aria-hidden="true">*</span></span>
               </label>
               <div class="error-campo oculto" id="error-consentimiento"></div>
-              <p class="nota-info"><svg class="icono" aria-hidden="true"><use href="#i-info"/></svg><span>Te llegarán 2 emails al correo que escribas: uno ahora y otro a los 5 minutos. Tus datos se anonimizan a los 30 días.</span></p>
+              <p class="nota-info"><svg class="icono" aria-hidden="true"><use href="#i-info"/></svg><span>Te llegará 1 email ahora y, si nadie te atiende en 5 minutos, otro con el siguiente paso. Tus datos se anonimizan a los 30 días.</span></p>
 
               <button type="submit" class="btn-primario" id="btnEnviar">
                 <span class="spinner" id="spinner" aria-hidden="true"></span>
@@ -829,7 +829,7 @@
             <li class="paso pendiente"><div class="nodo" aria-hidden="true">2</div><div class="res-texto"><div class="res-fila"><h3>Registrado en Google Sheets</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>La fila nueva en Google Sheets.</p></div></li>
             <li class="paso pendiente"><div class="nodo" aria-hidden="true">3</div><div class="res-texto"><div class="res-fila"><h3>Respuesta enviada</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>El correo que te llega a ti.</p></div></li>
             <li class="paso pendiente"><div class="nodo" aria-hidden="true">4</div><div class="res-texto"><div class="res-fila"><h3>Aviso en el móvil del negocio</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>El aviso que recibe el negocio.</p></div></li>
-            <li class="paso pendiente"><div class="nodo" aria-hidden="true">5</div><div class="res-texto"><div class="res-fila"><h3>Segundo correo si nadie contesta</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>El seguimiento, a los 5 minutos.</p></div></li>
+            <li class="paso pendiente"><div class="nodo" aria-hidden="true">5</div><div class="res-texto"><div class="res-fila"><h3>Segundo correo si nadie contesta</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>Si nadie lo atiende, el segundo correo, a los 5 minutos.</p></div></li>
           </ol>
         </div>
 
@@ -856,9 +856,9 @@
       <dt>Responsable</dt>
       <dd><span class="marcador">[NOMBRE DEL RESPONSABLE]</span><br>Contacto: <span class="marcador">[EMAIL DE CONTACTO]</span></dd>
       <dt>Para qué usamos tus datos</dt>
-      <dd>Esta es una demo de automatización. Con tus datos se registra tu solicitud en una hoja de cálculo de Google Sheets, se te envían dos correos (uno inmediato y otro a los 5 minutos) y se avisa por Telegram a quien gestiona la demo.</dd>
+      <dd>Esta es una demo de automatización. Con tus datos se registra tu solicitud en una hoja de cálculo de Google Sheets, se te envía un correo de confirmación y, si nadie ha atendido tu solicitud en 5 minutos, un segundo correo con el siguiente paso, y se avisa por Telegram a quien gestiona la demo.</dd>
       <dt>Qué datos</dt>
-      <dd>Nombre, apellido (opcional), email, mensaje (opcional), fecha y un identificador de la solicitud. El aviso de Telegram incluye tu nombre, tu email y las primeras palabras de tu mensaje.</dd>
+      <dd>Nombre, apellido (opcional), email, mensaje (opcional), fecha, un identificador de la solicitud y la fecha y hora en que aceptas esta política, como prueba de tu consentimiento. El aviso de Telegram incluye tu nombre, tu email y las primeras palabras de tu mensaje.</dd>
       <dt>Base legal</dt>
       <dd>Tu consentimiento, que das al marcar la casilla del formulario. Puedes retirarlo cuando quieras escribiendo al contacto.</dd>
       <dt>Cuánto tiempo</dt>
@@ -1118,13 +1118,14 @@
     function simular(modo, datos) {
       return new Promise((resolve, reject) => {
         setTimeout(() => {
-          const id = 'LEAD-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+          const id = 'LEAD-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 5);
           const nombre = String(datos.get('nombre') || ''), email = String(datos.get('email') || '').toLowerCase();
           if (datos.get('web')) return resolve({ status: 400, json: { error: 'validation_error', message: MSG.revisa, details: ['Solicitud rechazada.'] } });
           switch (modo) {
             case '202':          return resolve({ status: 202, json: { status: 'registered', emailSent: false, id, message: 'Tu solicitud está registrada, pero no hemos podido enviar el email de confirmación.' } });
             case '400':          return resolve({ status: 400, json: { error: 'validation_error', message: MSG.revisa, details: ['El nombre es obligatorio.', 'El email no es válido.'] } });
             case '400-trampa':   return resolve({ status: 400, json: { error: 'validation_error', message: MSG.revisa, details: ['Solicitud rechazada.'] } });
+            case '400-temporal': return resolve({ status: 400, json: { error: 'validation_error', message: MSG.revisa, details: ['El email parece temporal o desechable. Usa uno que consultes habitualmente.'] } });
             case '502':          return resolve({ status: 502, json: { error: 'upstream_error', message: MSG.guardado } });
             case '429':          return resolve({ status: 429, json: null });
             case '500':          return resolve({ status: 500, json: null });
@@ -1287,8 +1288,8 @@
       barra.append(icono('correo'), 'Correo · bandeja de entrada');
       const cab = el('div', 'correo-cab');
       const dl = el('dl');
-      dl.append(el('dt', '', 'De'), el('dd', '', 'Equipo de Automatización'), el('dt', '', 'Para'), el('dd', '', r.email));
-      cab.append(dl, el('p', 'asunto', primero ? 'Hemos recibido tu solicitud' : '¿Podemos ayudarte con tu solicitud?'));
+      dl.append(el('dt', '', 'De'), el('dd', '', 'Equipo de Atención al Cliente'), el('dt', '', 'Para'), el('dd', '', r.email));
+      cab.append(dl, el('p', 'asunto', primero ? 'Hemos recibido tu solicitud' : 'Sobre tu solicitud: cómo seguimos'));
       const cuerpo = el('div', 'pieza-cuerpo');
       const hola = el('p'); hola.append('Hola ', el('strong', '', r.nombre), ',');
       cuerpo.append(hola);
@@ -1297,23 +1298,19 @@
           el('p', '', 'Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.'),
           el('p', '', 'Nos pondremos en contacto contigo a la mayor brevedad posible.'));
       } else {
+        const cita = r.mensaje ? ' («' + (r.mensaje.length > 80 ? r.mensaje.slice(0, 80) + '...' : r.mensaje) + '»)' : '';
+        const paso2 = el('p');
+        paso2.append(el('strong', '', 'Responde a este correo con el día y la franja en que prefieres que te llamemos'), ' (por ejemplo, «jueves por la mañana»). Con eso reservamos 15 minutos para revisar tu caso y proponerte una solución concreta.');
         cuerpo.append(
-          el('p', '', 'Hace unos minutos recibimos tu solicitud y queríamos saber si necesitas algo más para poder ayudarte.'),
-          el('p', '', 'Si nos cuentas un poco más de lo que buscas, respondiendo a este correo, podremos prepararte una propuesta a medida.'));
+          el('p', '', 'Hace 5 minutos recibimos tu solicitud' + cita + ' y no queremos que te quedes esperando. Todavía no hemos podido contestarte en persona, así que te dejamos ya el siguiente paso.'),
+          paso2);
       }
-      const firma = el('p'); firma.append('Un saludo, ', el('strong', '', 'Equipo de Automatización'));
+      const firma = el('p'); firma.append('Un saludo, ', el('strong', '', 'Equipo de Atención al Cliente'));
       cuerpo.append(firma);
       if (!primero) {
         const nota = el('div', 'nota-demo');
-        nota.append(el('p', '', ''));
-        nota.firstChild.append(el('strong', '', '💡 Sobre esta demo: '), 'este segundo correo se ha enviado solo, 5 minutos después de tu solicitud, sin que nadie lo escribiera ni tuviera que acordarse. Eso es lo que vive tu cliente cuando tu negocio tiene un sistema de automatización:');
-        const lista = el('ul');
-        [['Cada contacto recibe respuesta inmediata', ', a cualquier hora y cualquier día'],
-         ['No pierdes ningún contacto', ': todo queda registrado y organizado automáticamente'],
-         ['El seguimiento ocurre solo', ', sin depender de que alguien se acuerde'],
-         ['Recuperas el tiempo', ' que hoy dedicas a tareas repetitivas y manuales']]
-          .forEach(([negrita, resto]) => { const li = el('li'); li.append(el('strong', '', negrita), resto); lista.append(li); });
-        nota.append(lista, el('p', '', 'Si quieres ver cómo quedaría en tu caso, responde a este correo y te lo explicamos sin compromiso.'));
+        const np = el('p'); np.append(el('strong', '', 'Sobre esta demo: '), 'este correo lo ha enviado el sistema solo: pasaron 5 minutos y nadie había marcado tu solicitud como atendida en la hoja. Si alguien la hubiera marcado, no habrías recibido nada, porque una persona ya te habría contestado. El plazo (aquí, 5 minutos; en un negocio real puede ser, por ejemplo, 24 horas), el texto y el número de correos se adaptan a lo que necesite la automatización de cada cliente.');
+        nota.append(np);
         cuerpo.append(nota);
       }
       t.append(barra, cab, cuerpo);
@@ -1418,7 +1415,7 @@
           paso(4, 'hecho', 'Aviso en el móvil del negocio', 'Quien gestiona el negocio recibe tus datos por Telegram, al momento.', vistaTelegram(r)));
         const ex = el('div');
         const li5 = paso(5, 'espera', 'Segundo correo si nadie contesta',
-          'En un negocio real solo llega si nadie le ha contestado (por ejemplo, a las 24 horas). En la demo llega siempre, a los 5 minutos, a ' + r.email + ', con el asunto «¿Podemos ayudarte con tu solicitud?», aunque cierres esta página.', ex);
+          'Pasado el plazo, el sistema mira en Google Sheets si alguien marcó tu solicitud como atendida. Si nadie lo hizo, avisa al negocio por Telegram y te envía este correo, con el asunto «Sobre tu solicitud: cómo seguimos». En la demo el plazo son 5 minutos y nadie lo marca, así que llega a ' + r.email + ', aunque cierres esta página. En un negocio real, el plazo y el texto se adaptan a cada caso (por ejemplo, 24 horas).', ex);
         ex.append(cuentaAtras(li5, () => { // al llegar a cero se muestra lo que dice el segundo correo
           const correo2 = vistaCorreo(r, 2); correo2.classList.add('aparece'); ex.append(correo2);
         }));
@@ -1472,7 +1469,7 @@
     /* ═══ Arranque ═══ */
     if (SIMULANDO) {
       const b = $('bannerSim');
-      b.textContent = 'MODO SIMULACIÓN (' + MODO_SIM + '): no se envía nada a n8n. Cambia con ?simular=200 | 202 | 400 | 400-trampa | 502 | 429 | 500 | timeout | red | real';
+      b.textContent = 'MODO SIMULACIÓN (' + MODO_SIM + '): no se envía nada a n8n. Cambia con ?simular=200 | 202 | 400 | 400-trampa | 400-temporal | 502 | 429 | 500 | timeout | red | real';
       mostrar(b, true);
       document.body.classList.add('con-banner');
     }

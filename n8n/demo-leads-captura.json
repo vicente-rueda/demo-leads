@@ -32,7 +32,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "const entrada = $input.first().json;\nconst body = entrada.body ?? entrada;\nconst limpio = (v, max) => String(v ?? '').replace(/[\\u0000-\\u001f\\u007f]+/g, ' ').trim().slice(0, max);\nconst escapar = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\n\nconst nombre = limpio(body.nombre, 60);\nconst apellido = limpio(body.apellido, 60);\nconst email = limpio(body.email, 254).toLowerCase();\nconst mensaje = limpio(body.mensaje, 500);\nconst origen = limpio(body.origen || 'web-form', 30);\n\nconst errores = [];\nif (!nombre) errores.push('El nombre es obligatorio.');\nif (!/^[^\\s@<>,;\"']+@[^\\s@<>,;\"']+\\.[^\\s@<>,;\"']{2,}$/.test(email)) errores.push('El email no es válido.');\nif (limpio(body.web, 100)) errores.push('Solicitud rechazada.');\n\nconst mensajeCorto = mensaje.length > 80 ? mensaje.slice(0, 80) + '...' : mensaje;\nconst fecha = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });\nconst id = 'LEAD-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);\n\nreturn [{ json: {\n  valido: errores.length === 0, errores, id, fecha, origen,\n  nombre, apellido, email, mensaje,\n  nombreH: escapar(nombre), apellidoH: escapar(apellido), emailH: escapar(email), mensajeCortoH: escapar(mensajeCorto),\n} }];"
+        "jsCode": "const entrada = $input.first().json;\nconst body = entrada.body ?? entrada;\nconst limpio = (v, max) => String(v ?? '').replace(/[\\u0000-\\u001f\\u007f]+/g, ' ').trim().slice(0, max);\nconst escapar = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\n\nconst nombre = limpio(body.nombre, 60);\nconst apellido = limpio(body.apellido, 60);\nconst email = limpio(body.email, 254).toLowerCase();\nconst mensaje = limpio(body.mensaje, 500);\nconst origen = limpio(body.origen || 'web-form', 30);\nconst acepta = limpio(body.consentimiento, 10).toLowerCase() === 'si';\n\n// Dominios de correo desechable. Lista corta y orientativa: no caza todos. Para ampliarla, añade dominios en minúsculas.\nconst DESECHABLES = new Set([\n  \"10mail.org\", \"10minemail.com\", \"10minutemail.com\", \"10minutemail.net\", \"10minutemail.org\", \"20minutemail.com\",\n  \"20minutemail.it\", \"33mail.com\", \"abyssmail.com\", \"anonbox.net\", \"anonymbox.com\", \"armyspy.com\",\n  \"bccto.me\", \"burnermail.io\", \"cmail.net\", \"courriel.fr.nf\", \"crazymailing.com\", \"cuvox.de\",\n  \"dayrep.com\", \"discard.email\", \"discardmail.com\", \"discardmail.de\", \"disposablemail.com\", \"dispostable.com\",\n  \"dropmail.me\", \"easytrashmail.com\", \"einrot.com\", \"email-fake.com\", \"emailfake.com\", \"emailondeck.com\",\n  \"emltmp.com\", \"ephemail.net\", \"fakeinbox.com\", \"fakemail.net\", \"fakemailgenerator.com\", \"fexbox.org\",\n  \"fexpost.com\", \"fleckens.hu\", \"getairmail.com\", \"getnada.com\", \"grr.la\", \"guerrillamail.biz\",\n  \"guerrillamail.com\", \"guerrillamail.de\", \"guerrillamail.info\", \"guerrillamail.net\", \"guerrillamail.org\", \"guerrillamailblock.com\",\n  \"gustr.com\", \"harakirimail.com\", \"inboxbear.com\", \"inboxkitten.com\", \"jetable.fr.nf\", \"jourrapide.com\",\n  \"linshiyouxiang.net\", \"lroid.com\", \"mail-temporaire.fr\", \"mailcatch.com\", \"maildrop.cc\", \"mailforspam.com\",\n  \"mailmoat.com\", \"mailnesia.com\", \"mailnull.com\", \"mailpoof.com\", \"mailsac.com\", \"mailtemp.info\",\n  \"meltmail.com\", \"mega.zik.dj\", \"minuteinbox.com\", \"mintemail.com\", \"moakt.com\", \"mohmal.com\",\n  \"mohmal.in\", \"mohmal.tech\", \"moncourrier.fr.nf\", \"monemail.fr.nf\", \"monmail.fr.nf\", \"mt2015.com\",\n  \"mvrht.com\", \"my10minutemail.com\", \"mytemp.email\", \"mytrashmail.com\", \"nada.email\", \"nada.ltd\",\n  \"nospam.ze.tc\", \"nowmymail.com\", \"objectmail.com\", \"owlpic.com\", \"pjjkp.com\", \"pokemail.net\",\n  \"proxymail.eu\", \"rcpt.at\", \"rhyta.com\", \"rmqkr.net\", \"safetymail.info\", \"selfdestructingmail.com\",\n  \"sendspamhere.com\", \"sharklasers.com\", \"sneakemail.com\", \"snkmail.com\", \"sofort-mail.de\", \"sogetthis.com\",\n  \"soodonims.com\", \"spam4.me\", \"spambog.com\", \"spambog.de\", \"spambog.ru\", \"spambox.us\",\n  \"spamex.com\", \"spamfree24.org\", \"spamgourmet.com\", \"spamgourmet.net\", \"spamgourmet.org\", \"spamhole.com\",\n  \"spaml.com\", \"speed.1s.fr\", \"superrito.com\", \"supergreatmail.com\", \"suremail.info\", \"teleworm.us\",\n  \"temp-mail.io\", \"temp-mail.org\", \"temp-mail.ru\", \"tempail.com\", \"tempemail.net\", \"tempinbox.com\",\n  \"tempmail.com\", \"tempmail.dev\", \"tempmail.email\", \"tempmail.net\", \"tempmailaddress.com\", \"tempmailer.com\",\n  \"tempmailer.de\", \"tempmailo.com\", \"tempr.email\", \"tempsky.com\", \"temporary-mail.net\", \"thankyou2010.com\",\n  \"thisisnotmyrealemail.com\", \"throwam.com\", \"throwawaymail.com\", \"tmail.ws\", \"tmailinator.com\", \"tmpeml.com\",\n  \"tmpmail.net\", \"tmpmail.org\", \"trash-mail.com\", \"trash-mail.de\", \"trashmail.com\", \"trashmail.de\",\n  \"trashmail.io\", \"trashmail.me\", \"trashmail.net\", \"trbvm.com\", \"trillianpro.com\", \"tyldd.com\",\n  \"uroid.com\", \"veryrealemail.com\", \"vomoto.com\", \"wegwerfmail.de\", \"wegwerfmail.net\", \"wegwerfmail.org\",\n  \"wh4f.org\", \"willhackforfood.biz\", \"yopmail.com\", \"yopmail.fr\", \"yopmail.net\", \"zehnminuten.de\",\n  \"zoemail.org\", \"mailinator.com\", \"mailinator.net\", \"mailinator.org\", \"mailinator2.com\",\n]);\n// Prueba el dominio y sus partes (a.b.mailinator.com -> b.mailinator.com -> mailinator.com).\nconst esDesechable = (dominio) => { const p = dominio.split('.'); return p.some((_, i) => DESECHABLES.has(p.slice(i).join('.'))); };\n\nconst errores = [];\nif (!nombre) errores.push('El nombre es obligatorio.');\nif (!/^[^\\s@<>,;\"']+@[^\\s@<>,;\"']+\\.[^\\s@<>,;\"']{2,}$/.test(email)) errores.push('El email no es válido.');\nelse if (esDesechable(email.split('@')[1])) errores.push('El email parece temporal o desechable. Usa uno que consultes habitualmente.');\nif (!acepta) errores.push('Debes aceptar la política de privacidad.');\nif (limpio(body.web, 100)) errores.push('Solicitud rechazada.');\n\nconst mensajeCorto = mensaje.length > 80 ? mensaje.slice(0, 80) + '...' : mensaje;\nconst fecha = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });\nconst id = 'LEAD-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 5);\n\nreturn [{ json: {\n  valido: errores.length === 0, errores, id, fecha, origen,\n  consentimiento: acepta ? fecha : '',\n  nombre, apellido, email, mensaje,\n  nombreH: escapar(nombre), apellidoH: escapar(apellido), emailH: escapar(email), mensajeCortoH: escapar(mensajeCorto),\n} }];"
       },
       "notes": "Recorta longitudes, quita caracteres de control, valida el email (sin comas ni espacios: evita enviar a varias direcciones) y prepara copias con el HTML escapado para el email y Telegram."
     },
@@ -99,7 +99,8 @@
             "Mensaje": "={{ $json.mensaje }}",
             "Fecha": "={{ $json.fecha }}",
             "Origen": "={{ $json.origen }}",
-            "Notas": ""
+            "Notas": "",
+            "Consentimiento": "={{ $json.consentimiento }}"
           },
           "matchingColumns": [],
           "schema": []
@@ -130,11 +131,11 @@
       ],
       "parameters": {
         "operation": "send",
-        "fromEmail": "Equipo de Automatización <REEMPLAZAR_EMAIL_REMITENTE>",
+        "fromEmail": "Equipo de Atención al Cliente <REEMPLAZAR_EMAIL_REMITENTE>",
         "toEmail": "={{ $(\"Validar y limpiar datos\").item.json.email }}",
         "subject": "Hemos recibido tu solicitud",
         "emailFormat": "html",
-        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#222;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.</p><p style=\"margin:0 0 28px 0\">Nos pondremos en contacto contigo a la mayor brevedad posible.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Automatización</strong></p><hr style=\"border:none;border-top:1px solid #e0e0e0;margin:0 0 14px 0\"><p style=\"margin:0;font-size:12px;color:#999\">Este mensaje ha sido generado automáticamente como parte de una demostración de sistema de automatización: el texto de arriba es un ejemplo de lo que recibiría el cliente de un negocio real. Los datos que introduces se guardan en una hoja de cálculo de esta demo (así se ve el registro automático), se anonimizan automáticamente a los 30 días y no se utilizan con ningún otro fin. Si quieres que los borremos antes, responde a este correo.</p></div>",
+        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f1b2b;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.</p><p style=\"margin:0 0 28px 0\">Nos pondremos en contacto contigo a la mayor brevedad posible.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Atención al Cliente</strong></p><hr style=\"border:none;border-top:1px solid #ddd4ef;margin:0 0 14px 0\"><p style=\"margin:0;font-size:12px;color:#5b5668\">Este mensaje ha sido generado automáticamente como parte de una demostración de sistema de automatización: el texto de arriba es un ejemplo de lo que recibiría el cliente de un negocio real. Los datos que introduces se guardan en una hoja de cálculo de esta demo (así se ve el registro automático), se anonimizan automáticamente a los 30 días y no se utilizan con ningún otro fin. Si quieres que los borremos antes, responde a este correo.</p></div>",
         "options": {
           "appendAttribution": false
         }
@@ -244,8 +245,8 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "fd0e290d-ecfb-57dd-0522-4ef2748f4015",
-      "name": "Esperar 5 minutos",
+      "id": "775f3521-9b6c-cfac-1dcc-1d9fb0354858",
+      "name": "Esperar el plazo de atención",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
@@ -256,7 +257,192 @@
         "resume": "timeInterval",
         "amount": 5,
         "unit": "minutes"
-      }
+      },
+      "notes": "Plazo para que alguien marque «Sí» en la columna Atendido de la hoja. Se cambia con PLAZO_MINUTOS en el código fuente (demo: 5 minutos)."
+    },
+    {
+      "id": "580a83aa-2011-c407-a6e2-bc4d46934246",
+      "name": "Comprobar si está atendido",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2260,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "read",
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REEMPLAZAR_ID_HOJA_GOOGLE_SHEETS"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "ID",
+              "lookupValue": "={{ $(\"Validar y limpiar datos\").item.json.id }}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Google Sheets - cuenta de servicio"
+        }
+      },
+      "notes": "Vuelve a leer la fila del lead por su ID. Si la fila no aparece, se trata como «no atendido» (por eso alwaysOutputData). Si falla la lectura, avisa y envía el seguimiento igualmente.",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "f16e4aa6-694e-9e62-71a1-f77b1089c893",
+      "name": "¿Alguien lo ha atendido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2500,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ String($json.Atendido ?? \"\").trim() !== \"\" && ![\"no\", \"false\"].includes(String($json.Atendido).trim().toLowerCase()) }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "notes": "Atendido = la celda de la columna Atendido tiene algo escrito (el desplegable solo admite «Sí»)."
+    },
+    {
+      "id": "d8bb88e9-2936-c39f-9ecc-138b7b2daf3a",
+      "name": "Anotar: no hace falta seguimiento",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2740,
+        120
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REEMPLAZAR_ID_HOJA_GOOGLE_SHEETS"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $(\"Validar y limpiar datos\").item.json.id }}",
+            "Seguimiento": "=No hace falta (atendido) · {{ $now.toFormat(\"dd/MM/yyyy, HH:mm:ss\") }}"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Google Sheets - cuenta de servicio"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "00b45b74-12f3-e3c8-0ebf-78d80051f703",
+      "name": "Avisar: fallo al anotar el seguimiento",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3220,
+        520
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
+        "text": "=⚠️ [Demo Leads] — El seguimiento del lead {{ $(\"Validar y limpiar datos\").item.json.id }} se gestionó, pero no se pudo anotar en la columna Seguimiento de Google Sheets.\nError: {{ $json.error?.message ?? $json.error ?? \"sin detalle\" }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Telegram - bot demo-leads"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "242f9b35-9209-9cbf-5edb-d25395ca3c4b",
+      "name": "Avisar por Telegram: sin respuesta",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2740,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
+        "text": "=⏰ <b>[Demo Leads] — Lleva 5 minutos sin respuesta</b>\n\n👤 <b>Nombre:</b> {{ $(\"Validar y limpiar datos\").item.json.nombreH }} {{ $(\"Validar y limpiar datos\").item.json.apellidoH }}\n📧 <b>Email:</b> {{ $(\"Validar y limpiar datos\").item.json.emailH }}\n💬 <b>Mensaje:</b> {{ $(\"Validar y limpiar datos\").item.json.mensajeCortoH }}\n🆔 <b>ID:</b> {{ $(\"Validar y limpiar datos\").item.json.id }}\n\nNadie lo ha marcado como atendido en Google Sheets. Se le envía al cliente su siguiente paso por correo.",
+        "additionalFields": {
+          "parse_mode": "HTML",
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Telegram - bot demo-leads"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
     },
     {
       "id": "fecf5b90-b2eb-c8bf-182f-b8f63ef851dd",
@@ -264,16 +450,16 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        2260,
+        2980,
         300
       ],
       "parameters": {
         "operation": "send",
-        "fromEmail": "Equipo de Automatización <REEMPLAZAR_EMAIL_REMITENTE>",
+        "fromEmail": "Equipo de Atención al Cliente <REEMPLAZAR_EMAIL_REMITENTE>",
         "toEmail": "={{ $(\"Validar y limpiar datos\").item.json.email }}",
-        "subject": "¿Podemos ayudarte con tu solicitud?",
+        "subject": "Sobre tu solicitud: cómo seguimos",
         "emailFormat": "html",
-        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#222;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Hace unos minutos recibimos tu solicitud y queríamos saber si necesitas algo más para poder ayudarte.</p><p style=\"margin:0 0 28px 0\">Si nos cuentas un poco más de lo que buscas, respondiendo a este correo, podremos prepararte una propuesta a medida.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Automatización</strong></p><div style=\"background:#f4f5ff;border-left:4px solid #6366f1;padding:12px 14px;margin:0 0 24px 0;font-size:14px\"><p style=\"margin:0 0 8px 0\"><strong>💡 Sobre esta demo:</strong> este segundo correo se ha enviado solo, 5 minutos después de tu solicitud, sin que nadie lo escribiera ni tuviera que acordarse. Eso es lo que vive tu cliente cuando tu negocio tiene un sistema de automatización:</p><ul style=\"margin:0 0 8px 0;padding-left:20px\"><li style=\"margin-bottom:4px\"><strong>Cada contacto recibe respuesta inmediata</strong>, a cualquier hora y cualquier día</li><li style=\"margin-bottom:4px\"><strong>No pierdes ningún contacto</strong>: todo queda registrado y organizado automáticamente</li><li style=\"margin-bottom:4px\"><strong>El seguimiento ocurre solo</strong>, sin depender de que alguien se acuerde</li><li style=\"margin-bottom:4px\"><strong>Recuperas el tiempo</strong> que hoy dedicas a tareas repetitivas y manuales</li></ul><p style=\"margin:0\">Si quieres ver cómo quedaría en tu caso, responde a este correo y te lo explicamos sin compromiso.</p></div><hr style=\"border:none;border-top:1px solid #e0e0e0;margin:0 0 14px 0\"><p style=\"margin:0;font-size:12px;color:#999\">Este mensaje ha sido generado automáticamente como parte de una demostración de sistema de automatización: el texto de arriba es un ejemplo de lo que recibiría el cliente de un negocio real. Los datos que introduces se guardan en una hoja de cálculo de esta demo (así se ve el registro automático), se anonimizan automáticamente a los 30 días y no se utilizan con ningún otro fin. Si quieres que los borremos antes, responde a este correo.</p></div>",
+        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f1b2b;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Hace 5 minutos recibimos tu solicitud{{ $(\"Validar y limpiar datos\").item.json.mensajeCortoH ? \" («\" + $(\"Validar y limpiar datos\").item.json.mensajeCortoH + \"»)\" : \"\" }} y no queremos que te quedes esperando. Todavía no hemos podido contestarte en persona, así que te dejamos ya el siguiente paso.</p><p style=\"margin:0 0 28px 0\"><strong>Responde a este correo con el día y la franja en que prefieres que te llamemos</strong> (por ejemplo, «jueves por la mañana»). Con eso reservamos 15 minutos para revisar tu caso y proponerte una solución concreta.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Atención al Cliente</strong></p><div style=\"background:#f2eef8;border-left:4px solid #5a4691;padding:12px 14px;margin:0 0 24px 0;font-size:14px\"><p style=\"margin:0\"><strong>Sobre esta demo:</strong> este correo lo ha enviado el sistema solo: pasaron 5 minutos y nadie había marcado tu solicitud como atendida en la hoja. Si alguien la hubiera marcado, no habrías recibido nada, porque una persona ya te habría contestado. El plazo (aquí, 5 minutos; en un negocio real puede ser, por ejemplo, 24 horas), el texto y el número de correos se adaptan a lo que necesite la automatización de cada cliente.</p></div><hr style=\"border:none;border-top:1px solid #ddd4ef;margin:0 0 14px 0\"><p style=\"margin:0;font-size:12px;color:#5b5668\">Este mensaje ha sido generado automáticamente como parte de una demostración de sistema de automatización: el texto de arriba es un ejemplo de lo que recibiría el cliente de un negocio real. Los datos que introduces se guardan en una hoja de cálculo de esta demo (así se ve el registro automático), se anonimizan automáticamente a los 30 días y no se utilizan con ningún otro fin. Si quieres que los borremos antes, responde a este correo.</p></div>",
         "options": {
           "appendAttribution": false
         }
@@ -288,6 +474,84 @@
       "maxTries": 3,
       "waitBetweenTries": 5000,
       "onError": "continueErrorOutput"
+    },
+    {
+      "id": "68736500-6f36-b92e-2a9e-fd26cbc426ec",
+      "name": "Anotar: seguimiento enviado",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3220,
+        300
+      ],
+      "parameters": {
+        "resource": "sheet",
+        "operation": "update",
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "REEMPLAZAR_ID_HOJA_GOOGLE_SHEETS"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID": "={{ $(\"Validar y limpiar datos\").item.json.id }}",
+            "Seguimiento": "=Enviado · {{ $now.toFormat(\"dd/MM/yyyy, HH:mm:ss\") }}"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": []
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Google Sheets - cuenta de servicio"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "93f41f2a-9829-0a43-e345-23e084d6aa69",
+      "name": "Avisar: fallo en email de seguimiento",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2980,
+        520
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
+        "text": "=⚠️ [Demo Leads] — Falló el email de seguimiento del lead {{ $(\"Validar y limpiar datos\").item.json.id }}.\nError: {{ $json.error?.message ?? $json.error ?? \"sin detalle\" }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Telegram - bot demo-leads"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
     },
     {
       "id": "b6459874-c544-7dd1-ad86-406af300a05f",
@@ -382,8 +646,8 @@
       }
     },
     {
-      "id": "93f41f2a-9829-0a43-e345-23e084d6aa69",
-      "name": "Avisar: fallo en email de seguimiento",
+      "id": "7752580e-f8be-512d-c9a0-8a2384cdb8b8",
+      "name": "Avisar: fallo al comprobar si está atendido",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
@@ -394,7 +658,7 @@
         "resource": "message",
         "operation": "sendMessage",
         "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
-        "text": "=⚠️ [Demo Leads] — Falló el email de seguimiento del lead {{ $(\"Validar y limpiar datos\").item.json.id }}.\nError: {{ $json.error?.message ?? $json.error ?? \"sin detalle\" }}",
+        "text": "=⚠️ [Demo Leads] — No se pudo comprobar en Google Sheets si el lead {{ $(\"Validar y limpiar datos\").item.json.id }} estaba atendido; se envía el seguimiento igualmente.\nError: {{ $json.error?.message ?? $json.error ?? \"sin detalle\" }}",
         "additionalFields": {
           "appendAttribution": false
         }
@@ -541,7 +805,7 @@
         -200
       ],
       "parameters": {
-        "content": "## Demo de captación de leads\nFormulario → validar → registrar en Sheets → email de confirmación → «ok» al formulario → aviso por Telegram → espera 5 min → email de seguimiento.\n\nSin secretos en el flujo: Telegram, Sheets y el correo (SMTP) usan credenciales de n8n. Al importar: sustituye los marcadores `REEMPLAZAR_…` (chat de Telegram, ID de la hoja, remitente de los correos) y elige tu credencial en cada nodo que la use.",
+        "content": "## Demo de captación de leads\nFormulario → validar (datos, consentimiento y correo temporal) → registrar en Sheets → email de confirmación → «ok» al formulario → aviso por Telegram → espera del plazo → comprobar si alguien lo atendió → si no, aviso al negocio y segundo email.\n\nSin secretos en el flujo: Telegram, Sheets y el correo (SMTP) usan credenciales de n8n. Al importar: sustituye los marcadores `REEMPLAZAR_…` (chat de Telegram, ID de la hoja, remitente de los correos) y elige tu credencial en cada nodo que la use.",
         "color": 4,
         "width": 760,
         "height": 200
@@ -557,10 +821,26 @@
         -200
       ],
       "parameters": {
-        "content": "## Política de errores\n- Si falla **Sheets**: aviso a Telegram y el formulario recibe 502.\n- Si falla el **primer email**: el lead ya está guardado → aviso y el formulario recibe 202.\n- Si falla **Telegram** o la lectura del total: el visitante no se entera, el flujo sigue.\n- Cada llamada externa reintenta 3 veces (5 s).",
+        "content": "## Política de errores\n- Si falla **Sheets** al registrar: aviso a Telegram y el formulario recibe 502.\n- Si falla el **primer email**: el lead ya está guardado → aviso y el formulario recibe 202.\n- Si falla **Telegram** o la lectura del total: el visitante no se entera, el flujo sigue.\n- Cada llamada externa reintenta 3 veces (5 s) y, si falla, el aviso lleva la causa real.",
         "color": 3,
         "width": 760,
         "height": 230
+      }
+    },
+    {
+      "id": "bec6b772-1c09-11c6-5de3-d573f1ce2600",
+      "name": "Nota - Seguimiento",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        -200
+      ],
+      "parameters": {
+        "content": "## Segundo correo con sentido\nPasado el plazo (`PLAZO_MINUTOS`: 5 min en la demo; en un negocio real, p. ej. 24 h) se vuelve a leer la fila del lead. Si la columna **Atendido** tiene «Sí», no se envía nada. Si no, se avisa al negocio por Telegram («lleva X sin respuesta») y el cliente recibe su siguiente paso por correo. En la columna **Seguimiento** queda anotado qué pasó.\n\nEl plazo, el texto y el número de correos se adaptan a lo que necesite la automatización de cada cliente.",
+        "color": 6,
+        "width": 800,
+        "height": 270
       }
     },
     {
@@ -683,14 +963,73 @@
       "main": [
         [
           {
-            "node": "Esperar 5 minutos",
+            "node": "Esperar el plazo de atención",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Esperar 5 minutos": {
+    "Esperar el plazo de atención": {
+      "main": [
+        [
+          {
+            "node": "Comprobar si está atendido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comprobar si está atendido": {
+      "main": [
+        [
+          {
+            "node": "¿Alguien lo ha atendido?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar: fallo al comprobar si está atendido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Alguien lo ha atendido?": {
+      "main": [
+        [
+          {
+            "node": "Anotar: no hace falta seguimiento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar por Telegram: sin respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anotar: no hace falta seguimiento": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Avisar: fallo al anotar el seguimiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar por Telegram: sin respuesta": {
       "main": [
         [
           {
@@ -703,10 +1042,28 @@
     },
     "Enviar email de seguimiento": {
       "main": [
-        [],
+        [
+          {
+            "node": "Anotar: seguimiento enviado",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Avisar: fallo en email de seguimiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anotar: seguimiento enviado": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Avisar: fallo al anotar el seguimiento",
             "type": "main",
             "index": 0
           }
@@ -729,6 +1086,17 @@
         [
           {
             "node": "Responder 202 - registrado sin email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar: fallo al comprobar si está atendido": {
+      "main": [
+        [
+          {
+            "node": "Avisar por Telegram: sin respuesta",
             "type": "main",
             "index": 0
           }
@@ -776,6 +1144,6 @@
   "pinData": {},
   "meta": {
     "templateCredsSetupCompleted": false,
-    "description": "Formulario de leads: valida, registra en Sheets, confirma por email, avisa por Telegram y hace seguimiento a los 5 min."
+    "description": "Formulario de leads: valida, registra en Sheets, confirma por email, avisa por Telegram y, si nadie lo atiende en el plazo, avisa al negocio y envía el segundo correo."
   }
 }

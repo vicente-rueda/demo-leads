@@ -21,7 +21,7 @@ Demostrar, con un caso real y completo, que sé:
 |---|---|
 | `index.html` | La web completa en un solo archivo (HTML, CSS y JavaScript). Sin dependencias ni recursos de terceros. |
 | `Dockerfile` | Imagen `nginx:alpine` que sirve la web. Recibe como parámetros de construcción los datos del responsable de la política de privacidad. |
-| `n8n/demo-leads-captura.json` | Flujo principal: formulario, registro, correos, aviso, seguimiento y contador (23 nodos). |
+| `n8n/demo-leads-captura.json` | Flujo principal: formulario, registro, correos, aviso, segundo correo si nadie atiende el contacto y contador (31 nodos). |
 | `n8n/demo-leads-limpieza.json` | Flujo programado: cada día anonimiza los datos personales de los contactos con más de 30 días. |
 | `n8n/demo-leads-errores.json` | Flujo de seguridad: avisa por Telegram si otro flujo falla de forma no prevista. |
 | `LICENSE` | Licencia (ver [Licencia](#licencia)). |
@@ -34,16 +34,21 @@ Los JSON son una **exportación sin secretos**: las credenciales se refieren por
  Navegador                          n8n                                   Servicios
  ─────────                          ───                                   ─────────
  Formulario ──POST──►  1. Recibir formulario (webhook)
-                       2. Validar y limpiar datos ──► datos no válidos ──► responde 400
+                       2. Validar y limpiar datos ──► datos no válidos, sin consentimiento
+                          o correo temporal ──► responde 400
                        3. Registrar en Google Sheets ──► Google Sheets (hoja «Leads»)
                               │ falla ──► aviso por Telegram ──► responde 502
                        4. Email de confirmación ───────────────► Correo (SMTP)
                               │ falla ──► aviso por Telegram ──► responde 202
                        5. Responde 200 al formulario  (todo guardado y enviado)
                        6. Aviso por Telegram: nuevo lead ──────► Telegram
-                       7. Espera 5 minutos
-                       8. Email de seguimiento ────────────────► Correo (SMTP)
-                              │ falla ──► aviso por Telegram
+                       7. Espera el plazo (5 minutos en la demo; se configura)
+                       8. Vuelve a leer la fila del lead ──────► Google Sheets
+                              │ «Atendido» = Sí ──► anota «No hace falta» y no envía nada
+                              │ vacío ──► aviso por Telegram («lleva X sin respuesta»)
+                              │           ──► segundo email, con el siguiente paso ──► Correo (SMTP)
+                              │           ──► anota «Enviado» en «Seguimiento»
+                              │ falla cualquier paso ──► aviso por Telegram con la causa
 
  Contador:   GET /demo-count ──► lee la celda «Total» de la pestaña «Stats» ──► responde {total}
 
@@ -58,6 +63,9 @@ Decisiones de diseño que importan:
 
 - **El visitante recibe el «ok» solo cuando el contacto está guardado y el primer correo enviado.** Si falla el registro, recibe un 502; si solo falla el correo, un 202 («guardado, pero sin email»).
 - **Cada llamada a un servicio externo reintenta 3 veces (5 s entre intentos)** y, si sigue fallando, avisa por Telegram.
+- **El segundo correo solo sale si nadie ha atendido el contacto.** Pasado el plazo, el flujo vuelve a leer la fila: si el negocio marcó «Sí» en `Atendido`, no se envía nada; si no, avisa al negocio por Telegram y manda al cliente su siguiente paso. El plazo es una constante (`PLAZO_MINUTOS`, 5 en la demo; un negocio real usaría, por ejemplo, 1440 = 24 h) y el texto y el número de correos se adaptan a lo que necesite la automatización de cada cliente.
+- **La prueba del consentimiento queda guardada:** la casilla de la política se envía con el formulario y el flujo anota la fecha y hora en la columna `Consentimiento`; sin ella, responde 400.
+- **Los correos temporales se rechazan con una lista corta de dominios desechables** (en el nodo de validación). Es orientativa: no caza todos, porque aparecen servicios nuevos cada semana. Un negocio real usaría además un servicio de verificación de correos.
 - **Los datos que llegan al webhook no se fían:** se recortan, se valida el email (sin comas ni espacios, para no enviar a varias direcciones), se descarta el envío si el campo trampa `web` viene relleno, y se escapa el HTML antes de meterlo en correos y avisos.
 - **Escritura `RAW` en Sheets:** una celda que empiece por `=` no se ejecuta como fórmula.
 - **El contador no escribe nada:** la celda `Total` de la pestaña `Stats` es la fórmula `=COUNTA(Leads!A:A)-1`, así no hay condiciones de carrera.
@@ -76,7 +84,7 @@ Decisiones de diseño que importan:
 
 Crea una hoja de Google con dos pestañas:
 
-- `Leads`, con estas columnas en la fila 1: `ID`, `Nombre`, `Apellido`, `Email`, `Mensaje`, `Fecha`, `Origen`, `Notas`.
+- `Leads`, con estas columnas en la fila 1: `ID`, `Nombre`, `Apellido`, `Email`, `Mensaje`, `Fecha`, `Origen`, `Notas`, `Atendido`, `Seguimiento`, `Consentimiento`. En `Atendido`, pon una **lista desplegable con una sola opción, «Sí»** (Datos → Validación de datos): el negocio la elige al contestar al contacto. No uses casillas: una casilla vacía guarda «FALSE» y hace que n8n añada las filas nuevas al final de la hoja, lejos de las demás. `Seguimiento` y `Consentimiento` los rellena el flujo.
 - `Stats`, con las columnas `ID` y `Total`. En la fila con `ID = 1`, pon en `Total` la fórmula `=COUNTA(Leads!A:A)-1`. Si la dejas vacía, el contador se queda en 0.
 
 ### 2. Credenciales en n8n
@@ -122,7 +130,7 @@ Los dos primeros parámetros rellenan el responsable y el contacto de la políti
 python3 -m http.server 8080      # abre http://localhost:8080
 ```
 
-En `localhost`, `127.0.0.1` o abierta como archivo, **la web simula al servidor** y muestra un aviso amarillo. Puedes forzar cada respuesta con `?simular=200 | 202 | 400 | 400-trampa | 502 | 429 | 500 | timeout | red`. Añade `&rapido` para acortar la cuenta atrás de 5 minutos a 10 segundos. En cualquier otro dominio estos parámetros se ignoran.
+En `localhost`, `127.0.0.1` o abierta como archivo, **la web simula al servidor** y muestra un aviso amarillo. Puedes forzar cada respuesta con `?simular=200 | 202 | 400 | 400-trampa | 400-temporal | 502 | 429 | 500 | timeout | red`. Añade `&rapido` para acortar la cuenta atrás de 5 minutos a 10 segundos. En cualquier otro dominio estos parámetros se ignoran.
 
 ## Estado y límites
 
@@ -136,7 +144,8 @@ Qué se ha comprobado y qué no:
 
 Limitaciones conocidas:
 
-- La casilla de consentimiento no se envía al flujo: **no se guarda prueba de que el visitante la aceptó**.
+- La lista de correos desechables no es exhaustiva: un correo temporal de un servicio que no esté en ella se acepta.
+- El plazo del segundo correo se espera dentro de n8n (nodo *Wait*). Para plazos largos (24 h) funciona, pero con mucho volumen sería más robusto un flujo programado que revise la hoja cada pocos minutos.
 - La limitación de peticiones por IP no se puede hacer dentro de n8n; va en el proxy inverso del servidor (en esta instalación, Traefik con un middleware `rateLimit` sobre los dos webhooks).
 - El historial de versiones de Google Sheets puede conservar valores antiguos tras la anonimización. Telegram conserva los avisos (con nombre, email y las primeras palabras del mensaje).
 - La limpieza lee la fecha como texto `dd/mm/aaaa, hh:mm:ss`: si se cambia ese formato en el flujo principal, hay que cambiar el patrón del nodo «Elegir leads de más de 30 días».
