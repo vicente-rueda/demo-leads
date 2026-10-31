@@ -4,24 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Demo · Cada contacto de tu web, respondido al momento</title>
-  <meta name="description" content="Cuando alguien escribe desde tu web, queda registrado en tu hoja, recibe respuesta al momento y te llega un aviso al móvil. Pruébalo haciendo de cliente.">
-  <meta name="theme-color" content="#f8f6fb">
+  <meta name="description" content="Cuando alguien escribe desde tu web, queda registrado en tu hoja de Google Sheets, recibe respuesta al momento y te llega un aviso al móvil. Pruébalo haciendo de cliente.">
+  <meta name="theme-color" content="#f8f6fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#17122b" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="logo/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="logo/favicon-180.png">
   <link rel="preload" href="fuentes/InstrumentSans-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fuentes/Newsreader16pt-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
-  <!-- Identidad visual (colores, fuentes, espaciado, esquinas): siempre antes de los estilos propios -->
-  <link rel="stylesheet" href="identidad.css">
+  <!-- Identidad visual (colores, fuentes, espaciado, esquinas): siempre antes de los estilos propios.
+       ?v=fecha: cambiarla cuando cambie identidad.css, para que el navegador no use la copia vieja -->
+  <link rel="stylesheet" href="identidad.css?v=2026-10-31">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      /* Bordes finos: el texto suave de la identidad con transparencia (decorativos) */
-      --borde: rgba(91, 86, 104, 0.22);
+      /* Bordes y sombras: los de la identidad (teñidos de violeta; cambian solos en modo oscuro) */
+      --borde: var(--color-borde);
       --borde-campo: var(--color-texto-suave);
-      /* Profundidad: sombras suaves en capas, del color del texto (nunca resplandor de color) */
-      --sombra: 0 1px 2px rgba(31, 27, 43, 0.06), 0 6px 20px rgba(31, 27, 43, 0.08);
-      --sombra-alta: 0 2px 4px rgba(31, 27, 43, 0.08), 0 12px 32px rgba(31, 27, 43, 0.12);
+      --sombra: var(--sombra-1);      /* lo que flota poco: piezas pequeñas, panel */
+      --sombra-alta: var(--sombra-2); /* la pieza en grande del paso */
       /* Escala de texto (rem): solo estos niveles, para que todas las secciones se vean iguales */
       --t-nota: 0.87rem;
       --t-etiqueta: 0.8rem;
@@ -90,10 +91,20 @@
       display: flex; flex-direction: column; align-items: center;
     }
     .portada > *:not(.fondo-flujo) { position: relative; z-index: 1; }
+    /* Luz que nace de abajo (identidad: una por pantalla, solo en la portada).
+       Se apaga antes del borde para no dejar una línea con la banda. */
+    .portada::before {
+      content: ''; position: absolute; z-index: 0; pointer-events: none;
+      left: 50%; bottom: 0; transform: translateX(-50%);
+      width: 100vw; max-width: 1920px; height: 85%;
+      background: var(--luz-portada);
+      -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent);
+              mask-image: linear-gradient(to bottom, #000 80%, transparent);
+    }
     .portada-centro { display: flex; flex-direction: column; align-items: center; padding: var(--espacio-32) 0 var(--espacio-128); }
     .logo { display: inline-block; line-height: 0; }
     .logo img { height: 48px; width: auto; }
-    @media (min-width: 1024px) { .logo img { height: 56px; } }
+    @media (min-width: 1024px) { .logo img { width: 300px; height: auto; } } /* 300 de ancho; el alto sale solo (~71) para no deformarlo */
 
     /* Imagen de fondo propia: la línea del flujo, en dos capas (una lejos y otra cerca) */
     .fondo-flujo {
@@ -108,7 +119,6 @@
     .fondo-flujo circle { fill: var(--color-fondo); stroke: var(--color-principal); stroke-opacity: 0.35; stroke-width: 2.5; animation: aparece 0.4s ease both; }
     .fondo-flujo circle.halo { fill: var(--color-principal); fill-opacity: 0.07; stroke: none; }
     .fondo-flujo circle.centro { fill: var(--color-principal); fill-opacity: 0.45; stroke: none; }
-    .fondo-flujo .ovalo { fill: var(--color-principal); fill-opacity: 0.05; stroke: var(--color-principal); stroke-opacity: 0.10; stroke-width: 1.5; animation: aparece 0.8s ease both; }
     @keyframes dibuja { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 
     .portada .etiqueta { margin-bottom: var(--espacio-12); }
@@ -121,6 +131,9 @@
     .pregunta {
       display: inline-flex; align-items: baseline; gap: var(--espacio-8);
       font-weight: var(--peso-fuerte); max-width: 40em; margin-bottom: var(--espacio-32); text-align: left;
+      padding: var(--espacio-8) var(--espacio-16);
+      border: 1px solid var(--borde); border-radius: var(--radio-medio);
+      background: var(--color-fondo); box-shadow: var(--sombra-1);
     }
     .pregunta::before { content: ''; width: 6px; height: 6px; flex-shrink: 0; background: var(--color-acento); transform: translateY(-2px) rotate(45deg); }
     .cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--espacio-12) var(--espacio-24); }
@@ -148,13 +161,16 @@
       display: flex; align-items: center; justify-content: center; gap: var(--espacio-8);
       text-decoration: none;
       /* un poco de relieve: luz arriba y sombra debajo */
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 1px 2px rgba(31, 27, 43, 0.16), 0 4px 12px rgba(31, 27, 43, 0.12);
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), var(--sombra-1);
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
-    .btn-primario:hover:not(:disabled) { transform: translateY(-1px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 2px 4px rgba(31, 27, 43, 0.18), 0 8px 20px rgba(31, 27, 43, 0.16); }
+    .btn-primario:hover:not(:disabled) { transform: translateY(-1px); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), var(--sombra-2); }
     .btn-primario:active:not(:disabled) { transform: none; }
     .btn-primario:disabled { opacity: 0.7; cursor: progress; }
     .cta .btn-primario { width: auto; margin-top: 0; }
+    /* Halo: solo el botón principal de la portada (el del formulario, sin brillo) */
+    .cta .btn-primario { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), var(--halo); }
+    .cta .btn-primario:hover { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), var(--halo-encima); }
 
     .btn-secundario {
       display: inline-flex; align-items: center; gap: var(--espacio-8);
@@ -182,7 +198,7 @@
 
     /* ─── PIEZAS: la hoja, el correo y el Telegram (en el recorrido y en el resultado) ─── */
     .pieza { border: 1px solid var(--borde); border-radius: var(--radio-medio); background: var(--color-fondo); box-shadow: var(--sombra); overflow: hidden; font-size: var(--t-nota); line-height: 1.5; text-align: left; }
-    .pieza-barra { display: flex; align-items: center; gap: var(--espacio-8); background: var(--color-superficie); padding: var(--espacio-8) var(--espacio-12); font-weight: var(--peso-fuerte); color: var(--color-texto-suave); }
+    .pieza-barra { display: flex; align-items: center; gap: var(--espacio-8); background: var(--color-caja); padding: var(--espacio-8) var(--espacio-12); font-weight: var(--peso-fuerte); color: var(--color-texto-suave); }
     .pieza-cuerpo { padding: var(--espacio-12); }
     .pieza-cuerpo p + p { margin-top: var(--espacio-8); }
 
@@ -197,11 +213,11 @@
     .hoja th { color: var(--color-texto-suave); font-weight: var(--peso-fuerte); padding: var(--espacio-8) var(--espacio-12); text-align: left; border-bottom: 1px solid var(--borde); }
     .hoja td { padding: var(--espacio-8) var(--espacio-12); max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
     .hoja .previas td { color: var(--color-texto-suave); font-style: italic; border-bottom: 1px solid var(--borde); }
-    .hoja .fila-nueva td { font-weight: var(--peso-fuerte); background: var(--color-superficie); }
+    .hoja .fila-nueva td { font-weight: var(--peso-fuerte); background: var(--color-caja); }
     @keyframes filaNueva {
       0%   { opacity: 0; background: rgba(47, 107, 58, 0.22); }
       40%  { opacity: 1; background: rgba(47, 107, 58, 0.16); }
-      100% { opacity: 1; background: var(--color-superficie); }
+      100% { opacity: 1; background: var(--color-caja); }
     }
     .paso.visible .fila-nueva td { animation: filaNueva 1.8s ease both; }
 
@@ -219,16 +235,16 @@
     .tg-avatar { width: 32px; height: 32px; border-radius: var(--radio-redondo); background: var(--color-principal); color: var(--color-sobre-principal); display: flex; align-items: center; justify-content: center; font-weight: var(--peso-fuerte); font-size: 0.85em; flex-shrink: 0; }
     .tg-cab > span:last-child { display: block; line-height: 1.3; }
     .tg-cab small { display: block; font-size: 0.9em; color: var(--color-texto-suave); }
-    .tg-burbuja { margin: var(--espacio-8); padding: var(--espacio-8) var(--espacio-12); background: var(--color-superficie); border-radius: var(--radio-medio); }
+    .tg-burbuja { margin: var(--espacio-8); padding: var(--espacio-8) var(--espacio-12); background: var(--color-caja); border-radius: var(--radio-medio); }
     .tg-burbuja .linea { display: block; overflow-wrap: anywhere; }
     .tg-hora { display: block; text-align: right; font-size: 0.9em; color: var(--color-texto-suave); margin-top: var(--espacio-4); }
 
     /* Seguimiento en miniatura */
     .mini-reloj { display: flex; align-items: center; gap: var(--espacio-8); font-size: 1.5rem; font-weight: var(--peso-fuerte); color: var(--color-acento); font-variant-numeric: tabular-nums; margin-bottom: var(--espacio-4); }
 
-    /* ─── BANDA: sección a todo lo ancho con el fondo de superficie ─── */
-    .banda { position: relative; padding: var(--espacio-48) 0; }
-    .banda::before { content: ''; position: absolute; z-index: -1; top: 0; bottom: 0; left: 50%; width: 100vw; transform: translateX(-50%); background: var(--color-superficie); }
+    /* ─── BANDA: sección a todo lo ancho; el fondo (--color-banda) y los bordes en arco
+       los pone la clase .banda-arco de la identidad ─── */
+    .banda { padding: var(--espacio-48) 0; }
     @media (min-width: 1024px) { .banda { padding: var(--espacio-64) 0 var(--espacio-48); } }
 
     .seccion-cab { margin-bottom: var(--espacio-32); }
@@ -272,7 +288,7 @@
       .r-pieza { align-self: center; }
     }
     .comparar > div { background: var(--color-fondo); border: 1px solid var(--borde); border-radius: var(--radio-medio); padding: var(--espacio-16); }
-    .comparar .c-auto { border: 1.5px solid var(--color-principal); }
+    .comparar .c-auto { border: 1.5px solid var(--color-principal); box-shadow: var(--sombra-1); }
     .c-etq { display: flex; align-items: center; gap: var(--espacio-8); margin-bottom: var(--espacio-4); font-size: var(--t-etiqueta); font-weight: var(--peso-fuerte); letter-spacing: 0.08em; text-transform: uppercase; }
     .c-mano { color: var(--color-texto-suave); }
     .c-auto .c-etq { color: var(--color-principal); }
@@ -295,7 +311,7 @@
     .r-progreso li.hecho::after { transform: scaleX(1); }
     .r-progreso .nodo { border-color: var(--borde); color: var(--color-texto-suave); transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease; }
     .r-progreso li.hecho .nodo { border-color: var(--color-principal); color: var(--color-principal); }
-    .r-progreso li.activo .nodo { background: var(--color-principal); border-color: var(--color-principal); color: var(--color-sobre-principal); box-shadow: 0 0 0 6px var(--color-fondo); transform: scale(1.12); }
+    .r-progreso li.activo .nodo { background: var(--color-principal); border-color: var(--color-principal); color: var(--color-sobre-principal); box-shadow: 0 0 0 6px var(--color-fondo), var(--sombra-2); transform: scale(1.12); }
     .r-progreso li.activo a { color: var(--color-texto); }
     @media (max-width: 599px) { .r-progreso a span:last-child { display: none; } } /* en móvil, solo los números */
 
@@ -332,6 +348,7 @@
       background: var(--color-fondo); border: 1px solid var(--borde); border-radius: var(--radio-pequeno);
     }
     .aviso-falla .icono { margin-top: 0.25em; color: var(--color-principal); }
+    @media (min-width: 1024px) { .pregunta, .aviso-falla { max-width: none; } .aviso-falla { width: fit-content; } } /* en pantallas anchas, en una sola línea */
 
     .probar-zona { padding-top: var(--espacio-48); }
     @media (min-width: 1024px) { .probar-zona { padding-top: var(--espacio-64); } }
@@ -504,9 +521,9 @@
       margin: auto; padding: 0; overflow: auto;
       background: var(--color-fondo); color: var(--color-texto);
       border: 1px solid var(--borde); border-radius: var(--radio-medio);
-      box-shadow: 0 24px 64px rgba(31, 27, 43, 0.25);
+      box-shadow: var(--sombra-3);
     }
-    dialog#privacidad::backdrop { background: rgba(31, 27, 43, 0.55); }
+    dialog#privacidad::backdrop { background: rgb(var(--sombra-tinte) / 0.55); }
     .dlg-cab {
       position: sticky; top: 0; z-index: 1;
       display: flex; align-items: center; justify-content: space-between; gap: var(--espacio-12);
@@ -530,6 +547,11 @@
     }
     /* Huecos que se rellenan al desplegar (build args del Dockerfile) */
     .marcador { background: var(--color-superficie); border: 1px dashed var(--color-acento); color: var(--color-acento); border-radius: var(--radio-pequeno); padding: 0 var(--espacio-4); }
+
+    /* Modo oscuro automático (identidad): piezas y panel un escalón por encima del fondo */
+    @media (prefers-color-scheme: dark) {
+      .pieza, .panel { background: var(--color-superficie); }
+    }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -561,7 +583,6 @@
     <!-- ─── PORTADA: qué hace (titular), el dolor (subtítulo y pregunta) y probarlo ─── -->
     <header class="portada">
       <svg class="fondo-flujo" viewBox="0 0 1600 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-        <ellipse class="ovalo" cx="800" cy="362" rx="640" ry="150"/>
         <path class="lejos" pathLength="1" d="M-40 152 C 140 152, 230 520, 430 534 S 680 552, 800 552 S 1050 552, 1170 534 S 1460 152, 1640 139"/>
         <path class="cerca" pathLength="1" d="M-40 152 C 140 152, 230 520, 430 534 S 680 552, 800 552 S 1050 552, 1170 534 S 1460 152, 1640 139"/>
         <circle class="halo" cx="146" cy="270" r="40"/><circle cx="146" cy="270" r="18"/><circle class="centro" cx="146" cy="270" r="6"/>
@@ -571,12 +592,15 @@
         <circle class="halo" cx="1458" cy="244" r="40"/><circle cx="1458" cy="244" r="18"/><circle class="centro" cx="1458" cy="244" r="6"/>
       </svg>
       <a class="logo" href="https://vicenterueda.com" aria-label="Vicente Rueda Gómez, ir a la web">
-        <img src="logo/logo-color.svg" alt="Vicente Rueda Gómez" width="272" height="64">
+        <picture>
+          <source srcset="logo/logo-blanco.svg" media="(prefers-color-scheme: dark)">
+          <img src="logo/logo-color.svg" alt="Vicente Rueda Gómez" width="272" height="64">
+        </picture>
       </a>
       <div class="portada-centro">
         <p class="etiqueta aparece">Demo · Los contactos de tu web</p>
         <h1 class="aparece">Cada contacto de tu web, registrado, respondido y en tu móvil al momento.</h1>
-        <p class="subtitulo aparece">Copiar sus datos, pasarlos a la hoja, contestarle, avisarte y acordarse de volver a escribirle. Aquí pasa solo, en segundos.</p>
+        <p class="subtitulo aparece">Copiar sus datos, pasarlos a Google Sheets, contestarle, avisarte y acordarse de volver a escribirle. Aquí pasa solo, en segundos.</p>
         <p class="pregunta aparece">¿Cuánto tiempo te lleva hoy cada contacto? ¿Y cuántos se quedan sin respuesta?</p>
         <div class="cta aparece">
           <a href="#probar" class="btn-primario">Pruébalo haciendo de cliente ↓</a>
@@ -589,7 +613,7 @@
     <main>
 
       <!-- ─── QUÉ PASA, PASO A PASO: un paso cada vez, con la pieza que sale y lo que costaría a mano ─── -->
-      <section class="banda" aria-labelledby="t-pasos">
+      <section class="banda banda-arco" aria-labelledby="t-pasos">
         <div class="recorrido" id="recorrido">
           <div class="escenario">
             <div class="seccion-cab">
@@ -632,11 +656,11 @@
             <div class="r-bloque">
               <div class="r-cab anima">
                 <p class="etiqueta">Paso 2 de 5</p>
-                <h3>Queda registrado en tu hoja</h3>
+                <h3>Queda registrado en tu hoja de Google Sheets</h3>
               </div>
               <div class="r-pieza anima" aria-hidden="true">
                 <div class="pieza hoja">
-                  <div class="pieza-barra"><svg class="icono"><use href="#i-hoja"/></svg>Hoja de cálculo · pestaña «Leads»</div>
+                  <div class="pieza-barra"><svg class="icono"><use href="#i-hoja"/></svg>Google Sheets · pestaña «Leads»</div>
                   <div class="hoja-scroll">
                     <table>
                       <thead><tr><th>Nombre</th><th>Email</th><th>Mensaje</th><th>Fecha</th></tr></thead>
@@ -646,7 +670,7 @@
                 </div>
               </div>
               <div class="comparar">
-                <div class="c-mano anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>A mano</p><p>Abrir la hoja y pegar cada dato.</p></div>
+                <div class="c-mano anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>A mano</p><p>Abrir Google Sheets y pegar cada dato.</p></div>
                 <div class="c-auto anima"><p class="c-etq"><svg class="icono" aria-hidden="true"><use href="#i-check"/></svg>Automático</p><p>Una fila con nombre, email, mensaje y hora.</p></div>
               </div>
             </div>
@@ -724,9 +748,9 @@
             </div>
           </li>
           </ol>
+          <p class="aviso-falla"><svg class="icono" aria-hidden="true"><use href="#i-escudo"/></svg><span>Y si algo falla (Google Sheets o el correo), también te avisa, con el motivo. Nada se pierde en silencio.</span></p>
           </div>
         </div>
-        <p class="aviso-falla"><svg class="icono" aria-hidden="true"><use href="#i-escudo"/></svg><span>Y si algo falla (la hoja o el correo), también te avisa, con el motivo. Nada se pierde en silencio.</span></p>
       </section>
 
       <!-- ─── PROBAR: formulario y, al lado, lo que pasa al enviar ─── -->
@@ -802,7 +826,7 @@
           </div>
           <ol class="flujo" id="panelLista">
             <li class="paso pendiente"><div class="nodo" aria-hidden="true">1</div><div class="res-texto"><div class="res-fila"><h3>Recibido desde tu web</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>Tus datos, en cuanto envíes.</p></div></li>
-            <li class="paso pendiente"><div class="nodo" aria-hidden="true">2</div><div class="res-texto"><div class="res-fila"><h3>Registrado en tu hoja</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>La fila nueva de la hoja.</p></div></li>
+            <li class="paso pendiente"><div class="nodo" aria-hidden="true">2</div><div class="res-texto"><div class="res-fila"><h3>Registrado en Google Sheets</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>La fila nueva en Google Sheets.</p></div></li>
             <li class="paso pendiente"><div class="nodo" aria-hidden="true">3</div><div class="res-texto"><div class="res-fila"><h3>Respuesta enviada</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>El correo que te llega a ti.</p></div></li>
             <li class="paso pendiente"><div class="nodo" aria-hidden="true">4</div><div class="res-texto"><div class="res-fila"><h3>Aviso en el móvil del negocio</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>El aviso que recibe el negocio.</p></div></li>
             <li class="paso pendiente"><div class="nodo" aria-hidden="true">5</div><div class="res-texto"><div class="res-fila"><h3>Segundo correo si nadie contesta</h3><span class="estado-paso"><svg class="icono" aria-hidden="true"><use href="#i-reloj"/></svg>Pendiente</span></div><p>El seguimiento, a los 5 minutos.</p></div></li>
@@ -816,7 +840,6 @@
 
     <footer class="pie">
       <span><b>Vicente Rueda</b>, automatización para pequeños negocios</span>
-      <span>Demo hecha con n8n, Google Sheets, correo SMTP y Telegram</span>
       <span><button type="button" class="enlace" data-abrir-politica>Política de privacidad</button></span>
     </footer>
 
@@ -833,7 +856,7 @@
       <dt>Responsable</dt>
       <dd><span class="marcador">[NOMBRE DEL RESPONSABLE]</span><br>Contacto: <span class="marcador">[EMAIL DE CONTACTO]</span></dd>
       <dt>Para qué usamos tus datos</dt>
-      <dd>Esta es una demo de automatización. Con tus datos se registra tu solicitud en una hoja de cálculo, se te envían dos correos (uno inmediato y otro a los 5 minutos) y se avisa por Telegram a quien gestiona la demo.</dd>
+      <dd>Esta es una demo de automatización. Con tus datos se registra tu solicitud en una hoja de cálculo de Google Sheets, se te envían dos correos (uno inmediato y otro a los 5 minutos) y se avisa por Telegram a quien gestiona la demo.</dd>
       <dt>Qué datos</dt>
       <dd>Nombre, apellido (opcional), email, mensaje (opcional), fecha y un identificador de la solicitud. El aviso de Telegram incluye tu nombre, tu email y las primeras palabras de tu mensaje.</dd>
       <dt>Base legal</dt>
@@ -841,7 +864,7 @@
       <dt>Cuánto tiempo</dt>
       <dd>Los datos personales se anonimizan automáticamente a los 30 días. Si quieres que se borren antes, responde a cualquiera de los correos o escribe al contacto: necesitaremos tu email para localizar el registro. El historial de versiones de la hoja de cálculo y el chat de Telegram pueden conservar copias durante un tiempo.</dd>
       <dt>Quién más los recibe</dt>
-      <dd>Google (hoja de cálculo), el proveedor de correo, Telegram y el servidor donde funciona el sistema de automatización. Alguno de ellos puede tratar los datos fuera de la Unión Europea.</dd>
+      <dd>Google (Google Sheets), el proveedor de correo, Telegram y el servidor donde funciona el sistema de automatización. Alguno de ellos puede tratar los datos fuera de la Unión Europea.</dd>
       <dt>Tus derechos</dt>
       <dd>Acceso, rectificación, supresión, oposición, limitación y portabilidad. Para ejercerlos, escribe al contacto. Si crees que no se han respetado, puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).</dd>
       <dt>Cookies</dt>
@@ -1236,10 +1259,10 @@
       const caja = el('div');
       const hoja = el('div', 'pieza hoja');
       const barra = el('div', 'pieza-barra');
-      barra.append(icono('hoja'), 'Hoja de cálculo · pestaña «Leads»');
+      barra.append(icono('hoja'), 'Google Sheets · pestaña «Leads»');
       const scroll = el('div', 'hoja-scroll');
       scroll.tabIndex = 0; // se puede desplazar con el teclado si no cabe
-      scroll.setAttribute('aria-label', 'Fila nueva de la hoja de cálculo');
+      scroll.setAttribute('aria-label', 'Fila nueva en Google Sheets');
       const tabla = el('table');
       const cab = el('tr');
       ['ID', 'Nombre', 'Apellido', 'Email', 'Mensaje', 'Fecha', 'Origen'].forEach((t) => cab.append(el('th', '', t)));
@@ -1388,7 +1411,7 @@
       lista.id = 'panelLista';
       lista.append(
         paso(1, 'hecho', 'Recibido desde tu web', nombreCompleto + ' · ' + r.email),
-        paso(2, 'hecho', 'Registrado en tu hoja', 'Una fila nueva en la pestaña «Leads»' + (r.id ? ' (ID: ' + r.id + ').' : '.'), vistaHoja(r)));
+        paso(2, 'hecho', 'Registrado en Google Sheets', 'Una fila nueva en la pestaña «Leads»' + (r.id ? ' (ID: ' + r.id + ').' : '.'), vistaHoja(r)));
       if (ok) {
         lista.append(
           paso(3, 'hecho', 'Respuesta enviada', 'Un correo a ' + r.email + ', en segundos. Si no lo ves, mira en la carpeta de spam.', vistaCorreo(r, 1)),

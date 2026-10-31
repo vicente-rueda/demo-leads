@@ -2,7 +2,9 @@
    Identidad visual de Vicente Rueda — paleta «C2 Lavanda sobria»
    Fuente única: mi-universo/identidad-visual/identidad.css (guía: identidad.md)
    Cada proyecto la copia a su repo junto con la carpeta fuentes/.
-   Cerrada el 30/10/2026.
+   Cerrada el 30/10/2026. Ampliada el 31/10/2026 (chat 3): escala de violetas,
+   fondo de banda, sombras, halo, luz, modo oscuro automático, bordes en arco
+   y «reducir movimiento». Prueba y elección: demo-leads, rama prueba-color.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -53,6 +55,60 @@
   --color-correcto:     #2f6b3a; /*  6,0 /  5,3 — siempre con icono y texto */
   --color-error:        #a63a2b; /*  6,0 /  5,3 — siempre con icono y texto */
   --color-separador:    #8a74c4; /*  3,6 /  3,2 — decorativo, nunca texto */
+  --color-banda:        #f2eef8; /* fondo de secciones a todo lo ancho (banda de pasos).
+                                    Salto con el fondo 1,07: entre claros el ojo nota más
+                                    el salto. Texto 14,7 · suave 6,2 · principal 6,8 ·
+                                    mostaza 5,5 · separador 3,4. Las tarjetas, en superficie. */
+  --color-caja:         #ece7f5; /* cajas dentro de piezas (= superficie; en oscuro, un escalón más) */
+  --color-borde:        rgb(90 70 145 / 0.18); /* borde fino de lo apoyado (decorativo) */
+
+  /* ---- Escala de violetas: un solo tono (256°) en 11 intensidades ---------
+     La profundidad sale de usar un color en muchas luces, no de mezclar colores.
+     Contraste con blanco / con --color-texto. Texto blanco desde el 600;
+     texto oscuro hasta el 400. */
+  --violeta-50:  #f8f6fb; /*  1,07 / 15,65 — = fondo */
+  --violeta-100: #ece7f5; /*  1,21 / 13,85 — = superficie */
+  --violeta-200: #ddd4ef; /*  1,42 / 11,79 */
+  --violeta-300: #c4b6e4; /*  1,88 /  8,93 */
+  --violeta-400: #a693d6; /*  2,70 /  6,21 — luz de la portada */
+  --violeta-500: #8a74c4; /*  3,91 /  4,30 — = separador */
+  --violeta-600: #6f5aab; /*  5,64 /  2,98 */
+  --violeta-700: #5a4691; /*  7,72 /  2,18 — = principal */
+  --violeta-800: #463670; /* 10,39 /  1,62 */
+  --violeta-900: #2e2550; /* 14,03 /  1,20 — tinte de las sombras */
+  --violeta-950: #1e1838; /* 16,90 /  1,01 */
+
+  /* ---- Sombras: finas, en capas y teñidas de violeta 900 (no grises) -------
+     Solo en lo que flota; lo apoyado lleva borde. Tres alturas como máximo. */
+  --sombra-tinte: 46 37 80;
+  --sombra-1: 0 1px 2px rgb(var(--sombra-tinte) / 0.08),   /* flota poco: piezas */
+              0 2px 8px rgb(var(--sombra-tinte) / 0.06);   /* pequeñas, paneles  */
+  --sombra-2: 0 1px 2px rgb(var(--sombra-tinte) / 0.08),   /* pieza en grande,   */
+              0 4px 12px rgb(var(--sombra-tinte) / 0.08),  /* nodo activo, botón */
+              0 16px 32px -8px rgb(var(--sombra-tinte) / 0.16); /* al pasar    */
+  --sombra-3: 0 2px 4px rgb(var(--sombra-tinte) / 0.10),   /* ventanas encima    */
+              0 12px 24px rgb(var(--sombra-tinte) / 0.12), /* (política)         */
+              0 32px 64px -12px rgb(var(--sombra-tinte) / 0.24);
+
+  /* Halo: SOLO el botón principal de la portada (uno por página). Es una sombra
+     de su propio color, no cuenta como segundo brillo. */
+  --halo:        0 1px 2px rgb(var(--sombra-tinte) / 0.20),
+                 0 8px 24px -6px rgb(90 70 145 / 0.55);
+  --halo-encima: 0 1px 2px rgb(var(--sombra-tinte) / 0.20),
+                 0 12px 32px -6px rgb(90 70 145 / 0.65);
+
+  /* Luz de la portada: un solo violeta que nace de abajo y se apaga. Uno por
+     pantalla, solo en la portada. Al 30 %: la mostaza en su punto más fuerte
+     (#dfd8f0) da 4,53 (al 40 % bajaba a 4,15). Cada proyecto la apaga en su
+     borde inferior con una máscara para no dejar línea con lo siguiente. */
+  --luz: 166 147 214;      /* violeta 400 */
+  --luz-fuerza: 0.30;
+  --luz-portada: radial-gradient(ellipse 50% 75% at 50% 92%,
+                   rgb(var(--luz) / var(--luz-fuerza)), rgb(var(--luz) / 0) 70%);
+
+  /* Bordes de sección en arco (como un horizonte): cuánto más alto queda el
+     centro que los extremos. Móvil 32 px; escritorio (≥ 1024 px) 64 px. */
+  --arco: var(--espacio-32);
 
   /* ---- Fuentes ---------------------------------------------------------- */
   --fuente-titulares: "Newsreader", Georgia, "Times New Roman", serif;
@@ -122,4 +178,98 @@
   height: 5px;
   background: var(--color-acento);
   transform: translate(-50%, -50%) rotate(45deg);
+}
+
+@media (min-width: 1024px) {
+  :root { --arco: var(--espacio-64); }
+}
+
+/* --------------------------------------------------------------------------
+   Modo oscuro AUTOMÁTICO (opción C, elegida el 31/10/2026)
+   Solo para quien tiene el sistema en oscuro; la identidad sigue siendo clara.
+   El fondo es violeta casi negro, nunca negro. Se descartó el oscuro fijo:
+   contradice «fondos oscuros: no» y de día se lee peor para la mayoría.
+   Contraste comprobado sobre fondo / superficie / cajas #2e2550.
+   El logo se cambia por logo/logo-blanco.svg con
+   <picture><source srcset="logo-blanco.svg" media="(prefers-color-scheme: dark)">.
+   -------------------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark; /* casillas, barras y menús del sistema en oscuro */
+
+    --color-fondo:        #17122b;
+    --color-superficie:   #231c3e;
+    --color-caja:         #2e2550; /* un escalón más: barras de pieza, burbujas */
+    --color-banda:        #231c3e; /* = superficie (salto 1,13, ya suave en oscuro) */
+    --color-texto:        #efebf7; /* 15,46 / 13,69 / 11,96 */
+    --color-texto-suave:  #b7aecb; /*  8,58 /  7,60 /  6,64 */
+    --color-principal:    #b9a7f0; /*  8,51 /  7,53 /  6,58 */
+    --color-sobre-principal: #17122b; /* texto del botón: 8,51 */
+    --color-acento:       #e0b850; /*  9,62 /  8,52 /  7,44 */
+    --color-correcto:     #86cf98; /*  9,84 /  8,72 /  7,61 */
+    --color-error:        #f29a8a; /*  8,43 /  7,47 /  6,52 */
+    --color-separador:    #7c67bf; /*  3,93 /  3,48 — decorativo, nunca texto */
+    --color-borde:        rgb(239 235 247 / 0.14);
+
+    --sombra-tinte: 6 4 16; /* violeta casi negro */
+    --sombra-1: 0 1px 2px rgb(var(--sombra-tinte) / 0.40),
+                0 2px 8px rgb(var(--sombra-tinte) / 0.30);
+    --sombra-2: 0 1px 2px rgb(var(--sombra-tinte) / 0.40),
+                0 4px 12px rgb(var(--sombra-tinte) / 0.35),
+                0 16px 32px -8px rgb(var(--sombra-tinte) / 0.55);
+    --sombra-3: 0 2px 4px rgb(var(--sombra-tinte) / 0.45),
+                0 12px 24px rgb(var(--sombra-tinte) / 0.45),
+                0 32px 64px -12px rgb(var(--sombra-tinte) / 0.65);
+    --halo:        0 1px 2px rgb(var(--sombra-tinte) / 0.50),
+                   0 8px 28px -6px rgb(185 167 240 / 0.45);
+    --halo-encima: 0 1px 2px rgb(var(--sombra-tinte) / 0.50),
+                   0 12px 36px -6px rgb(185 167 240 / 0.55);
+
+    --luz: 185 167 240;   /* violeta claro; punto más fuerte #3b3356 */
+    --luz-fuerza: 0.22;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Sección con bordes en arco: <section class="banda-arco">
+   El fondo va en un ::before a todo lo ancho, recortado con tres capas de
+   máscara: arco arriba (una franja de alto --r con media elipse), arco abajo
+   (igual, al revés) y el centro recto. Una elipse mucho más ancha que la
+   pantalla da un horizonte; border-radius daría bordes de pestaña.
+   Vale para cualquier alto de sección (la primera versión de demo-leads solo
+   funcionaba si la sección medía más de 4 × --r). Esquinas de cajas: 4–8 px.
+   -------------------------------------------------------------------------- */
+.banda-arco { position: relative; isolation: isolate; }
+.banda-arco::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: var(--color-banda);
+  --r: calc(var(--arco) * 7.5); /* alto de la elipse: con 100vw de ancho, el arco baja 0,134 × r = --arco en los extremos */
+  -webkit-mask:
+    radial-gradient(100vw var(--r) at 50% 100%, #000 99.4%, transparent 100%) top / 100% var(--r) no-repeat,
+    radial-gradient(100vw var(--r) at 50% 0%, #000 99.4%, transparent 100%) bottom / 100% var(--r) no-repeat,
+    linear-gradient(transparent var(--r), #000 var(--r), #000 calc(100% - var(--r)), transparent calc(100% - var(--r)));
+          mask:
+    radial-gradient(100vw var(--r) at 50% 100%, #000 99.4%, transparent 100%) top / 100% var(--r) no-repeat,
+    radial-gradient(100vw var(--r) at 50% 0%, #000 99.4%, transparent 100%) bottom / 100% var(--r) no-repeat,
+    linear-gradient(transparent var(--r), #000 var(--r), #000 calc(100% - var(--r)), transparent calc(100% - var(--r)));
+}
+
+/* --------------------------------------------------------------------------
+   Reducir movimiento: quien lo tiene activado ve cambios instantáneos.
+   Va en la identidad para que ningún proyecto se lo salte.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
