@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Demo · Cada contacto de tu web, respondido al momento</title>
-  <meta name="description" content="Cuando alguien escribe desde tu web, queda registrado en tu hoja de Google Sheets, recibe respuesta al momento y te llega un aviso al móvil. Pruébalo haciendo de cliente.">
+  <title>Demo de captación de leads: pruébala en directo</title>
+  <meta name="description" content="Demo de captación de leads: escribe como lo haría uno de tus clientes y mira cómo se apunta, se responde y te avisa al móvil, paso a paso.">
   <!-- Vista previa al compartir el enlace (LinkedIn, WhatsApp, X…) -->
   <meta property="og:type" content="website">
   <meta property="og:locale" content="es_ES">
   <meta property="og:site_name" content="Vicente Rueda Gómez">
-  <meta property="og:title" content="Demo · Cada contacto de tu web, respondido al momento">
-  <meta property="og:description" content="Cuando alguien escribe desde tu web, queda registrado en tu hoja de Google Sheets, recibe respuesta al momento y te llega un aviso al móvil. Pruébalo haciendo de cliente.">
+  <meta property="og:title" content="Demo de captación de leads: pruébala en directo">
+  <meta property="og:description" content="Demo de captación de leads: escribe como lo haría uno de tus clientes y mira cómo se apunta, se responde y te avisa al móvil, paso a paso.">
   <meta property="og:url" content="https://demo-leads.vicenterueda.com/">
   <meta property="og:image" content="https://demo-leads.vicenterueda.com/compartir.png">
   <meta property="og:image:width" content="1200">
@@ -141,7 +141,7 @@
     @media (min-width: 600px)  { h1 { font-size: 2.1rem; } }
     @media (min-width: 1024px) { h1 { font-size: 2.4rem; } }
     .subtitulo { font-size: var(--t-paso); max-width: 34em; margin: 0 auto var(--espacio-24); text-wrap: balance; }
-    @media (min-width: 1280px) { .subtitulo { max-width: none; } }
+    @media (min-width: 1280px) { .subtitulo { max-width: 48em; } } /* tope de ancho (dos líneas): sin él, el texto largo pasa por encima de los círculos de la línea */
     .pregunta {
       display: inline-flex; align-items: baseline; gap: var(--espacio-8);
       font-weight: var(--peso-fuerte); max-width: 40em; margin-bottom: var(--espacio-32); text-align: left;
@@ -613,12 +613,12 @@
         </picture>
       </a>
       <div class="portada-centro">
-        <p class="etiqueta aparece">Demo · Los contactos de tu web</p>
+        <p class="etiqueta aparece">Demo · Captación de leads</p>
         <h1 class="aparece">Cada contacto de tu web, registrado, respondido y en tu móvil al momento.</h1>
-        <p class="subtitulo aparece">Copiar sus datos, pasarlos a Google Sheets, contestarle, avisarte y acordarse de volver a escribirle. Aquí pasa solo, en segundos.</p>
+        <p class="subtitulo aparece">Un lead es alguien que te deja sus datos desde tu web. Copiarlos a tu hoja, contestarle, avisarte y acordarte de volver a escribirle: aquí pasa solo, en segundos.</p>
         <p class="pregunta aparece">¿Cuánto tiempo te lleva hoy cada contacto? ¿Y cuántos se quedan sin respuesta?</p>
         <div class="cta aparece">
-          <a href="#probar" class="btn-primario">Pruébalo haciendo de cliente ↓</a>
+          <a href="#probar" class="btn-primario">Pruébalo como uno de tus clientes ↓</a>
           <p class="personas oculto" id="pruebaSocial"><svg class="icono" aria-hidden="true"><use href="#i-persona"/></svg>
             <span><b id="contadorPersonas"></b> <span id="textoContador">personas lo han probado</span></span></p>
         </div>
@@ -649,7 +649,7 @@
             <div class="r-bloque">
               <div class="r-cab anima">
                 <p class="etiqueta">Paso 1 de 5</p>
-                <h3>El cliente escribe en tu web</h3>
+                <h3>Uno de tus clientes escribe en tu web</h3>
               </div>
               <div class="r-pieza anima" aria-hidden="true">
                 <div class="pieza">
@@ -745,7 +745,7 @@
             <div class="r-bloque">
               <div class="r-cab anima">
                 <p class="etiqueta">Paso 5 de 5</p>
-                <h3>Si nadie le ha contestado, vuelve a escribirle</h3>
+                <h3>Si nadie le ha contestado, se le vuelve a escribir solo</h3>
               </div>
               <div class="r-pieza anima" aria-hidden="true">
                 <div class="pieza">
@@ -763,7 +763,7 @@
             </div>
           </li>
           </ol>
-          <p class="aviso-falla"><svg class="icono" aria-hidden="true"><use href="#i-escudo"/></svg><span>Y si algo falla (Google Sheets o el correo), también te avisa, con el motivo. Nada se pierde en silencio.</span></p>
+          <p class="aviso-falla"><svg class="icono" aria-hidden="true"><use href="#i-escudo"/></svg><span>Y si algo falla (Google Sheets o el correo), también te avisa, con el motivo, para que no te enteres tarde.</span></p>
           </div>
         </div>
       </section>
@@ -774,7 +774,7 @@
         <div>
           <div class="tarjeta">
             <div class="tarjeta-cab">
-              <h2 class="titular" id="t-probar">Haz de cliente</h2>
+              <h2 class="titular" id="t-probar">Escribe como uno de tus clientes</h2>
               <span class="nota" id="notaObligatorios">Los campos con <span class="req">*</span> son obligatorios.</span>
             </div>
 
