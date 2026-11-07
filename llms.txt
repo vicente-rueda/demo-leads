@@ -1,0 +1,22 @@
+# Demo de captación de leads
+
+> Cada contacto de tu web, registrado, respondido y en tu móvil al momento. Un lead es alguien que te deja sus datos desde tu web. Copiarlos a tu hoja, contestarle, avisarte y acordarte de volver a escribirle: aquí pasa solo, en segundos.
+
+Demo en vivo y gratuita de Vicente Rueda Gómez (https://vicenterueda.com/). Funciona de verdad: quien la prueba recibe los correos reales. Por dentro es un flujo de n8n.
+
+## Qué pasa, paso a paso
+
+1. Uno de tus clientes escribe en tu web.
+2. Queda registrado en tu hoja de Google Sheets.
+3. Recibe respuesta al momento.
+4. Te avisa al móvil (Telegram).
+5. Si nadie le ha contestado, se le vuelve a escribir solo, a los 5 minutos.
+
+Si algo falla (Google Sheets o el correo), también avisa, con el motivo. Los datos personales se anonimizan solos a los 30 días.
+
+## Enlaces
+
+- [Probar la demo](https://demo-leads.vicenterueda.com/): formulario y resultado paso a paso.
+- [Ficha de la demo](https://vicenterueda.com/demos/captacion-de-contactos/): para qué sirve en una pyme.
+- [Automatización para pymes](https://vicenterueda.com/automatizacion/): el área de la que forma parte.
+- [Código y flujos de n8n](https://github.com/vicente-rueda/demo-leads): README con el esquema y los pasos para reproducirla.

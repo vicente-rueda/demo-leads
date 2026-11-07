@@ -1,0 +1,5 @@
+# Todo se puede leer, también los rastreadores de buscadores con IA.
+User-agent: *
+Allow: /
+
+Sitemap: https://demo-leads.vicenterueda.com/sitemap.xml

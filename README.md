@@ -130,18 +130,25 @@ Los tres flujos están en `n8n/`. Los nodos que llaman a un servicio externo rei
 - **El CORS de los webhooks solo admite el dominio de la demo**, y un límite de peticiones por IP en el proxy inverso frena los envíos masivos.
 - **n8n no guarda las ejecuciones correctas** (`saveDataSuccessExecution: none`), para no acumular datos personales en su base de datos.
 - **Sin recursos de terceros en la web:** las fuentes, el logo y los estilos se sirven desde el mismo dominio. La web no hace ninguna petición a Google Fonts ni a ningún CDN.
-- **El servidor web no va «de serie»** (`nginx.conf`): no dice su versión, obliga a usar HTTPS (HSTS), impide que otra web la meta en un marco, limita con una política de seguridad de contenido (CSP) qué puede cargar la página y a dónde puede conectarse (solo a sí misma y a n8n), comprime el texto y deja en caché lo que no cambia. Los datos del visitante se muestran siempre como texto, nunca como HTML.
+- **El servidor web no va «de serie»** (`nginx.conf`): no dice su versión, obliga a usar HTTPS (HSTS), impide que otra web la meta en un marco, limita con una política de seguridad de contenido (CSP) qué puede cargar la página y a dónde puede conectarse (solo a sí misma y a n8n), comprime el texto y deja en caché lo que no cambia. La CSP **no admite código dentro del HTML** (`'unsafe-inline'`): los estilos y el JavaScript están en archivos propios, así que un script inyectado no se ejecutaría. Bloquea los archivos ocultos, tiene su propia página 404 y su registro de accesos no guarda la IP. Los datos del visitante se muestran siempre como texto, nunca como HTML.
+- **Los avisos de Telegram van en HTML con el texto escapado**, y los correos que traiga un mensaje de error se cambian por `[correo]` antes de enviarlo. Sin el modo HTML, Telegram interpreta los corchetes como formato y se los come; con él, un `<` sin escapar haría que rechazara el aviso entero.
+- **Cada correo lleva un pie legal:** quién es el responsable, por qué se recibe, el borrado a 30 días, los derechos y el enlace a la política de privacidad.
+- **Buscadores y robots:** `robots.txt`, `sitemap.xml`, `llms.txt` (resumen para asistentes de IA), `/.well-known/security.txt` y datos estructurados (`WebApplication`) que enlazan la demo con su autor.
 
 ## Qué hay en el repositorio
 
 | Ruta | Qué es |
 |---|---|
-| `index.html` | La página: estructura, estilos propios de la demo y JavaScript (envío, estados, simulación y política de privacidad). Sin librerías. |
+| `index.html` | La página: estructura, textos, política de privacidad y datos estructurados. Sin código dentro. |
+| `demo.css` | Los estilos propios de la demo. |
+| `demo.js` | El JavaScript: envío, estados, simulación y política de privacidad. Sin librerías. |
+| `404.html` | La página de «no existe». |
+| `robots.txt`, `sitemap.xml`, `llms.txt`, `.well-known/security.txt` | Para buscadores, asistentes de IA y avisos de seguridad. |
 | `identidad.css` | La identidad visual compartida: colores (con modo oscuro automático), tipografía, espacios y sombras, como variables CSS. |
 | `fuentes/` | Newsreader e Instrument Sans en `woff2`, servidas desde la propia web, cada una con su licencia SIL OFL 1.1 (`*-OFL.txt`). |
 | `logo/` | Logo en color y en blanco (para el modo oscuro) y favicon en SVG y PNG. |
 | `Dockerfile` | Imagen `nginx:alpine` que sirve la web. Recibe al construirse los datos del responsable de la política de privacidad y comprueba la configuración de nginx antes de darla por buena. |
-| `nginx.conf` | Configuración del servidor web: cabeceras de seguridad, compresión y caché. |
+| `nginx.conf` | Configuración del servidor web: cabeceras de seguridad (CSP estricta), compresión, caché, 404 y registro sin IP. |
 | `compartir.png` | Imagen de 1200 × 630 que muestran LinkedIn, WhatsApp y otras redes al compartir el enlace. |
 | `n8n/demo-leads-captura.json` | Flujo principal: formulario, registro, correos, aviso, segundo correo si nadie atiende el contacto y contador. |
 | `n8n/demo-leads-errores.json` | Red de seguridad: avisa por Telegram si otro flujo falla de forma no prevista. |
@@ -181,7 +188,7 @@ Las claves van **solo** al gestor de credenciales de n8n (y a tu gestor de contr
 ### 3. Importar los flujos
 
 1. Importa los tres JSON de `n8n/`.
-2. En cada nodo, sustituye `REEMPLAZAR_ID_HOJA_GOOGLE_SHEETS` por el ID de tu hoja, `REEMPLAZAR_CHAT_ID_TELEGRAM` por tu chat y `REEMPLAZAR_EMAIL_REMITENTE` por la dirección desde la que enviarás los correos (en los dos nodos de envío).
+2. En cada nodo, sustituye `REEMPLAZAR_ID_HOJA_GOOGLE_SHEETS` por el ID de tu hoja, `REEMPLAZAR_CHAT_ID_TELEGRAM` por tu chat y `REEMPLAZAR_EMAIL_REMITENTE` por la dirección desde la que enviarás los correos (en los dos nodos de envío). En el pie de esos dos correos, cambia `[NOMBRE DEL RESPONSABLE]` y `[EMAIL DE CONTACTO]` por los tuyos.
 3. **Abre cada nodo que use credenciales y elige la tuya**: el ID de credencial del JSON es un marcador.
 4. Publica `Demo Leads - Alerta de errores` y, en los ajustes del flujo principal **y** del de limpieza, selecciónalo en *Error workflow*.
 5. Publica `Demo Leads - Limpieza de datos personales`. Si no está publicado, no se ejecuta, y lo que la web promete sobre los 30 días dejaría de ser cierto.
@@ -189,7 +196,7 @@ Las claves van **solo** al gestor de credenciales de n8n (y a tu gestor de contr
 
 ### 4. La web
 
-1. En el script de `index.html`, ajusta `URL_ENVIO`, `URL_CONTADOR` y `URL_DEMO` a tus direcciones (o pasa `N8N_BASE_URL` al construir, ver abajo). En n8n, pon tu dominio como origen permitido (CORS) en los nodos «Recibir formulario» y «Recibir petición del contador».
+1. En `demo.js`, ajusta `URL_ENVIO`, `URL_CONTADOR` y `URL_DEMO` a tus direcciones (o pasa `N8N_BASE_URL` al construir, ver abajo). En n8n, pon tu dominio como origen permitido (CORS) en los nodos «Recibir formulario» y «Recibir petición del contador».
 2. Construye y ejecuta la imagen:
 
 ```bash
@@ -201,7 +208,7 @@ docker build \
 docker run --rm -p 8080:80 demo-leads
 ```
 
-Los dos primeros parámetros rellenan el responsable y el contacto de la política de privacidad **al construir la imagen**, de modo que tus datos personales no se guardan en git. Si los dejas vacíos, la web conserva los marcadores amarillos y no muestra el botón de contacto. `N8N_BASE_URL` (opcional, sin barra final) cambia la dirección de n8n que trae `index.html`: sirve para probar con una dirección provisional sin tocar el código.
+Los dos primeros parámetros rellenan el responsable y el contacto de la política de privacidad **al construir la imagen**, de modo que tus datos personales no se guardan en git. Si los dejas vacíos, la web conserva los marcadores amarillos y no muestra el botón de contacto. `N8N_BASE_URL` (opcional, sin barra final) cambia la dirección de n8n que trae `demo.js` (y la de la CSP): sirve para probar con una dirección provisional sin tocar el código.
 
 3. Para limitar las peticiones por IP, configúralo en tu proxy inverso; n8n no puede hacerlo. Aquí se usa Traefik con un middleware `rateLimit` sobre los dos webhooks.
 
@@ -251,6 +258,7 @@ Limitaciones conocidas:
 - **Lo que prometes sobre datos personales tiene que ser verdad.** El correo decía que los datos no se guardaban, y era falso. Ahora un flujo que anonimiza a los 30 días respalda lo que dice el texto.
 - **Una casilla en una hoja de cálculo no es un dato vacío:** sin marcar guarda «FALSE», y n8n la cuenta como fila ocupada. Por eso `Atendido` es un desplegable.
 - **Antes de publicar un repositorio hay que revisar también su historial**, no solo los archivos actuales: ahí se quedan las direcciones y las claves olvidadas.
+- **Telegram no muestra lo que le mandas, sino lo que entiende.** Sin indicarle el formato, se comía los `[corchetes]` de los avisos. Con HTML hay que escapar todo lo que venga de fuera; si no, un `<` en un mensaje de error tumba justo el aviso que más importa.
 - **Si dos sitios guardan el mismo texto, acaban desincronizados.** Los correos están en el flujo y en la vista previa de la web: si se cambia uno, hay que cambiar el otro.
 
 ## Licencia

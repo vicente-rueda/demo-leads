@@ -1,0 +1,4 @@
+Contact: https://vicenterueda.com/contacto/
+Expires: 2027-11-07T00:00:00.000Z
+Preferred-Languages: es, en
+Canonical: https://demo-leads.vicenterueda.com/.well-known/security.txt

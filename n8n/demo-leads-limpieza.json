@@ -263,6 +263,7 @@
         "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
         "text": "=🧹 [Demo Leads] Limpieza diaria: {{ $input.all().length }} lead(s) anonimizado(s) por superar los 30 días.",
         "additionalFields": {
+          "parse_mode": "HTML",
           "appendAttribution": false
         }
       },

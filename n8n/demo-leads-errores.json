@@ -25,8 +25,9 @@
         "resource": "message",
         "operation": "sendMessage",
         "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
-        "text": "=🚨 [n8n] Ha fallado el workflow «{{ $json.workflow.name }}»\nNodo: {{ $json.execution.lastNodeExecuted }}\nError: {{ $json.execution.error.message }}\nEjecución: {{ $json.execution.url }}",
+        "text": "=🚨 <b>[n8n] Ha fallado el workflow «{{ String($json.workflow?.name ?? \"desconocido\").replace(/[^\\s<>\"'()\\[\\],;:@]+@[^\\s<>\"'()\\[\\],;:@]+\\.[A-Za-z]{2,}/g, \"[correo]\").replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\") }}»</b>\nNodo: {{ String($json.execution?.lastNodeExecuted ?? \"—\").replace(/[^\\s<>\"'()\\[\\],;:@]+@[^\\s<>\"'()\\[\\],;:@]+\\.[A-Za-z]{2,}/g, \"[correo]\").replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\") }}\nError: {{ String($json.execution?.error?.message ?? \"sin detalle\").replace(/[^\\s<>\"'()\\[\\],;:@]+@[^\\s<>\"'()\\[\\],;:@]+\\.[A-Za-z]{2,}/g, \"[correo]\").replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\") }}\nEjecución: {{ String($json.execution?.url ?? \"—\").replace(/[^\\s<>\"'()\\[\\],;:@]+@[^\\s<>\"'()\\[\\],;:@]+\\.[A-Za-z]{2,}/g, \"[correo]\").replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\") }}",
         "additionalFields": {
+          "parse_mode": "HTML",
           "appendAttribution": false
         }
       },

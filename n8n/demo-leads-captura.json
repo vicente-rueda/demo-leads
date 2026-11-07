@@ -248,7 +248,7 @@
         "toEmail": "={{ $(\"Validar y limpiar datos\").item.json.email }}",
         "subject": "Hemos recibido tu solicitud",
         "emailFormat": "html",
-        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f1b2b;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.</p><p style=\"margin:0 0 28px 0\">Nos pondremos en contacto contigo a la mayor brevedad posible.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Atención al Cliente</strong></p><hr style=\"border:none;border-top:1px solid #ddd4ef;margin:0 0 14px 0\"><p style=\"margin:0;font-size:12px;color:#5b5668\">Este mensaje ha sido generado automáticamente como parte de una demostración de sistema de automatización: el texto de arriba es un ejemplo de lo que recibiría el cliente de un negocio real. Los datos que introduces se guardan en una hoja de cálculo de esta demo (así se ve el registro automático), se anonimizan automáticamente a los 30 días y no se utilizan con ningún otro fin. Si quieres que los borremos antes, responde a este correo.</p></div>",
+        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f1b2b;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Gracias por ponerte en contacto con nosotros. Hemos recibido tu solicitud y ya la tenemos registrada.</p><p style=\"margin:0 0 28px 0\">Nos pondremos en contacto contigo a la mayor brevedad posible.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Atención al Cliente</strong></p><hr style=\"border:none;border-top:1px solid #ddd4ef;margin:0 0 14px 0\"><p style=\"margin:0 0 8px 0;font-size:12px;line-height:1.5;color:#5b5668\">Has recibido este correo porque has probado la demo de captación de leads de vicenterueda.com y has aceptado su política de privacidad. Es un ejemplo de lo que recibiría el cliente de un negocio real.</p><p style=\"margin:0 0 8px 0;font-size:12px;line-height:1.5;color:#5b5668\"><strong>Responsable:</strong> [NOMBRE DEL RESPONSABLE] · [EMAIL DE CONTACTO]. Tus datos están en la hoja de cálculo de esta demo, no se usan para nada más y se anonimizan solos a los 30 días. Puedes pedir verlos, corregirlos o borrarlos antes (y el resto de tus derechos) respondiendo a este correo. Si crees que no se han respetado, puedes reclamar ante la AEPD (aepd.es).</p><p style=\"margin:0;font-size:12px;line-height:1.5;color:#5b5668\"><a href=\"https://demo-leads.vicenterueda.com/#privacidad\" style=\"color:#5a4691\">Política de privacidad</a></p></div>",
         "options": {
           "appendAttribution": false
         }
@@ -634,8 +634,9 @@
         "resource": "message",
         "operation": "sendMessage",
         "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
-        "text": "=⚠️ [Demo Leads] — El seguimiento del lead {{ $(\"Validar y limpiar datos\").item.json.id }} se gestionó, pero no se pudo anotar en la columna Seguimiento de Google Sheets.\nError: {{ $json.error?.message ?? $json.error ?? \"sin detalle\" }}",
+        "text": "=⚠️ [Demo Leads] — El seguimiento del lead {{ $(\"Validar y limpiar datos\").item.json.id }} se gestionó, pero no se pudo anotar en la columna Seguimiento de Google Sheets.\nError: {{ String($json.error?.message ?? (typeof $json.error === \"object\" ? JSON.stringify($json.error) : $json.error) ?? \"sin detalle\").replace(/[^\\s<>\"'()\\[\\],;:@]+@[^\\s<>\"'()\\[\\],;:@]+\\.[A-Za-z]{2,}/g, \"[correo]\").replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\") }}",
         "additionalFields": {
+          "parse_mode": "HTML",
           "appendAttribution": false
         }
       },
@@ -695,7 +696,7 @@
         "toEmail": "={{ $(\"Validar y limpiar datos\").item.json.email }}",
         "subject": "Sobre tu solicitud: cómo seguimos",
         "emailFormat": "html",
-        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f1b2b;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Hace 5 minutos recibimos tu solicitud{{ $(\"Validar y limpiar datos\").item.json.mensajeCortoH ? \" («\" + $(\"Validar y limpiar datos\").item.json.mensajeCortoH + \"»)\" : \"\" }} y no queremos que te quedes esperando. Todavía no hemos podido contestarte en persona, así que te dejamos ya el siguiente paso.</p><p style=\"margin:0 0 28px 0\"><strong>Responde a este correo con el día y la franja en que prefieres que te llamemos</strong> (por ejemplo, «jueves por la mañana»). Con eso reservamos 15 minutos para revisar tu caso y proponerte una solución concreta.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Atención al Cliente</strong></p><div style=\"background:#f2eef8;border-left:4px solid #5a4691;padding:12px 14px;margin:0 0 24px 0;font-size:14px\"><p style=\"margin:0\"><strong>Sobre esta demo:</strong> este correo lo ha enviado el sistema solo: pasaron 5 minutos y nadie había marcado tu solicitud como atendida en la hoja. Si alguien la hubiera marcado, no habrías recibido nada, porque una persona ya te habría contestado. El plazo (aquí, 5 minutos; en un negocio real puede ser, por ejemplo, 24 horas), el texto y el número de correos se adaptan a lo que necesite la automatización de cada cliente.</p></div><hr style=\"border:none;border-top:1px solid #ddd4ef;margin:0 0 14px 0\"><p style=\"margin:0;font-size:12px;color:#5b5668\">Este mensaje ha sido generado automáticamente como parte de una demostración de sistema de automatización: el texto de arriba es un ejemplo de lo que recibiría el cliente de un negocio real. Los datos que introduces se guardan en una hoja de cálculo de esta demo (así se ve el registro automático), se anonimizan automáticamente a los 30 días y no se utilizan con ningún otro fin. Si quieres que los borremos antes, responde a este correo.</p></div>",
+        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#1f1b2b;max-width:760px;text-align:left;\"><p style=\"margin:0 0 14px 0\">Hola <strong>{{ $(\"Validar y limpiar datos\").item.json.nombreH }}</strong>,</p><p style=\"margin:0 0 14px 0\">Hace 5 minutos recibimos tu solicitud{{ $(\"Validar y limpiar datos\").item.json.mensajeCortoH ? \" («\" + $(\"Validar y limpiar datos\").item.json.mensajeCortoH + \"»)\" : \"\" }} y no queremos que te quedes esperando. Todavía no hemos podido contestarte en persona, así que te dejamos ya el siguiente paso.</p><p style=\"margin:0 0 28px 0\"><strong>Responde a este correo con el día y la franja en que prefieres que te llamemos</strong> (por ejemplo, «jueves por la mañana»). Con eso reservamos 15 minutos para revisar tu caso y proponerte una solución concreta.</p><p style=\"margin:0 0 2px 0\">Un saludo,</p><p style=\"margin:0 0 24px 0\"><strong>Equipo de Atención al Cliente</strong></p><div style=\"background:#f2eef8;border-left:4px solid #5a4691;padding:12px 14px;margin:0 0 24px 0;font-size:14px\"><p style=\"margin:0\"><strong>Sobre esta demo:</strong> este correo lo ha enviado el sistema solo: pasaron 5 minutos y nadie había marcado tu solicitud como atendida en la hoja. Si alguien la hubiera marcado, no habrías recibido nada, porque una persona ya te habría contestado. El plazo (aquí, 5 minutos; en un negocio real puede ser, por ejemplo, 24 horas), el texto y el número de correos se adaptan a lo que necesite la automatización de cada cliente.</p></div><hr style=\"border:none;border-top:1px solid #ddd4ef;margin:0 0 14px 0\"><p style=\"margin:0 0 8px 0;font-size:12px;line-height:1.5;color:#5b5668\">Has recibido este correo porque has probado la demo de captación de leads de vicenterueda.com y has aceptado su política de privacidad. Es un ejemplo de lo que recibiría el cliente de un negocio real.</p><p style=\"margin:0 0 8px 0;font-size:12px;line-height:1.5;color:#5b5668\"><strong>Responsable:</strong> [NOMBRE DEL RESPONSABLE] · [EMAIL DE CONTACTO]. Tus datos están en la hoja de cálculo de esta demo, no se usan para nada más y se anonimizan solos a los 30 días. Puedes pedir verlos, corregirlos o borrarlos antes (y el resto de tus derechos) respondiendo a este correo. Si crees que no se han respetado, puedes reclamar ante la AEPD (aepd.es).</p><p style=\"margin:0;font-size:12px;line-height:1.5;color:#5b5668\"><a href=\"https://demo-leads.vicenterueda.com/#privacidad\" style=\"color:#5a4691\">Política de privacidad</a></p></div>",
         "options": {
           "appendAttribution": false
         }
@@ -897,8 +898,9 @@
         "resource": "message",
         "operation": "sendMessage",
         "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
-        "text": "=⚠️ [Demo Leads] — Falló el email de seguimiento del lead {{ $(\"Validar y limpiar datos\").item.json.id }}.\nError: {{ $json.error?.message ?? $json.error ?? \"sin detalle\" }}",
+        "text": "=⚠️ [Demo Leads] — Falló el email de seguimiento del lead {{ $(\"Validar y limpiar datos\").item.json.id }}.\nError: {{ String($json.error?.message ?? (typeof $json.error === \"object\" ? JSON.stringify($json.error) : $json.error) ?? \"sin detalle\").replace(/[^\\s<>\"'()\\[\\],;:@]+@[^\\s<>\"'()\\[\\],;:@]+\\.[A-Za-z]{2,}/g, \"[correo]\").replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\") }}",
         "additionalFields": {
+          "parse_mode": "HTML",
           "appendAttribution": false
         }
       },
@@ -926,8 +928,9 @@
         "resource": "message",
         "operation": "sendMessage",
         "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
-        "text": "=⚠️ [Demo Leads] — No se pudo registrar el lead {{ $(\"Validar y limpiar datos\").item.json.id }} en Google Sheets.\nError: {{ $json.error?.message ?? $json.error ?? \"sin detalle\" }}",
+        "text": "=⚠️ [Demo Leads] — No se pudo registrar el lead {{ $(\"Validar y limpiar datos\").item.json.id }} en Google Sheets.\nError: {{ String($json.error?.message ?? (typeof $json.error === \"object\" ? JSON.stringify($json.error) : $json.error) ?? \"sin detalle\").replace(/[^\\s<>\"'()\\[\\],;:@]+@[^\\s<>\"'()\\[\\],;:@]+\\.[A-Za-z]{2,}/g, \"[correo]\").replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\") }}",
         "additionalFields": {
+          "parse_mode": "HTML",
           "appendAttribution": false
         }
       },
@@ -972,8 +975,9 @@
         "resource": "message",
         "operation": "sendMessage",
         "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
-        "text": "=⚠️ [Demo Leads] — El lead {{ $(\"Validar y limpiar datos\").item.json.id }} se registró, pero falló el email de confirmación.\nError: {{ $json.error?.message ?? $json.error ?? \"sin detalle\" }}",
+        "text": "=⚠️ [Demo Leads] — El lead {{ $(\"Validar y limpiar datos\").item.json.id }} se registró, pero falló el email de confirmación.\nError: {{ String($json.error?.message ?? (typeof $json.error === \"object\" ? JSON.stringify($json.error) : $json.error) ?? \"sin detalle\").replace(/[^\\s<>\"'()\\[\\],;:@]+@[^\\s<>\"'()\\[\\],;:@]+\\.[A-Za-z]{2,}/g, \"[correo]\").replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\") }}",
         "additionalFields": {
+          "parse_mode": "HTML",
           "appendAttribution": false
         }
       },
@@ -1018,8 +1022,9 @@
         "resource": "message",
         "operation": "sendMessage",
         "chatId": "REEMPLAZAR_CHAT_ID_TELEGRAM",
-        "text": "=⚠️ [Demo Leads] — No se pudo comprobar en Google Sheets si el lead {{ $(\"Validar y limpiar datos\").item.json.id }} estaba atendido; se envía el seguimiento igualmente.\nError: {{ $json.error?.message ?? $json.error ?? \"sin detalle\" }}",
+        "text": "=⚠️ [Demo Leads] — No se pudo comprobar en Google Sheets si el lead {{ $(\"Validar y limpiar datos\").item.json.id }} estaba atendido; se envía el seguimiento igualmente.\nError: {{ String($json.error?.message ?? (typeof $json.error === \"object\" ? JSON.stringify($json.error) : $json.error) ?? \"sin detalle\").replace(/[^\\s<>\"'()\\[\\],;:@]+@[^\\s<>\"'()\\[\\],;:@]+\\.[A-Za-z]{2,}/g, \"[correo]\").replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\") }}",
         "additionalFields": {
+          "parse_mode": "HTML",
           "appendAttribution": false
         }
       },
